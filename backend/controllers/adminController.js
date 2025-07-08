@@ -1,4 +1,4 @@
-// backend/controllers/adminController.js
+// backend/controllers/adminController.js (Updated with new endpoints)
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
@@ -116,6 +116,7 @@ const getUnassignedBookings = async (req, res) => {
         date: booking.date,
         time: booking.time,
         status: booking.status,
+        detailerId: booking.detailerId,
         createdAt: booking.createdAt
       }))
     });
@@ -125,6 +126,123 @@ const getUnassignedBookings = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching unassigned bookings'
+    });
+  }
+};
+
+// Get all bookings (NEW ENDPOINT)
+const getAllBookings = async (req, res) => {
+  try {
+    const allBookings = await prisma.booking.findMany({
+      include: {
+        detailer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: [
+        { date: 'asc' },
+        { time: 'asc' }
+      ]
+    });
+
+    res.json({
+      success: true,
+      bookings: allBookings.map(booking => ({
+        id: booking.id,
+        confirmationCode: booking.confirmationCode,
+        customer: {
+          firstName: booking.firstName,
+          lastName: booking.lastName,
+          phoneNumber: booking.phoneNumber
+        },
+        vehicle: {
+          type: booking.vehicleType,
+          make: booking.make,
+          model: booking.model,
+          year: booking.year
+        },
+        services: booking.services,
+        extras: booking.extras,
+        date: booking.date,
+        time: booking.time,
+        status: booking.status,
+        detailerId: booking.detailerId,
+        detailer: booking.detailer,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt
+      }))
+    });
+
+  } catch (error) {
+    console.error('Get all bookings error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching all bookings'
+    });
+  }
+};
+
+// Get assigned bookings (NEW ENDPOINT)
+const getAssignedBookings = async (req, res) => {
+  try {
+    const assignedBookings = await prisma.booking.findMany({
+      where: {
+        detailerId: {
+          not: null
+        }
+      },
+      include: {
+        detailer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: [
+        { date: 'asc' },
+        { time: 'asc' }
+      ]
+    });
+
+    res.json({
+      success: true,
+      bookings: assignedBookings.map(booking => ({
+        id: booking.id,
+        confirmationCode: booking.confirmationCode,
+        customer: {
+          firstName: booking.firstName,
+          lastName: booking.lastName,
+          phoneNumber: booking.phoneNumber
+        },
+        vehicle: {
+          type: booking.vehicleType,
+          make: booking.make,
+          model: booking.model,
+          year: booking.year
+        },
+        services: booking.services,
+        extras: booking.extras,
+        date: booking.date,
+        time: booking.time,
+        status: booking.status,
+        detailerId: booking.detailerId,
+        detailer: booking.detailer,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt
+      }))
+    });
+
+  } catch (error) {
+    console.error('Get assigned bookings error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching assigned bookings'
     });
   }
 };
@@ -274,6 +392,8 @@ const autoAssignBooking = async (req, res) => {
 module.exports = {
   assignBookingToDetailer,
   getUnassignedBookings,
+  getAllBookings,        // NEW
+  getAssignedBookings,   // NEW
   getActiveDetailers,
   autoAssignBooking
 };

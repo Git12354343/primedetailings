@@ -117,6 +117,41 @@ const DashboardJobCard = ({ booking, onStatusUpdate }) => {
     }
   };
 
+  // Parse services safely
+  const parseServices = (services) => {
+    try {
+      if (Array.isArray(services)) {
+        return services;
+      }
+      if (typeof services === 'string') {
+        return JSON.parse(services);
+      }
+      return [];
+    } catch (error) {
+      console.error('Error parsing services:', error);
+      return [];
+    }
+  };
+
+  // Parse extras safely
+  const parseExtras = (extras) => {
+    try {
+      if (Array.isArray(extras)) {
+        return extras;
+      }
+      if (typeof extras === 'string' && extras) {
+        return JSON.parse(extras);
+      }
+      return [];
+    } catch (error) {
+      console.error('Error parsing extras:', error);
+      return [];
+    }
+  };
+
+  const services = parseServices(booking.services);
+  const extras = parseExtras(booking.extras);
+
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
       {/* Header */}
@@ -172,25 +207,29 @@ const DashboardJobCard = ({ booking, onStatusUpdate }) => {
           <span className="font-medium text-gray-900">Services</span>
         </div>
         <div className="space-y-1">
-          {booking.services.map((service, index) => (
-            <span
-              key={index}
-              className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2 mb-1"
-            >
-              {service}
-            </span>
-          ))}
+          {services.length > 0 ? (
+            services.map((service, index) => (
+              <span
+                key={index}
+                className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2 mb-1"
+              >
+                {service}
+              </span>
+            ))
+          ) : (
+            <span className="text-gray-500 text-xs">No services listed</span>
+          )}
         </div>
         
         {/* Extras */}
-        {booking.extras && booking.extras.length > 0 && (
+        {extras.length > 0 && (
           <div className="mt-3">
             <div className="flex items-center mb-2">
               <Package className="w-4 h-4 mr-2 text-green-600" />
               <span className="font-medium text-gray-900">Add-ons</span>
             </div>
             <div className="space-y-1">
-              {booking.extras.map((extra, index) => (
+              {extras.map((extra, index) => (
                 <span
                   key={index}
                   className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-2 mb-1"
