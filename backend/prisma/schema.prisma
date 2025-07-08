@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Booking {
+  id               Int           @id @default(autoincrement())
+  firstName        String        @db.VarChar(100)
+  lastName         String        @db.VarChar(100)
+  phoneNumber      String        @db.VarChar(20)
+  vehicleType      String        @db.VarChar(50)
+  make             String        @db.VarChar(50)
+  model            String        @db.VarChar(50)
+  year             Int
+  services         String        @db.Text // JSON string of selected services
+  extras           String?       @db.Text // JSON string of selected add-ons
+  date             DateTime      @db.Date
+  time             String        @db.VarChar(20)
+  status           BookingStatus @default(PENDING)
+  confirmationCode String        @unique @db.VarChar(10)
+  detailer         Detailer?     @relation(fields: [detailerId], references: [id])
+  detailerId       Int?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  @@map("bookings")
+}
+
+model Detailer {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  phone     String    @unique @db.VarChar(20)
+  email     String    @unique @db.VarChar(255)
+  password  String    @db.VarChar(255) // Hashed password
+  isActive  Boolean   @default(true)
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@map("detailers")
+}
+
+model Contact {
+  id        Int           @id @default(autoincrement())
+  name      String        @db.VarChar(100)
+  email     String        @db.VarChar(255)
+  phone     String?       @db.VarChar(20)
+  subject   String        @db.VarChar(200)
+  message   String        @db.Text
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  
+  @@map("contacts")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum ContactStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  ARCHIVED
+}
