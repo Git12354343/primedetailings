@@ -5,6 +5,26 @@ import { CheckCircle, ChevronRight } from 'lucide-react';
 const Services = () => {
   const allServices = [
     {
+      category: "Detailing Packages",
+      services: [
+        {
+          name: "Full Detail Package",
+          description: "Our most popular package. Includes a complete interior and exterior detail for a comprehensive clean.",
+          price: "Starting at $199",
+          originalPrice: "$218",
+          features: ["Premium Exterior Detail", "Premium Interior Detail", "Tire Shine & Dressing", "10% Discount Included"],
+          highlight: "Most Popular"
+        },
+        {
+          name: "Complete Care Package",
+          description: "Everything your vehicle needs. Full detail plus paint protection for ultimate care.",
+          price: "Starting at $379",
+          originalPrice: "$398",
+          features: ["Full Detail Package", "Paint Protection Coating", "Headlight Restoration", "Free Priority Scheduling"]
+        }
+      ]
+    },
+    {
       category: "Exterior Services",
       services: [
         {
@@ -17,7 +37,8 @@ const Services = () => {
           name: "Premium Exterior Detail",
           description: "Comprehensive exterior cleaning with clay bar treatment and wax protection",
           price: "Starting at $89",
-          features: ["Everything in Basic", "Clay bar treatment", "Paint decontamination", "Carnauba wax", "Chrome polishing"]
+          features: ["Everything in Basic", "Clay bar treatment", "Paint decontamination", "Carnauba wax", "Chrome polishing"],
+          highlight: "Best Value"
         },
         {
           name: "Paint Correction",
@@ -105,10 +126,20 @@ const Services = () => {
             </h2>
             <div className="grid md:grid-cols-2 gap-6">
               {category.services.map((service, serviceIndex) => (
-                <div key={serviceIndex} className="card p-6">
+                <div key={serviceIndex} className="card p-6 relative">
+                  {service.highlight && (
+                    <div className="absolute top-0 right-4 -mt-3 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                      {service.highlight}
+                    </div>
+                  )}
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-semibold text-gray-900">{service.name}</h3>
-                    <span className="text-blue-600 font-bold text-lg">{service.price}</span>
+                    <div className="text-right">
+                      <span className="text-blue-600 font-bold text-lg">{service.price}</span>
+                      {service.originalPrice && (
+                        <div className="text-sm text-gray-500 line-through">{service.originalPrice}</div>
+                      )}
+                    </div>
                   </div>
                   <p className="text-gray-600 mb-4">{service.description}</p>
                   <ul className="space-y-2">

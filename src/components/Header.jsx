@@ -30,6 +30,9 @@ const Header = () => {
             <Link to="/services" className={`py-2 px-1 border-b-2 border-transparent font-medium text-sm transition-colors ${isActive('/services')}`}>
               Services
             </Link>
+            <Link to="/gallery" className={`py-2 px-1 border-b-2 border-transparent font-medium text-sm transition-colors ${isActive('/gallery')}`}>
+              Gallery
+            </Link>
             <Link to="/booking" className={`py-2 px-1 border-b-2 border-transparent font-medium text-sm transition-colors ${isActive('/booking')}`}>
               Book Now
             </Link>
@@ -64,6 +67,13 @@ const Header = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Services
+              </Link>
+              <Link
+                to="/gallery"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Gallery
               </Link>
               <Link
                 to="/booking"

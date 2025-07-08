@@ -4,6 +4,7 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const { PrismaClient } = require('@prisma/client');
 const twilio = require('twilio');
+const emailService = require('./services/emailService');
 require('dotenv').config();
 
 // Import new Phase 3 route handlers
@@ -19,6 +20,15 @@ const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
+
+// Test email service on startup
+emailService.testConnection().then(isReady => {
+  if (isReady) {
+    console.log('📧 Email service initialized successfully');
+  } else {
+    console.warn('⚠️  Email service not configured properly');
+  }
+});
 
 // Security middleware
 app.use(helmet());
@@ -96,14 +106,41 @@ const formatPhoneNumber = (phone) => {
   return `+${digits}`;
 };
 
-// EXISTING API Routes (Your Original Code)
+// Utility function to calculate total price
+const calculateTotalPrice = (services, addOns) => {
+  const servicePrices = {
+    'exterior': 89,
+    'interior': 119,
+    'paint-protection': 299,
+    'express': 49
+  };
+
+  const addOnPrices = {
+    'engine-bay': 59,
+    'headlight-restoration': 79,
+    'tire-shine': 29,
+    'odor-elimination': 49
+  };
+
+  const serviceTotal = services.reduce((total, serviceId) => {
+    return total + (servicePrices[serviceId] || 0);
+  }, 0);
+
+  const addOnTotal = addOns.reduce((total, addOnId) => {
+    return total + (addOnPrices[addOnId] || 0);
+  }, 0);
+
+  return serviceTotal + addOnTotal;
+};
+
+// EXISTING API Routes (Updated with Email Integration)
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    phase: 'Phase 3 - Authentication Ready'
+    phase: 'Phase 3 - Authentication & Email Ready'
   });
 });
 
@@ -113,7 +150,11 @@ app.post('/api/bookings/initiate', async (req, res) => {
     const {
       firstName,
       lastName,
+      email,
       phone,
+      address,
+      city,
+      postalCode,
       vehicleType,
       make,
       model,
@@ -121,24 +162,45 @@ app.post('/api/bookings/initiate', async (req, res) => {
       services,
       addOns,
       date,
-      time
+      time,
+      specialInstructions
     } = req.body;
 
     // Validate required fields
-    if (!firstName || !lastName || !phone || !vehicleType || !make || !model || !year || !services || !date || !time) {
+    const requiredFields = {
+      firstName, lastName, email, phone, address, city, postalCode,
+      vehicleType, make, model, year, services, date, time
+    };
+
+    for (const [field, value] of Object.entries(requiredFields)) {
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        return res.status(400).json({
+          success: false,
+          error: `${field} is required`
+        });
+      }
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields'
+        error: 'Please provide a valid email address'
       });
     }
 
-    // Validate services array
-    if (!Array.isArray(services) || services.length === 0) {
+    // Validate Canadian postal code
+    const postalRegex = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/;
+    if (!postalRegex.test(postalCode)) {
       return res.status(400).json({
         success: false,
-        error: 'At least one service must be selected'
+        error: 'Please provide a valid Canadian postal code'
       });
     }
+
+    // Calculate total price
+    const totalPrice = calculateTotalPrice(services, addOns || []);
 
     // Format phone number
     const formattedPhone = formatPhoneNumber(phone);
@@ -155,7 +217,11 @@ app.post('/api/bookings/initiate', async (req, res) => {
       bookingData: {
         firstName,
         lastName,
+        email: email.toLowerCase(),
         phoneNumber: formattedPhone,
+        address,
+        city,
+        postalCode: postalCode.toUpperCase(),
         vehicleType,
         make,
         model,
@@ -163,7 +229,9 @@ app.post('/api/bookings/initiate', async (req, res) => {
         services: JSON.stringify(services),
         extras: addOns && addOns.length > 0 ? JSON.stringify(addOns) : null,
         date: new Date(date),
-        time
+        time,
+        specialInstructions: specialInstructions || null,
+        totalPrice: totalPrice
       },
       expiresAt: Date.now() + (10 * 60 * 1000) // 10 minutes expiry
     });
@@ -178,7 +246,11 @@ app.post('/api/bookings/initiate', async (req, res) => {
     res.json({
       success: true,
       bookingId,
-      message: 'Verification code sent successfully'
+      message: 'Verification code sent successfully',
+      ...(process.env.NODE_ENV === 'development' && { 
+        developmentMode: true, 
+        verificationCode 
+      })
     });
 
   } catch (error) {
@@ -262,9 +334,46 @@ app.post('/api/bookings/verify', async (req, res) => {
     // Clean up temporary data
     verificationCodes.delete(bookingId);
 
+    // Prepare email data
+    const emailData = {
+      firstName: booking.firstName,
+      lastName: booking.lastName,
+      email: booking.email,
+      confirmationCode: booking.confirmationCode,
+      date: booking.date,
+      time: booking.time,
+      address: booking.address,
+      city: booking.city,
+      postalCode: booking.postalCode,
+      services: JSON.parse(booking.services),
+      addOns: booking.extras ? JSON.parse(booking.extras) : [],
+      vehicleInfo: `${booking.year} ${booking.make} ${booking.model}`,
+      totalPrice: booking.totalPrice,
+      specialInstructions: booking.specialInstructions
+    };
+
+    // Send emails (don't wait for completion to avoid delays)
+    Promise.all([
+      // Send confirmation email to customer
+      emailService.sendBookingConfirmation(emailData),
+      // Send notification email to business
+      emailService.sendNewBookingNotification({
+        ...emailData,
+        phone: booking.phoneNumber
+      })
+    ]).then(() => {
+      // Update email sent status
+      prisma.booking.update({
+        where: { id: booking.id },
+        data: { emailSent: true }
+      }).catch(console.error);
+    }).catch(error => {
+      console.error('Email sending error:', error);
+    });
+
     // Send confirmation SMS
     await twilioClient.messages.create({
-      body: `Prime Detailing: Booking confirmed! Reference: #${booking.confirmationCode}. We'll contact you 24hrs before your appointment on ${booking.date.toLocaleDateString()} at ${booking.time}.`,
+      body: `Prime Detailing: Booking confirmed! Reference: #${booking.confirmationCode}. We'll contact you 24hrs before your appointment on ${booking.date.toLocaleDateString()} at ${booking.time}. Check your email for full details.`,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: booking.phoneNumber
     });
@@ -315,13 +424,19 @@ app.get('/api/bookings/:confirmationCode', async (req, res) => {
         id: booking.id,
         firstName: booking.firstName,
         lastName: booking.lastName,
+        email: booking.email,
         phoneNumber: booking.phoneNumber,
+        address: booking.address,
+        city: booking.city,
+        postalCode: booking.postalCode,
         vehicle: `${booking.year} ${booking.make} ${booking.model}`,
         vehicleType: booking.vehicleType,
         services: JSON.parse(booking.services),
         extras: booking.extras ? JSON.parse(booking.extras) : [],
         date: booking.date,
         time: booking.time,
+        specialInstructions: booking.specialInstructions,
+        totalPrice: booking.totalPrice,
         status: booking.status,
         confirmationCode: booking.confirmationCode,
         createdAt: booking.createdAt
@@ -337,7 +452,7 @@ app.get('/api/bookings/:confirmationCode', async (req, res) => {
   }
 });
 
-// Contact form submission
+// Contact form submission (Updated with email integration)
 app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, phone, subject, message } = req.body;
@@ -349,11 +464,20 @@ app.post('/api/contact', async (req, res) => {
       });
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide a valid email address'
+      });
+    }
+
     // Store contact submission in database
     const contact = await prisma.contact.create({
       data: {
         name,
-        email,
+        email: email.toLowerCase(),
         phone: phone || null,
         subject: subject || 'General Inquiry',
         message,
@@ -361,13 +485,35 @@ app.post('/api/contact', async (req, res) => {
       }
     });
 
+    // Send notification email to business (don't wait)
+    emailService.sendContactFormNotification({
+      name,
+      email,
+      phone,
+      subject: subject || 'General Inquiry',
+      message
+    }).then(() => {
+      // Update email sent status
+      prisma.contact.update({
+        where: { id: contact.id },
+        data: { emailSent: true }
+      }).catch(console.error);
+    }).catch(error => {
+      console.error('Contact email error:', error);
+    });
+
     // Optional: Send notification SMS to business owner
     if (process.env.BUSINESS_PHONE) {
-      await twilioClient.messages.create({
-        body: `New contact form submission from ${name} (${email}). Subject: ${subject || 'General'}. Message: ${message.substring(0, 100)}...`,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: process.env.BUSINESS_PHONE
-      });
+      try {
+        await twilioClient.messages.create({
+          body: `New contact form submission from ${name} (${email}). Subject: ${subject || 'General'}. Message: ${message.substring(0, 100)}...`,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: process.env.BUSINESS_PHONE
+        });
+      } catch (smsError) {
+        console.error('Contact SMS error:', smsError);
+        // Don't fail the request if SMS fails
+      }
     }
 
     res.json({
@@ -381,6 +527,71 @@ app.post('/api/contact', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to submit contact form'
+    });
+  }
+});
+
+// Send booking reminders (can be called via cron job)
+app.post('/api/admin/send-reminders', async (req, res) => {
+  try {
+    // Find bookings for tomorrow that haven't had reminders sent
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const nextDay = new Date(tomorrow);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        date: {
+          gte: tomorrow,
+          lt: nextDay
+        },
+        reminderSent: false,
+        status: {
+          in: ['CONFIRMED', 'IN_PROGRESS']
+        }
+      }
+    });
+
+    let sentCount = 0;
+
+    for (const booking of bookings) {
+      try {
+        await emailService.sendBookingReminder({
+          firstName: booking.firstName,
+          email: booking.email,
+          confirmationCode: booking.confirmationCode,
+          date: booking.date,
+          time: booking.time,
+          address: booking.address,
+          city: booking.city,
+          services: JSON.parse(booking.services)
+        });
+
+        await prisma.booking.update({
+          where: { id: booking.id },
+          data: { reminderSent: true }
+        });
+
+        sentCount++;
+      } catch (error) {
+        console.error(`Failed to send reminder for booking ${booking.id}:`, error);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Sent ${sentCount} reminder emails`,
+      reminders: sentCount
+    });
+
+  } catch (error) {
+    console.error('Error sending reminders:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send reminders'
     });
   }
 });
@@ -417,6 +628,7 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Prime Detailing Backend running on port ${PORT}`);
   console.log(`📱 SMS Mode: Production (Real Twilio)`);
+  console.log(`📧 Email Service: ${process.env.EMAIL_USER ? 'Configured' : 'Not Configured'}`);
   console.log(`🔐 Authentication: Phase 3 Ready`);
   console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);

@@ -29,6 +29,18 @@ export const validationRules = {
     return null;
   },
 
+  postalCode: (value) => {
+    if (!value) return null;
+    // Canadian postal code format: A1A 1A1 or A1A1A1
+    const postalRegex = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/;
+    return postalRegex.test(value) ? null : 'Please enter a valid Canadian postal code (e.g., H1A 1A1)';
+  },
+
+  address: (value) => {
+    if (!value) return null;
+    return value.length >= 5 ? null : 'Please enter a complete address';
+  },
+
   minLength: (min) => (value) => {
     if (!value) return null;
     return value.length >= min ? null : `Must be at least ${min} characters`;
@@ -82,14 +94,19 @@ export const formConfigs = {
   booking: {
     firstName: [validationRules.required, validationRules.minLength(2)],
     lastName: [validationRules.required, validationRules.minLength(2)],
+    email: [validationRules.required, validationRules.email],
     phone: [validationRules.required, validationRules.phone],
+    address: [validationRules.required, validationRules.address],
+    city: [validationRules.required, validationRules.minLength(2)],
+    postalCode: [validationRules.required, validationRules.postalCode],
     vehicleType: [validationRules.required],
     make: [validationRules.required],
     model: [validationRules.required],
     year: [validationRules.required, validationRules.vehicleYear],
     services: [validationRules.required],
     date: [validationRules.required, validationRules.futureDate],
-    time: [validationRules.required, validationRules.businessHours]
+    time: [validationRules.required, validationRules.businessHours],
+    specialInstructions: [] // Optional field
   },
 
   contact: {
@@ -282,6 +299,21 @@ export const formatPhoneNumber = (value) => {
     return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
   }
   return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+};
+
+// Utility function to format postal code
+export const formatPostalCode = (value) => {
+  if (!value) return value;
+  
+  const cleanCode = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  
+  if (cleanCode.length <= 3) {
+    return cleanCode;
+  } else if (cleanCode.length <= 6) {
+    return `${cleanCode.slice(0, 3)} ${cleanCode.slice(3)}`;
+  }
+  
+  return `${cleanCode.slice(0, 3)} ${cleanCode.slice(3, 6)}`;
 };
 
 // Validation error display component

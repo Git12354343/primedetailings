@@ -11,24 +11,32 @@ datasource db {
 }
 
 model Booking {
-  id               Int           @id @default(autoincrement())
-  firstName        String        @db.VarChar(100)
-  lastName         String        @db.VarChar(100)
-  phoneNumber      String        @db.VarChar(20)
-  vehicleType      String        @db.VarChar(50)
-  make             String        @db.VarChar(50)
-  model            String        @db.VarChar(50)
-  year             Int
-  services         String        @db.Text // JSON string of selected services
-  extras           String?       @db.Text // JSON string of selected add-ons
-  date             DateTime      @db.Date
-  time             String        @db.VarChar(20)
-  status           BookingStatus @default(PENDING)
-  confirmationCode String        @unique @db.VarChar(10)
-  detailer         Detailer?     @relation(fields: [detailerId], references: [id])
-  detailerId       Int?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id                   Int           @id @default(autoincrement())
+  firstName            String        @db.VarChar(100)
+  lastName             String        @db.VarChar(100)
+  email                String        @db.VarChar(255)
+  phoneNumber          String        @db.VarChar(20)
+  address              String        @db.VarChar(255)
+  city                 String        @db.VarChar(100)
+  postalCode           String        @db.VarChar(10)
+  vehicleType          String        @db.VarChar(50)
+  make                 String        @db.VarChar(50)
+  model                String        @db.VarChar(50)
+  year                 Int
+  services             String        @db.Text // JSON string of selected services
+  extras               String?       @db.Text // JSON string of selected add-ons
+  date                 DateTime      @db.Date
+  time                 String        @db.VarChar(20)
+  specialInstructions  String?       @db.Text // Optional special instructions
+  status               BookingStatus @default(PENDING)
+  confirmationCode     String        @unique @db.VarChar(10)
+  detailer             Detailer?     @relation(fields: [detailerId], references: [id])
+  detailerId           Int?
+  totalPrice           Decimal?      @db.Decimal(8,2) // Store calculated total price
+  emailSent            Boolean       @default(false) // Track if confirmation email was sent
+  reminderSent         Boolean       @default(false) // Track if reminder email was sent
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
   
   @@map("bookings")
 }
@@ -55,6 +63,7 @@ model Contact {
   subject   String        @db.VarChar(200)
   message   String        @db.Text
   status    ContactStatus @default(NEW)
+  emailSent Boolean       @default(false) // Track if notification email was sent
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   

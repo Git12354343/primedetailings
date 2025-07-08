@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Phone, CheckCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Phone, CheckCircle, ChevronLeft, ChevronRight, Loader2, MapPin } from 'lucide-react';
 import { vehicleData } from '../data/vehicleData';
 import { useBookingFormValidation, ValidatedInput, ValidatedSelect, formatPhoneNumber } from '../hooks/useFormValidation';
 import { useBookingsApi } from '../hooks/useApi';
@@ -17,11 +17,20 @@ const BookingForm = () => {
   });
   const [bookingConfirmed, setBookingConfirmed] = useState(null);
 
+  // Step configuration for progress bar
+  const steps = [
+    { number: 1, title: 'Contact & Address' },
+    { number: 2, title: 'Vehicle Info' },
+    { number: 3, title: 'Services' },
+    { number: 4, title: 'Schedule' },
+    { number: 5, title: 'Confirm' }
+  ];
+
   // API hooks
   const { createBooking, verifyBooking, loading: apiLoading } = useBookingsApi();
   const { success, error: notifyError } = useNotifications();
 
-  // Form validation
+  // Enhanced form validation with address fields
   const {
     values,
     errors,
@@ -34,7 +43,11 @@ const BookingForm = () => {
   } = useBookingFormValidation({
     firstName: '',
     lastName: '',
+    email: '',
     phone: '',
+    address: '',
+    city: '',
+    postalCode: '',
     vehicleType: '',
     make: '',
     model: '',
@@ -42,7 +55,8 @@ const BookingForm = () => {
     services: [],
     addOns: [],
     date: '',
-    time: ''
+    time: '',
+    specialInstructions: ''
   });
 
   const services = [
@@ -85,9 +99,9 @@ const BookingForm = () => {
   };
 
   const nextStep = async () => {
-    if (currentStep === 3) {
+    if (currentStep === 4) {
       await initiateSMSVerification();
-    } else if (currentStep < 4) {
+    } else if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -103,7 +117,11 @@ const BookingForm = () => {
       const result = await createBooking({
         firstName: values.firstName,
         lastName: values.lastName,
-        phone: values.phone.replace(/\D/g, ''), // Remove formatting
+        email: values.email,
+        phone: values.phone.replace(/\D/g, ''),
+        address: values.address,
+        city: values.city,
+        postalCode: values.postalCode,
         vehicleType: values.vehicleType,
         make: values.make,
         model: values.model,
@@ -111,7 +129,8 @@ const BookingForm = () => {
         services: values.services,
         addOns: values.addOns,
         date: values.date,
-        time: values.time
+        time: values.time,
+        specialInstructions: values.specialInstructions
       });
 
       if (result.success) {
@@ -121,7 +140,7 @@ const BookingForm = () => {
           codeSent: true,
           attemptsRemaining: 3
         }));
-        setCurrentStep(4);
+        setCurrentStep(5);
         
         if (result.developmentMode && result.verificationCode) {
           success(`Development Mode: Your verification code is ${result.verificationCode}`);
@@ -149,7 +168,6 @@ const BookingForm = () => {
       if (result.success) {
         setBookingConfirmed(result.booking);
       } else {
-        // Update attempts remaining if provided
         if (result.error.includes('attempts remaining')) {
           const match = result.error.match(/(\d+) attempts remaining/);
           if (match) {
@@ -159,7 +177,6 @@ const BookingForm = () => {
             }));
           }
         }
-        
         setSmsState(prev => ({ ...prev, verificationCode: '' }));
       }
     } catch (error) {
@@ -170,14 +187,17 @@ const BookingForm = () => {
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return values.firstName && values.lastName && values.phone && 
-               values.vehicleType && values.make && values.model && values.year && 
-               !errors.firstName && !errors.lastName && !errors.phone && !errors.year;
+        return values.firstName && values.lastName && values.email && values.phone && 
+               values.address && values.city && values.postalCode &&
+               !errors.firstName && !errors.lastName && !errors.email && !errors.phone;
       case 2:
-        return values.services.length > 0;
+        return values.vehicleType && values.make && values.model && values.year && 
+               !errors.year;
       case 3:
-        return values.date && values.time && !errors.date && !errors.time;
+        return values.services.length > 0;
       case 4:
+        return values.date && values.time && !errors.date && !errors.time;
+      case 5:
         return true;
       default:
         return false;
@@ -258,6 +278,14 @@ const BookingForm = () => {
             </div>
 
             <ValidatedInput
+              label="Email Address"
+              required
+              type="email"
+              placeholder="your@email.com"
+              {...getFieldProps('email')}
+            />
+
+            <ValidatedInput
               label="Phone Number"
               required
               type="tel"
@@ -269,6 +297,45 @@ const BookingForm = () => {
               hasError={!!errors.phone}
             />
 
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex items-center mb-3">
+                <MapPin className="w-5 h-5 text-blue-600 mr-2" />
+                <h4 className="font-semibold text-blue-900">Service Address</h4>
+              </div>
+              <p className="text-sm text-blue-800 mb-4">
+                Where should our team come to detail your vehicle? We service the Greater Montreal area.
+              </p>
+              
+              <div className="space-y-4">
+                <ValidatedInput
+                  label="Street Address"
+                  required
+                  placeholder="123 Main Street, Apt 4B"
+                  {...getFieldProps('address')}
+                />
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <ValidatedInput
+                    label="City"
+                    required
+                    placeholder="Montreal"
+                    {...getFieldProps('city')}
+                  />
+                  <ValidatedInput
+                    label="Postal Code"
+                    required
+                    placeholder="H1A 1A1"
+                    {...getFieldProps('postalCode')}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-6">
             <ValidatedSelect
               label="Vehicle Type"
               required
@@ -323,7 +390,7 @@ const BookingForm = () => {
           </div>
         );
 
-      case 2:
+      case 3:
         return (
           <div className="space-y-6">
             <div>
@@ -356,24 +423,21 @@ const BookingForm = () => {
 
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Optional Add-ons</h3>
-              <div className="space-y-3">
+              <div className="grid md:grid-cols-2 gap-4">
                 {addOns.map(addOn => (
-                  <div key={addOn.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={addOn.id}
-                        checked={values.addOns.includes(addOn.id)}
-                        onChange={() => handleAddOnToggle(addOn.id)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <label htmlFor={addOn.id} className="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
-                        {addOn.name}
-                      </label>
+                  <div 
+                    key={addOn.id} 
+                    onClick={() => handleAddOnToggle(addOn.id)}
+                    className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                      values.addOns.includes(addOn.id) 
+                        ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-500' 
+                        : 'border-gray-300 hover:border-blue-400'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-800">{addOn.name}</span>
+                      <span className="font-semibold text-blue-600">+${addOn.price}</span>
                     </div>
-                    <span className="text-sm font-semibold text-blue-600">
-                      +${addOn.price}
-                    </span>
                   </div>
                 ))}
               </div>
@@ -388,7 +452,7 @@ const BookingForm = () => {
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-6">
             <ValidatedInput
@@ -424,11 +488,26 @@ const BookingForm = () => {
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Special Instructions (Optional)
+              </label>
+              <textarea
+                value={values.specialInstructions}
+                onChange={(e) => handleChange('specialInstructions', e.target.value)}
+                rows={3}
+                className="input-field"
+                placeholder="Any specific instructions for our team? (e.g., gate code, parking instructions, pet considerations)"
+              />
+            </div>
+
             <div className="bg-blue-50 p-4 rounded-lg">
               <h4 className="font-semibold text-blue-900 mb-2">Booking Summary</h4>
               <div className="space-y-1 text-sm text-blue-800">
                 <p><span className="font-medium">Customer:</span> {values.firstName} {values.lastName}</p>
+                <p><span className="font-medium">Email:</span> {values.email}</p>
                 <p><span className="font-medium">Phone:</span> {values.phone}</p>
+                <p><span className="font-medium">Address:</span> {values.address}, {values.city} {values.postalCode}</p>
                 <p><span className="font-medium">Vehicle:</span> {values.year} {values.make} {values.model}</p>
                 <p><span className="font-medium">Services:</span> {values.services.map(id => services.find(s => s.id === id)?.name).join(', ')}</p>
                 {values.addOns.length > 0 && (
@@ -441,7 +520,7 @@ const BookingForm = () => {
           </div>
         );
 
-      case 4:
+      case 5:
         if (bookingConfirmed) {
           return (
             <div className="space-y-6 text-center">
@@ -454,8 +533,7 @@ const BookingForm = () => {
                   <strong>Confirmation Code:</strong> #{bookingConfirmed.confirmationCode}
                 </p>
                 <p className="text-sm text-green-700">
-                  We've sent you a confirmation SMS. Save your confirmation code for reference.
-                  We'll contact you 24 hours before your appointment.
+                  We've sent you a confirmation email and SMS. Our team will contact you 24 hours before your appointment.
                 </p>
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
@@ -463,10 +541,8 @@ const BookingForm = () => {
                 <div className="space-y-1 text-sm text-blue-800">
                   <p><span className="font-medium">Date:</span> {new Date(bookingConfirmed.date).toLocaleDateString()}</p>
                   <p><span className="font-medium">Time:</span> {bookingConfirmed.time}</p>
+                  <p><span className="font-medium">Address:</span> {values.address}, {values.city}</p>
                   <p><span className="font-medium">Services:</span> {bookingConfirmed.services.map(id => services.find(s => s.id === id)?.name).join(', ')}</p>
-                  {bookingConfirmed.extras.length > 0 && (
-                    <p><span className="font-medium">Add-ons:</span> {bookingConfirmed.extras.map(id => addOns.find(a => a.id === id)?.name).join(', ')}</p>
-                  )}
                 </div>
               </div>
               <button
@@ -566,27 +642,36 @@ const BookingForm = () => {
   return (
     <ErrorBoundary>
       <div className="max-w-2xl mx-auto">
-        {/* Progress Steps */}
-        <div className="flex items-center justify-between mb-8">
-          {[1, 2, 3, 4].map((step) => (
-            <div key={step} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                step <= currentStep 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                {step < currentStep || (step === 4 && bookingConfirmed) ? (
-                  <CheckCircle className="w-5 h-5" />
-                ) : (
-                  step
-                )}
+        {/* Enhanced Progress Steps */}
+        <div className="flex items-center justify-between mb-8 overflow-x-auto">
+          {steps.map((step, index) => (
+            <React.Fragment key={step.number}>
+              <div className="flex items-center min-w-0">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                  step.number <= currentStep 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {currentStep > step.number || bookingConfirmed ? (
+                    <CheckCircle className="w-5 h-5" />
+                  ) : (
+                    step.number
+                  )}
+                </div>
+                <div className={`ml-2 text-sm font-medium ${
+                  step.number <= currentStep ? 'text-gray-900' : 'text-gray-500'
+                } hidden sm:block`}>
+                  {step.title}
+                </div>
               </div>
-              {step < 4 && (
-                <div className={`w-16 h-1 mx-2 transition-colors ${
-                  step < currentStep || (step === 3 && bookingConfirmed) ? 'bg-blue-600' : 'bg-gray-200'
+              {index < steps.length - 1 && (
+                <div className={`flex-1 h-1 mx-2 transition-colors ${
+                  step.number < currentStep || (step.number === 4 && bookingConfirmed) 
+                    ? 'bg-blue-600' 
+                    : 'bg-gray-200'
                 }`} />
               )}
-            </div>
+            </React.Fragment>
           ))}
         </div>
 
@@ -594,13 +679,14 @@ const BookingForm = () => {
         <div className="card p-6">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-gray-900">
-              {currentStep === 1 && "Personal & Vehicle Information"}
-              {currentStep === 2 && "Select Services"}
-              {currentStep === 3 && "Choose Date & Time"}
-              {currentStep === 4 && (bookingConfirmed ? "Booking Confirmed" : "Verification")}
+              {currentStep === 1 && "Contact & Service Address"}
+              {currentStep === 2 && "Vehicle Information"}
+              {currentStep === 3 && "Select Services"}
+              {currentStep === 4 && "Choose Date & Time"}
+              {currentStep === 5 && (bookingConfirmed ? "Booking Confirmed" : "Verification")}
             </h2>
             <p className="text-gray-600 mt-1">
-              Step {currentStep} of 4
+              Step {currentStep} of 5
             </p>
           </div>
 
@@ -623,7 +709,7 @@ const BookingForm = () => {
                 Previous
               </button>
 
-              {currentStep < 4 ? (
+              {currentStep < 5 ? (
                 <button
                   type="button"
                   onClick={nextStep}
@@ -637,11 +723,11 @@ const BookingForm = () => {
                   {apiLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                      {currentStep === 3 ? 'Sending...' : 'Loading...'}
+                      {currentStep === 4 ? 'Sending...' : 'Loading...'}
                     </>
                   ) : (
                     <>
-                      {currentStep === 3 ? 'Send Verification Code' : 'Next'}
+                      {currentStep === 4 ? 'Send Verification Code' : 'Next'}
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </>
                   )}
