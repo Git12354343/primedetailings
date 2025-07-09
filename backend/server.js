@@ -7,10 +7,11 @@ const twilio = require('twilio');
 const emailService = require('./services/emailService');
 require('dotenv').config();
 
-// Import new Phase 3 route handlers
+// Import Phase 3 route handlers
 const authRoutes = require('./routes/auth');
 const bookingRoutes = require('./routes/bookings');
 const adminRoutes = require('./routes/admin');
+const serviceRoutes = require('./routes/services'); // NEW: Service management routes
 
 const app = express();
 const prisma = new PrismaClient();
@@ -75,10 +76,11 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/bookings/initiate', smsLimiter);
 app.use('/api/contact', contactLimiter);
 
-// NEW Phase 3 Routes
+// Phase 3 Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/services', serviceRoutes); // NEW: Service management routes
 
 // In-memory store for temporary verification codes (in production, use Redis)
 const verificationCodes = new Map();
@@ -106,41 +108,84 @@ const formatPhoneNumber = (phone) => {
   return `+${digits}`;
 };
 
-// Utility function to calculate total price
-const calculateTotalPrice = (services, addOns) => {
-  const servicePrices = {
-    'exterior': 89,
-    'interior': 119,
-    'paint-protection': 299,
-    'express': 49
-  };
+// UPDATED: Dynamic pricing calculation using database
+const calculateTotalPrice = async (services, addOns, vehicleType) => {
+  try {
+    let totalPrice = 0;
 
-  const addOnPrices = {
-    'engine-bay': 59,
-    'headlight-restoration': 79,
-    'tire-shine': 29,
-    'odor-elimination': 49
-  };
+    // Calculate service prices from database
+    if (services && services.length > 0) {
+      const serviceRecords = await prisma.service.findMany({
+        where: {
+          id: { in: services.map(id => parseInt(id)) },
+          isActive: true
+        },
+        include: {
+          pricing: {
+            where: { vehicleType }
+          }
+        }
+      });
 
-  const serviceTotal = services.reduce((total, serviceId) => {
-    return total + (servicePrices[serviceId] || 0);
-  }, 0);
+      for (const service of serviceRecords) {
+        const pricing = service.pricing[0];
+        if (pricing) {
+          totalPrice += parseFloat(pricing.price);
+        }
+      }
+    }
 
-  const addOnTotal = addOns.reduce((total, addOnId) => {
-    return total + (addOnPrices[addOnId] || 0);
-  }, 0);
+    // Calculate add-on prices from database
+    if (addOns && addOns.length > 0) {
+      const addOnRecords = await prisma.addOn.findMany({
+        where: {
+          id: { in: addOns.map(id => parseInt(id)) },
+          isActive: true
+        }
+      });
 
-  return serviceTotal + addOnTotal;
+      for (const addOn of addOnRecords) {
+        totalPrice += parseFloat(addOn.price);
+      }
+    }
+
+    return totalPrice;
+  } catch (error) {
+    console.error('Error calculating dynamic pricing:', error);
+    
+    // Fallback to hardcoded prices if database fails
+    const servicePrices = {
+      'exterior': 89,
+      'interior': 119,
+      'paint-protection': 299,
+      'express': 49
+    };
+
+    const addOnPrices = {
+      'engine-bay': 59,
+      'headlight-restoration': 79,
+      'tire-shine': 29,
+      'odor-elimination': 49
+    };
+
+    const serviceTotal = services.reduce((total, serviceId) => {
+      return total + (servicePrices[serviceId] || 0);
+    }, 0);
+
+    const addOnTotal = addOns.reduce((total, addOnId) => {
+      return total + (addOnPrices[addOnId] || 0);
+    }, 0);
+
+    return serviceTotal + addOnTotal;
+  }
 };
-
-// EXISTING API Routes (Updated with Email Integration)
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    phase: 'Phase 3 - Authentication & Email Ready'
+    phase: 'Phase 3 - Authentication & Service Management Ready'
   });
 });
 
@@ -199,8 +244,8 @@ app.post('/api/bookings/initiate', async (req, res) => {
       });
     }
 
-    // Calculate total price
-    const totalPrice = calculateTotalPrice(services, addOns || []);
+    // Calculate total price using dynamic pricing
+    const totalPrice = await calculateTotalPrice(services, addOns || [], vehicleType);
 
     // Format phone number
     const formattedPhone = formatPhoneNumber(phone);
@@ -452,6 +497,54 @@ app.get('/api/bookings/:confirmationCode', async (req, res) => {
   }
 });
 
+// NEW: Update booking notes (for detailers)
+app.patch('/api/bookings/:id/notes', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { notes } = req.body;
+
+    // TODO: In production, verify the detailer token here
+    // const token = req.header('Authorization')?.replace('Bearer ', '');
+    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    const updatedBooking = await prisma.booking.update({
+      where: { id: parseInt(id) },
+      data: { 
+        notes: notes || null,
+        updatedAt: new Date()
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Notes updated successfully',
+      booking: {
+        id: updatedBooking.id,
+        notes: updatedBooking.notes,
+        updatedAt: updatedBooking.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating booking notes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating booking notes'
+    });
+  }
+});
+
 // Contact form submission (Updated with email integration)
 app.post('/api/contact', async (req, res) => {
   try {
@@ -630,6 +723,7 @@ app.listen(PORT, () => {
   console.log(`📱 SMS Mode: Production (Real Twilio)`);
   console.log(`📧 Email Service: ${process.env.EMAIL_USER ? 'Configured' : 'Not Configured'}`);
   console.log(`🔐 Authentication: Phase 3 Ready`);
+  console.log(`⚙️  Service Management: Database-Driven Pricing`);
   console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
 });

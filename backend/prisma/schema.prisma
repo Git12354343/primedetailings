@@ -28,6 +28,7 @@ model Booking {
   date                 DateTime      @db.Date
   time                 String        @db.VarChar(20)
   specialInstructions  String?       @db.Text // Optional special instructions
+  notes                String?       @db.Text // Private detailer notes - NEW
   status               BookingStatus @default(PENDING)
   confirmationCode     String        @unique @db.VarChar(10)
   detailer             Detailer?     @relation(fields: [detailerId], references: [id])
@@ -70,6 +71,49 @@ model Contact {
   @@map("contacts")
 }
 
+// NEW: Service Management Tables
+model Service {
+  id          Int              @id @default(autoincrement())
+  name        String           @db.VarChar(100)
+  description String?          @db.Text
+  category    ServiceCategory  @default(DETAILING)
+  isActive    Boolean          @default(true)
+  sortOrder   Int              @default(0) // For ordering services in UI
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  pricing     ServicePricing[]
+  
+  @@map("services")
+}
+
+model ServicePricing {
+  id          Int     @id @default(autoincrement())
+  serviceId   Int
+  vehicleType String  @db.VarChar(50) // Sedan, SUV, Truck, Coupe
+  price       Decimal @db.Decimal(8,2)
+  service     Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([serviceId, vehicleType])
+  @@map("service_pricing")
+}
+
+// NEW: Add-on Management Table  
+model AddOn {
+  id          Int            @id @default(autoincrement())
+  name        String         @db.VarChar(100)
+  description String?        @db.Text
+  category    AddOnCategory  @default(ENHANCEMENT)
+  price       Decimal        @db.Decimal(8,2) // Fixed price for add-ons
+  isActive    Boolean        @default(true)
+  sortOrder   Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  @@map("add_ons")
+}
+
 enum BookingStatus {
   PENDING
   CONFIRMED
@@ -84,4 +128,19 @@ enum ContactStatus {
   IN_PROGRESS
   RESOLVED
   ARCHIVED
+}
+
+enum ServiceCategory {
+  DETAILING
+  PROTECTION
+  RESTORATION
+  MAINTENANCE
+  SPECIALTY
+}
+
+enum AddOnCategory {
+  ENHANCEMENT
+  PROTECTION
+  CLEANING
+  RESTORATION
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Phone, CheckCircle, ChevronLeft, ChevronRight, Loader2, MapPin } from 'lucide-react';
 import { vehicleData } from '../data/vehicleData';
 import { useBookingFormValidation, ValidatedInput, ValidatedSelect, formatPhoneNumber } from '../hooks/useFormValidation';
@@ -16,6 +16,12 @@ const BookingForm = () => {
     attemptsRemaining: 3
   });
   const [bookingConfirmed, setBookingConfirmed] = useState(null);
+  
+  // NEW: Dynamic services and add-ons from database
+  const [services, setServices] = useState([]);
+  const [addOns, setAddOns] = useState([]);
+  const [dynamicPricing, setDynamicPricing] = useState({ services: [], addOns: [], total: 0 });
+  const [loadingServices, setLoadingServices] = useState(true);
 
   // Step configuration for progress bar
   const steps = [
@@ -59,24 +65,72 @@ const BookingForm = () => {
     specialInstructions: ''
   });
 
-  const services = [
-    { id: 'exterior', name: 'Exterior Detailing', price: 89 },
-    { id: 'interior', name: 'Interior Detailing', price: 119 },
-    { id: 'paint-protection', name: 'Paint Protection', price: 299 },
-    { id: 'express', name: 'Express Detail', price: 49 }
-  ];
-
-  const addOns = [
-    { id: 'engine-bay', name: 'Engine Bay Cleaning', price: 59 },
-    { id: 'headlight-restoration', name: 'Headlight Restoration', price: 79 },
-    { id: 'tire-shine', name: 'Tire Shine & Dressing', price: 29 },
-    { id: 'odor-elimination', name: 'Odor Elimination', price: 49 }
-  ];
-
   const timeSlots = [
     '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
     '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'
   ];
+
+  // NEW: Fetch services and add-ons on component mount
+  useEffect(() => {
+    const fetchServicesAndAddOns = async () => {
+      setLoadingServices(true);
+      try {
+        const [servicesResponse, addOnsResponse] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_URL}/services/active`),
+          fetch(`${import.meta.env.VITE_API_URL}/services/addons/active`)
+        ]);
+
+        const servicesData = await servicesResponse.json();
+        const addOnsData = await addOnsResponse.json();
+
+        if (servicesData.success) {
+          setServices(servicesData.services);
+        }
+
+        if (addOnsData.success) {
+          setAddOns(addOnsData.addOns);
+        }
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        notifyError('Failed to load services. Please refresh the page.');
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    fetchServicesAndAddOns();
+  }, []);
+
+  // NEW: Calculate dynamic pricing when services, add-ons, or vehicle type changes
+  useEffect(() => {
+    if (values.vehicleType && (values.services.length > 0 || values.addOns.length > 0)) {
+      calculateDynamicPricing();
+    }
+  }, [values.services, values.addOns, values.vehicleType]);
+
+  const calculateDynamicPricing = async () => {
+    if (!values.vehicleType) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/services/calculate-pricing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          services: values.services,
+          addOns: values.addOns,
+          vehicleType: values.vehicleType
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setDynamicPricing(data.pricing);
+      }
+    } catch (error) {
+      console.error('Error calculating pricing:', error);
+    }
+  };
 
   // Enhanced input handlers
   const handlePhoneChange = (value) => {
@@ -96,6 +150,19 @@ const BookingForm = () => {
       ? values.addOns.filter(id => id !== addOnId)
       : [...values.addOns, addOnId];
     handleChange('addOns', newAddOns);
+  };
+
+  // NEW: Handle vehicle type change and recalculate pricing
+  const handleVehicleTypeChange = (vehicleType) => {
+    handleChange('vehicleType', vehicleType);
+    handleChange('make', '');
+    handleChange('model', '');
+    handleChange('year', '');
+    
+    // Recalculate pricing for new vehicle type
+    if (values.services.length > 0 || values.addOns.length > 0) {
+      setTimeout(() => calculateDynamicPricing(), 100);
+    }
   };
 
   const nextStep = async () => {
@@ -220,18 +287,15 @@ const BookingForm = () => {
       : [];
   };
 
+  // NEW: Get service price for current vehicle type
+  const getServicePrice = (service) => {
+    if (!values.vehicleType || !service.pricing) return 0;
+    return service.pricing[values.vehicleType] || 0;
+  };
+
+  // NEW: Updated total price calculation using dynamic pricing
   const getTotalPrice = () => {
-    const serviceTotal = values.services.reduce((total, serviceId) => {
-      const service = services.find(s => s.id === serviceId);
-      return total + (service ? service.price : 0);
-    }, 0);
-
-    const addOnTotal = values.addOns.reduce((total, addOnId) => {
-      const addOn = addOns.find(a => a.id === addOnId);
-      return total + (addOn ? addOn.price : 0);
-    }, 0);
-
-    return serviceTotal + addOnTotal;
+    return dynamicPricing.total || 0;
   };
 
   const resendVerificationCode = async () => {
@@ -253,10 +317,24 @@ const BookingForm = () => {
       attemptsRemaining: 3
     });
     setBookingConfirmed(null);
+    setDynamicPricing({ services: [], addOns: [], total: 0 });
   };
 
   if (apiLoading && currentStep === 1) {
     return <BookingFormSkeleton />;
+  }
+
+  if (loadingServices) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="card p-6">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+            <p className="text-gray-600">Loading available services...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const renderStep = () => {
@@ -341,14 +419,23 @@ const BookingForm = () => {
               required
               placeholder="Select vehicle type"
               options={Object.keys(vehicleData)}
-              {...getFieldProps('vehicleType')}
-              onChange={(e) => {
-                handleChange('vehicleType', e.target.value);
-                handleChange('make', '');
-                handleChange('model', '');
-                handleChange('year', '');
-              }}
+              value={values.vehicleType}
+              onChange={(e) => handleVehicleTypeChange(e.target.value)}
+              error={errors.vehicleType}
+              hasError={!!errors.vehicleType}
             />
+
+            {values.vehicleType && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  💡 <strong>Good to know:</strong> Our pricing is tailored to your vehicle type. 
+                  {values.vehicleType === 'Sedan' && ' Sedans typically require less time and materials.'}
+                  {values.vehicleType === 'SUV' && ' SUVs have more surface area and may take additional time.'}
+                  {values.vehicleType === 'Truck' && ' Trucks require more time and materials due to their size.'}
+                  {values.vehicleType === 'Coupe' && ' Coupes are compact and efficient to detail.'}
+                </p>
+              </div>
+            )}
 
             <div className="grid md:grid-cols-3 gap-4">
               <ValidatedSelect
@@ -395,29 +482,49 @@ const BookingForm = () => {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Services *</h3>
+              {!values.vehicleType && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-blue-800 text-sm">
+                    💡 Please select your vehicle type in the previous step to see accurate pricing.
+                  </p>
+                </div>
+              )}
               {errors.services && (
                 <p className="text-red-600 text-sm mb-4">{errors.services}</p>
               )}
               <div className="space-y-3">
-                {services.map(service => (
-                  <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={service.id}
-                        checked={values.services.includes(service.id)}
-                        onChange={() => handleServiceToggle(service.id)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <label htmlFor={service.id} className="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
-                        {service.name}
-                      </label>
+                {services.map(service => {
+                  const price = getServicePrice(service);
+                  return (
+                    <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center flex-1">
+                        <input
+                          type="checkbox"
+                          id={service.id}
+                          checked={values.services.includes(service.id)}
+                          onChange={() => handleServiceToggle(service.id)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <div className="ml-3 flex-1">
+                          <label htmlFor={service.id} className="text-sm font-medium text-gray-700 cursor-pointer block">
+                            {service.name}
+                          </label>
+                          {service.description && (
+                            <p className="text-xs text-gray-500 mt-1">{service.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right ml-4">
+                        <span className="text-sm font-semibold text-blue-600">
+                          ${price > 0 ? price : '—'}
+                        </span>
+                        {values.vehicleType && (
+                          <p className="text-xs text-gray-500">{values.vehicleType}</p>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-sm font-semibold text-blue-600">
-                      ${service.price}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -434,20 +541,47 @@ const BookingForm = () => {
                         : 'border-gray-300 hover:border-blue-400'
                     }`}
                   >
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-800">{addOn.name}</span>
-                      <span className="font-semibold text-blue-600">+${addOn.price}</span>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <span className="font-medium text-gray-800 block">{addOn.name}</span>
+                        {addOn.description && (
+                          <p className="text-xs text-gray-500 mt-1">{addOn.description}</p>
+                        )}
+                      </div>
+                      <span className="font-semibold text-blue-600 ml-3">+${addOn.price}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
+            {/* Enhanced pricing display */}
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-900">Total:</span>
-                <span className="text-xl font-bold text-blue-600">${getTotalPrice()}</span>
-              </div>
+              {values.vehicleType && (values.services.length > 0 || values.addOns.length > 0) ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Services subtotal:</span>
+                    <span>${dynamicPricing.services?.reduce((sum, s) => sum + s.price, 0) || 0}</span>
+                  </div>
+                  {dynamicPricing.addOns?.length > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Add-ons subtotal:</span>
+                      <span>${dynamicPricing.addOns.reduce((sum, a) => sum + a.price, 0)}</span>
+                    </div>
+                  )}
+                  <div className="border-t pt-2 flex justify-between items-center">
+                    <span className="text-lg font-semibold text-gray-900">Total:</span>
+                    <span className="text-xl font-bold text-blue-600">${getTotalPrice()}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-900">Total:</span>
+                  <span className="text-xl font-bold text-blue-600">
+                    {values.vehicleType ? '$0' : 'Select vehicle type first'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -508,10 +642,10 @@ const BookingForm = () => {
                 <p><span className="font-medium">Email:</span> {values.email}</p>
                 <p><span className="font-medium">Phone:</span> {values.phone}</p>
                 <p><span className="font-medium">Address:</span> {values.address}, {values.city} {values.postalCode}</p>
-                <p><span className="font-medium">Vehicle:</span> {values.year} {values.make} {values.model}</p>
-                <p><span className="font-medium">Services:</span> {values.services.map(id => services.find(s => s.id === id)?.name).join(', ')}</p>
-                {values.addOns.length > 0 && (
-                  <p><span className="font-medium">Add-ons:</span> {values.addOns.map(id => addOns.find(a => a.id === id)?.name).join(', ')}</p>
+                <p><span className="font-medium">Vehicle:</span> {values.year} {values.make} {values.model} ({values.vehicleType})</p>
+                <p><span className="font-medium">Services:</span> {dynamicPricing.services?.map(s => s.name).join(', ') || 'None selected'}</p>
+                {dynamicPricing.addOns?.length > 0 && (
+                  <p><span className="font-medium">Add-ons:</span> {dynamicPricing.addOns.map(a => a.name).join(', ')}</p>
                 )}
                 <p><span className="font-medium">Date & Time:</span> {values.date} at {values.time}</p>
                 <p><span className="font-medium">Total:</span> ${getTotalPrice()}</p>
@@ -542,7 +676,7 @@ const BookingForm = () => {
                   <p><span className="font-medium">Date:</span> {new Date(bookingConfirmed.date).toLocaleDateString()}</p>
                   <p><span className="font-medium">Time:</span> {bookingConfirmed.time}</p>
                   <p><span className="font-medium">Address:</span> {values.address}, {values.city}</p>
-                  <p><span className="font-medium">Services:</span> {bookingConfirmed.services.map(id => services.find(s => s.id === id)?.name).join(', ')}</p>
+                  <p><span className="font-medium">Total:</span> ${getTotalPrice()}</p>
                 </div>
               </div>
               <button
