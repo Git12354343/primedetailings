@@ -1,7 +1,8 @@
-// backend/controllers/bookingController.js (COMPLETE FIXED VERSION)
+// backend/controllers/bookingController.js (Enhanced with Availability Integration)
 const { PrismaClient } = require('@prisma/client');
 const { generateConfirmationCode } = require('../utils/helpers');
 const { sendBookingConfirmation, sendBookingUpdate } = require('../utils/emailService');
+const { isTimeSlotAvailable, BUSINESS_CONFIG } = require('./availabilityController');
 
 const prisma = new PrismaClient();
 
@@ -47,6 +48,85 @@ const formatBookingData = (booking) => ({
   createdAt: booking.createdAt,
   updatedAt: booking.updatedAt
 });
+
+// Map frontend time labels to backend time slot IDs
+const mapTimeToSlotId = (timeLabel) => {
+  const timeSlotMapping = {
+    '8:00 AM': 'morning',
+    '12:00 PM': 'afternoon'
+  };
+  return timeSlotMapping[timeLabel];
+};
+
+// Enhanced pricing calculation
+const calculateBookingPrice = async (services, addOns, vehicleType) => {
+  try {
+    let totalPrice = 0;
+    const breakdown = {
+      services: [],
+      addOns: [],
+      basePrice: 0,
+      subtotal: 0,
+      total: 0
+    };
+
+    // Calculate service prices
+    if (services && services.length > 0) {
+      const serviceRecords = await prisma.service.findMany({
+        where: {
+          id: { in: services.map(id => parseInt(id)) },
+          isActive: true
+        },
+        include: {
+          pricing: {
+            where: { vehicleType }
+          }
+        }
+      });
+
+      for (const service of serviceRecords) {
+        const pricing = service.pricing[0];
+        if (pricing) {
+          const price = parseFloat(pricing.price);
+          totalPrice += price;
+          breakdown.services.push({
+            id: service.id,
+            name: service.name,
+            price: price
+          });
+        }
+      }
+    }
+
+    // Calculate add-on prices
+    if (addOns && addOns.length > 0) {
+      const addOnRecords = await prisma.addOn.findMany({
+        where: {
+          id: { in: addOns.map(id => parseInt(id)) },
+          isActive: true
+        }
+      });
+
+      for (const addOn of addOnRecords) {
+        const price = parseFloat(addOn.price);
+        totalPrice += price;
+        breakdown.addOns.push({
+          id: addOn.id,
+          name: addOn.name,
+          price: price
+        });
+      }
+    }
+
+    breakdown.subtotal = totalPrice;
+    breakdown.total = totalPrice;
+
+    return breakdown;
+  } catch (error) {
+    console.error('Error calculating booking price:', error);
+    return { total: 0, services: [], addOns: [] };
+  }
+};
 
 // Get assigned bookings for a detailer with pagination
 const getAssignedBookings = async (req, res) => {
@@ -125,7 +205,7 @@ const getAssignedBookings = async (req, res) => {
   }
 };
 
-// Create new booking with enhanced validation and pricing calculation
+// Enhanced booking creation with real-time availability checking
 const createBooking = async (req, res) => {
   try {
     const {
@@ -141,7 +221,7 @@ const createBooking = async (req, res) => {
       model,
       year,
       services,
-      extras = [],
+      addOns = [],
       date,
       time,
       specialInstructions
@@ -176,6 +256,25 @@ const createBooking = async (req, res) => {
       });
     }
 
+    // NEW: Validate time slot availability in real-time
+    const timeSlotId = mapTimeToSlotId(time);
+    if (!timeSlotId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid time slot selected'
+      });
+    }
+
+    const availability = await isTimeSlotAvailable(date, timeSlotId);
+    if (!availability.available) {
+      return res.status(409).json({
+        success: false,
+        message: `Time slot unavailable: ${availability.reason}`,
+        availabilityError: true,
+        suggestedAction: 'Please select a different date or time'
+      });
+    }
+
     // Check for duplicate booking (same customer, date, time)
     const existingBooking = await prisma.booking.findFirst({
       where: {
@@ -195,18 +294,14 @@ const createBooking = async (req, res) => {
       });
     }
 
-    // Calculate total price (simplified - you can enhance this)
-    let totalPrice = 0;
-    
-    // For now, use a simple calculation - you can make this more sophisticated
-    const basePrice = vehicleType === 'Sedan' ? 100 : 
-                     vehicleType === 'SUV' ? 120 : 
-                     vehicleType === 'Truck' ? 140 : 110;
-    
-    totalPrice = basePrice * services.length;
-    
-    if (Array.isArray(extras)) {
-      totalPrice += extras.length * 25; // $25 per add-on
+    // NEW: Calculate accurate pricing using database services
+    const pricingBreakdown = await calculateBookingPrice(services, addOns, vehicleType);
+    const totalPrice = pricingBreakdown.total;
+
+    // Calculate estimated duration
+    let estimatedDuration = BUSINESS_CONFIG.serviceDuration; // Base duration
+    if (addOns && addOns.length > 0) {
+      estimatedDuration += addOns.length * 0.5; // 30 minutes per add-on
     }
 
     // Generate unique confirmation code
@@ -245,12 +340,13 @@ const createBooking = async (req, res) => {
         model: model.trim(),
         year: parseInt(year),
         services: JSON.stringify(services),
-        extras: JSON.stringify(extras || []),
+        extras: JSON.stringify(addOns || []),
         date: new Date(date),
         time,
         specialInstructions: specialInstructions?.trim() || null,
         confirmationCode,
         totalPrice,
+        estimatedDuration,
         status: 'PENDING'
       }
     });
@@ -265,7 +361,9 @@ const createBooking = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
-      booking: formatBookingData(booking)
+      booking: formatBookingData(booking),
+      pricingBreakdown,
+      estimatedDuration: `${estimatedDuration} hours`
     });
 
   } catch (error) {
@@ -581,9 +679,94 @@ const getBookingByCode = async (req, res) => {
       });
     }
 
+    // Parse and resolve services and add-ons IDs to names
+    let resolvedServices = [];
+    let resolvedAddOns = [];
+    
+    try {
+      // Parse services - handle both array and JSON string
+      let serviceIds = [];
+      if (typeof booking.services === 'string') {
+        serviceIds = JSON.parse(booking.services || '[]');
+      } else if (Array.isArray(booking.services)) {
+        serviceIds = booking.services;
+      }
+
+      // Check if services are IDs (numbers) or already names (strings)
+      const servicesAreIds = serviceIds.length > 0 && serviceIds.every(item => 
+        !isNaN(parseInt(item)) || typeof item === 'number'
+      );
+
+      if (servicesAreIds && serviceIds.length > 0) {
+        // Fetch service names from database
+        const services = await prisma.service.findMany({
+          where: {
+            id: { in: serviceIds.map(id => parseInt(id)) }
+          },
+          select: { id: true, name: true }
+        });
+        
+        // Map IDs to names, preserve order
+        resolvedServices = serviceIds.map(id => {
+          const service = services.find(s => s.id === parseInt(id));
+          return service ? service.name : `Unknown Service (ID: ${id})`;
+        });
+      } else {
+        // Already names, use directly
+        resolvedServices = serviceIds;
+      }
+    } catch (error) {
+      console.error('Error parsing/resolving services:', error);
+      resolvedServices = [];
+    }
+
+    try {
+      // Parse add-ons - handle both array and JSON string
+      let addOnIds = [];
+      if (typeof booking.extras === 'string') {
+        addOnIds = JSON.parse(booking.extras || '[]');
+      } else if (Array.isArray(booking.extras)) {
+        addOnIds = booking.extras;
+      }
+
+      // Check if add-ons are IDs (numbers) or already names (strings)
+      const addOnsAreIds = addOnIds.length > 0 && addOnIds.every(item => 
+        !isNaN(parseInt(item)) || typeof item === 'number'
+      );
+
+      if (addOnsAreIds && addOnIds.length > 0) {
+        // Fetch add-on names from database
+        const addOns = await prisma.addOn.findMany({
+          where: {
+            id: { in: addOnIds.map(id => parseInt(id)) }
+          },
+          select: { id: true, name: true }
+        });
+        
+        // Map IDs to names, preserve order
+        resolvedAddOns = addOnIds.map(id => {
+          const addOn = addOns.find(a => a.id === parseInt(id));
+          return addOn ? addOn.name : `Unknown Add-on (ID: ${id})`;
+        });
+      } else {
+        // Already names, use directly
+        resolvedAddOns = addOnIds;
+      }
+    } catch (error) {
+      console.error('Error parsing/resolving add-ons:', error);
+      resolvedAddOns = [];
+    }
+
+    // Format the booking data and add resolved services/add-ons
+    const formattedBooking = formatBookingData(booking);
+    
     res.json({
       success: true,
-      booking: formatBookingData(booking)
+      booking: {
+        ...formattedBooking,
+        resolvedServices,
+        resolvedAddOns
+      }
     });
 
   } catch (error) {

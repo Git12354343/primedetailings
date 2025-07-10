@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Car } from 'lucide-react';
+import { Menu, X, Car, Search } from 'lucide-react';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,6 +40,18 @@ const Header = () => {
               Contact
             </Link>
           </nav>
+
+          {/* Track Booking Button (Desktop) */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Link
+              to="/lookup"
+              className="flex items-center px-3 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors font-medium text-sm"
+              title="Track your booking"
+            >
+              <Search className="w-4 h-4 mr-1" />
+              Track Booking
+            </Link>
+          </div>
 
           {/* Mobile menu button */}
           <button
@@ -89,6 +101,18 @@ const Header = () => {
               >
                 Contact
               </Link>
+              
+              {/* Track Booking for Mobile */}
+              <div className="border-t pt-2 mt-2">
+                <Link
+                  to="/lookup"
+                  className="flex items-center px-3 py-2 text-base font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Track Your Booking
+                </Link>
+              </div>
             </div>
           </div>
         )}

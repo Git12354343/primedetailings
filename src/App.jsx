@@ -14,6 +14,8 @@ const Home = lazy(() => import('./pages/Home'));
 const Services = lazy(() => import('./pages/Services'));
 const Booking = lazy(() => import('./pages/Booking'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Gallery = lazy(() => import('./pages/Gallery'));
+const BookingLookup = lazy(() => import('./pages/BookingLookup'));
 const DetailerLogin = lazy(() => import('./pages/DetailerLogin'));
 const DetailerDashboard = lazy(() => import('./pages/DetailerDashboard'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
@@ -128,6 +130,44 @@ function EnhancedApp() {
                   </PublicLayout>
                 } 
               />
+
+              <Route 
+                path="/gallery" 
+                element={
+                  <PublicLayout>
+                    <Gallery />
+                  </PublicLayout>
+                } 
+              />
+
+              {/* Booking Lookup Route - NEW */}
+              <Route 
+                path="/lookup" 
+                element={
+                  <PublicLayout>
+                    <BookingLookup />
+                  </PublicLayout>
+                } 
+              />
+
+              {/* Alternative routes for booking lookup */}
+              <Route 
+                path="/track" 
+                element={
+                  <PublicLayout>
+                    <BookingLookup />
+                  </PublicLayout>
+                } 
+              />
+
+              <Route 
+                path="/track-booking" 
+                element={
+                  <PublicLayout>
+                    <BookingLookup />
+                  </PublicLayout>
+                } 
+              />
               
               {/* 404 Fallback */}
               <Route 
@@ -146,7 +186,7 @@ function EnhancedApp() {
   );
 }
 
-// 404 Page Component
+// Enhanced 404 Page Component
 const NotFoundPage = () => (
   <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
     <div className="max-w-md w-full text-center">
@@ -177,7 +217,9 @@ const NotFoundPage = () => (
         <div className="grid grid-cols-2 gap-3 text-sm">
           <a href="/services" className="text-blue-600 hover:text-blue-700">Our Services</a>
           <a href="/booking" className="text-blue-600 hover:text-blue-700">Book Now</a>
+          <a href="/lookup" className="text-blue-600 hover:text-blue-700">Track Booking</a>
           <a href="/contact" className="text-blue-600 hover:text-blue-700">Contact</a>
+          <a href="/gallery" className="text-blue-600 hover:text-blue-700">Gallery</a>
           <a href="/detailer-login" className="text-blue-600 hover:text-blue-700">Staff Login</a>
         </div>
       </div>

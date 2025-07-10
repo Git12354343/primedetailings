@@ -11,7 +11,8 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const bookingRoutes = require('./routes/bookings');
 const adminRoutes = require('./routes/admin');
-const serviceRoutes = require('./routes/services'); // NEW: Service management routes
+const serviceRoutes = require('./routes/services');
+const availabilityRoutes = require('./routes/availabilityRoutes'); // ADD THIS LINE
 
 const app = express();
 const prisma = new PrismaClient();
@@ -80,7 +81,8 @@ app.use('/api/contact', contactLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/services', serviceRoutes); // NEW: Service management routes
+app.use('/api/services', serviceRoutes);
+app.use('/api/availability', availabilityRoutes); // ADD THIS LINE
 
 // In-memory store for temporary verification codes (in production, use Redis)
 const verificationCodes = new Map();
@@ -724,6 +726,7 @@ app.listen(PORT, () => {
   console.log(`📧 Email Service: ${process.env.EMAIL_USER ? 'Configured' : 'Not Configured'}`);
   console.log(`🔐 Authentication: Phase 3 Ready`);
   console.log(`⚙️  Service Management: Database-Driven Pricing`);
+  console.log(`📅 Availability System: Enabled`); // ADD THIS LINE
   console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
 });

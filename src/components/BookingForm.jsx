@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, CheckCircle, ChevronLeft, ChevronRight, Loader2, MapPin } from 'lucide-react';
+import { Phone, CheckCircle, ChevronLeft, ChevronRight, Loader2, MapPin, Calendar, Clock, AlertTriangle, DollarSign, Sparkles, Shield, Car } from 'lucide-react';
 import { vehicleData } from '../data/vehicleData';
 import { useBookingFormValidation, ValidatedInput, ValidatedSelect, formatPhoneNumber } from '../hooks/useFormValidation';
 import { useBookingsApi } from '../hooks/useApi';
 import { useNotifications } from '../components/NotificationSystem';
 import { BookingFormSkeleton } from '../components/LoadingSkeleton';
 import ErrorBoundary from '../components/ErrorBoundary';
+import AvailabilityCalendar from '../components/AvailabilityCalendar';
+import TimeSlotPicker from '../components/TimeSlotPicker';
+import PricingCalculator from '../components/PricingCalculator';
 
 const BookingForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -17,26 +20,33 @@ const BookingForm = () => {
   });
   const [bookingConfirmed, setBookingConfirmed] = useState(null);
   
-  // NEW: Dynamic services and add-ons from database
+  // Services and add-ons
   const [services, setServices] = useState([]);
   const [addOns, setAddOns] = useState([]);
   const [dynamicPricing, setDynamicPricing] = useState({ services: [], addOns: [], total: 0 });
   const [loadingServices, setLoadingServices] = useState(true);
 
-  // Step configuration for progress bar
+  // NEW: Enhanced availability state
+  const [businessConfig, setBusinessConfig] = useState(null);
+  const [selectedDateAvailability, setSelectedDateAvailability] = useState(null);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [estimatedDuration, setEstimatedDuration] = useState('');
+  const [availabilityError, setAvailabilityError] = useState('');
+
+  // Enhanced step configuration with icons
   const steps = [
-    { number: 1, title: 'Contact & Address' },
-    { number: 2, title: 'Vehicle Info' },
-    { number: 3, title: 'Services' },
-    { number: 4, title: 'Schedule' },
-    { number: 5, title: 'Confirm' }
+    { number: 1, title: 'Contact & Address', icon: <MapPin className="w-4 h-4" />, description: 'Your details and service location' },
+    { number: 2, title: 'Vehicle Info', icon: <Car className="w-4 h-4" />, description: 'Tell us about your vehicle' },
+    { number: 3, title: 'Services', icon: <Sparkles className="w-4 h-4" />, description: 'Choose your detailing services' },
+    { number: 4, title: 'Schedule', icon: <Calendar className="w-4 h-4" />, description: 'Pick your preferred date & time' },
+    { number: 5, title: 'Confirm', icon: <Shield className="w-4 h-4" />, description: 'Verify and complete booking' }
   ];
 
   // API hooks
   const { createBooking, verifyBooking, loading: apiLoading } = useBookingsApi();
   const { success, error: notifyError } = useNotifications();
 
-  // Enhanced form validation with address fields
+  // Enhanced form validation
   const {
     values,
     errors,
@@ -65,12 +75,25 @@ const BookingForm = () => {
     specialInstructions: ''
   });
 
-  const timeSlots = [
-    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
-    '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'
-  ];
+  // Fetch business configuration
+  useEffect(() => {
+    const fetchBusinessConfig = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/availability/config`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setBusinessConfig(data.config);
+        }
+      } catch (error) {
+        console.error('Error fetching business config:', error);
+      }
+    };
 
-  // NEW: Fetch services and add-ons on component mount
+    fetchBusinessConfig();
+  }, []);
+
+  // Fetch services and add-ons
   useEffect(() => {
     const fetchServicesAndAddOns = async () => {
       setLoadingServices(true);
@@ -101,12 +124,19 @@ const BookingForm = () => {
     fetchServicesAndAddOns();
   }, []);
 
-  // NEW: Calculate dynamic pricing when services, add-ons, or vehicle type changes
+  // Calculate dynamic pricing
   useEffect(() => {
     if (values.vehicleType && (values.services.length > 0 || values.addOns.length > 0)) {
       calculateDynamicPricing();
     }
   }, [values.services, values.addOns, values.vehicleType]);
+
+  // NEW: Validate selected time slot when date/time changes
+  useEffect(() => {
+    if (values.date && values.time) {
+      validateTimeSlot();
+    }
+  }, [values.date, values.time]);
 
   const calculateDynamicPricing = async () => {
     if (!values.vehicleType) return;
@@ -132,6 +162,41 @@ const BookingForm = () => {
     }
   };
 
+  // NEW: Real-time availability validation
+  const validateTimeSlot = async () => {
+    if (!values.date || !values.time) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/availability/validate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: values.date,
+            time: values.time,
+            services: values.services,
+            addOns: values.addOns,
+            vehicleType: values.vehicleType
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success && data.validation) {
+        setEstimatedDuration(data.validation.estimatedDuration);
+        setAvailabilityError('');
+      } else {
+        setAvailabilityError(data.message || 'Selected time slot is no longer available');
+        handleChange('time', '');
+        notifyError('Time slot is no longer available. Please select another time.');
+      }
+    } catch (error) {
+      console.error('Error validating time slot:', error);
+    }
+  };
+
   // Enhanced input handlers
   const handlePhoneChange = (value) => {
     const formatted = formatPhoneNumber(value);
@@ -152,20 +217,34 @@ const BookingForm = () => {
     handleChange('addOns', newAddOns);
   };
 
-  // NEW: Handle vehicle type change and recalculate pricing
   const handleVehicleTypeChange = (vehicleType) => {
     handleChange('vehicleType', vehicleType);
     handleChange('make', '');
     handleChange('model', '');
     handleChange('year', '');
-    
-    // Recalculate pricing for new vehicle type
-    if (values.services.length > 0 || values.addOns.length > 0) {
-      setTimeout(() => calculateDynamicPricing(), 100);
-    }
+  };
+
+  // NEW: Enhanced date selection with availability
+  const handleDateSelect = (selectedDate, availability) => {
+    handleChange('date', selectedDate);
+    handleChange('time', ''); // Reset time when date changes
+    setSelectedDateAvailability(availability);
+    setAvailabilityError('');
+  };
+
+  // NEW: Enhanced time selection
+  const handleTimeSelect = (selectedTime) => {
+    handleChange('time', selectedTime);
+    setAvailabilityError('');
   };
 
   const nextStep = async () => {
+    // Enhanced validation before proceeding
+    if (currentStep === 4 && availabilityError) {
+      notifyError('Please resolve availability issues before proceeding');
+      return;
+    }
+
     if (currentStep === 4) {
       await initiateSMSVerification();
     } else if (currentStep < 5) {
@@ -180,44 +259,121 @@ const BookingForm = () => {
   };
 
   const initiateSMSVerification = async () => {
-    try {
-      const result = await createBooking({
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        phone: values.phone.replace(/\D/g, ''),
-        address: values.address,
-        city: values.city,
-        postalCode: values.postalCode,
-        vehicleType: values.vehicleType,
-        make: values.make,
-        model: values.model,
-        year: parseInt(values.year),
-        services: values.services,
-        addOns: values.addOns,
-        date: values.date,
-        time: values.time,
-        specialInstructions: values.specialInstructions
-      });
+  try {
+    console.log('=== BOOKING FORM: Starting SMS verification ===');
+    console.log('Current form values:', JSON.stringify(values, null, 2));
+    
+    // Prepare the booking data - make sure phone is properly formatted
+    const bookingData = {
+      firstName: values.firstName?.trim(),
+      lastName: values.lastName?.trim(),
+      email: values.email?.trim(),
+      phone: values.phone?.replace(/\D/g, ''), // Remove all non-digits
+      address: values.address?.trim(),
+      city: values.city?.trim(),
+      postalCode: values.postalCode?.trim(),
+      vehicleType: values.vehicleType,
+      make: values.make,
+      model: values.model,
+      year: parseInt(values.year),
+      services: values.services || [],
+      addOns: values.addOns || [],
+      date: values.date,
+      time: values.time,
+      specialInstructions: values.specialInstructions?.trim() || ''
+    };
 
-      if (result.success) {
-        setSmsState(prev => ({
-          ...prev,
-          bookingId: result.bookingId,
-          codeSent: true,
-          attemptsRemaining: 3
-        }));
-        setCurrentStep(5);
-        
-        if (result.developmentMode && result.verificationCode) {
-          success(`Development Mode: Your verification code is ${result.verificationCode}`);
-        } else {
-          success('Verification code sent to your phone!');
-        }
+    console.log('📋 Processed booking data:', JSON.stringify(bookingData, null, 2));
+
+    // Final validation check before API call
+    const requiredFields = [
+      'firstName', 'lastName', 'email', 'phone', 'address', 
+      'city', 'postalCode', 'vehicleType', 'make', 'model', 
+      'year', 'date', 'time'
+    ];
+
+    console.log('🔍 Final validation check:');
+    for (const field of requiredFields) {
+      const value = bookingData[field];
+      const isEmpty = value === null || value === undefined || value === '' || 
+                     (Array.isArray(value) && value.length === 0);
+      
+      console.log(`${field}: ${isEmpty ? '❌ EMPTY' : '✅ OK'} - Value:`, value);
+      
+      if (isEmpty) {
+        const error = `${field} is required`;
+        console.error(`❌ Final validation failed: ${error}`);
+        notifyError(`Please fill in the ${field} field`);
+        return;
       }
-    } catch (error) {
+    }
+
+    // Check services array specifically
+    if (!Array.isArray(bookingData.services) || bookingData.services.length === 0) {
+      console.error('❌ Services validation failed:', bookingData.services);
+      notifyError('Please select at least one service');
+      return;
+    }
+
+    console.log('✅ All validations passed');
+
+    // Real-time availability check before submission
+    if (availabilityError) {
+      console.error('❌ Availability error exists:', availabilityError);
+      notifyError('Please resolve availability issues before proceeding');
+      return;
+    }
+
+    console.log('📡 Calling createBooking API...');
+    const result = await createBooking(bookingData);
+
+    if (result && result.success) {
+      console.log('✅ Booking initiation successful:', result);
+      
+      setSmsState(prev => ({
+        ...prev,
+        bookingId: result.bookingId,
+        codeSent: true,
+        attemptsRemaining: 3
+      }));
+      
+      setCurrentStep(5);
+      
+      if (result.developmentMode && result.verificationCode) {
+        success(`Development Mode: Your verification code is ${result.verificationCode}`);
+      } else {
+        success('Verification code sent to your phone!');
+      }
+    } else {
+      console.error('❌ Unexpected API response:', result);
+      notifyError('Unexpected response from server. Please try again.');
+    }
+
+  } catch (error) {
+    console.error('❌ BookingForm initiateSMSVerification error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      status: error.status,
+      response: error.response
+    });
+    
+    // Handle specific error types
+    if (error.message && error.message.includes('Time slot unavailable')) {
+      setAvailabilityError(error.message);
+      notifyError('Selected time slot is no longer available. Please choose another time.');
+    } else if (error.message && error.message.includes('Network error')) {
+      notifyError('Network connection failed. Please check your internet connection.');
+    } else if (error.message && error.message.includes('Please fill in')) {
+      // Validation error already handled
+      return;
+    } else if (error.status === 400) {
+      // Bad request - show the specific error from server
+      notifyError(error.message || 'Please check your information and try again.');
+    } else {
       notifyError('Failed to send verification code. Please try again.');
     }
+  }
   };
 
   const verifySMSCode = async () => {
@@ -251,6 +407,7 @@ const BookingForm = () => {
     }
   };
 
+  // Enhanced validation logic
   const canProceed = () => {
     switch (currentStep) {
       case 1:
@@ -263,7 +420,7 @@ const BookingForm = () => {
       case 3:
         return values.services.length > 0;
       case 4:
-        return values.date && values.time && !errors.date && !errors.time;
+        return values.date && values.time && !errors.date && !errors.time && !availabilityError;
       case 5:
         return true;
       default:
@@ -287,13 +444,11 @@ const BookingForm = () => {
       : [];
   };
 
-  // NEW: Get service price for current vehicle type
   const getServicePrice = (service) => {
     if (!values.vehicleType || !service.pricing) return 0;
     return service.pricing[values.vehicleType] || 0;
   };
 
-  // NEW: Updated total price calculation using dynamic pricing
   const getTotalPrice = () => {
     return dynamicPricing.total || 0;
   };
@@ -318,6 +473,9 @@ const BookingForm = () => {
     });
     setBookingConfirmed(null);
     setDynamicPricing({ services: [], addOns: [], total: 0 });
+    setSelectedDateAvailability(null);
+    setEstimatedDuration('');
+    setAvailabilityError('');
   };
 
   if (apiLoading && currentStep === 1) {
@@ -326,7 +484,7 @@ const BookingForm = () => {
 
   if (loadingServices) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="card p-6">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
@@ -342,6 +500,14 @@ const BookingForm = () => {
       case 1:
         return (
           <div className="space-y-6">
+            {/* Enhanced header with step description */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-3">
+                <MapPin className="w-6 h-6 text-blue-600" />
+              </div>
+              <p className="text-gray-600">We'll need your contact information and service location to get started.</p>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-4">
               <ValidatedInput
                 label="First Name"
@@ -375,13 +541,13 @@ const BookingForm = () => {
               hasError={!!errors.phone}
             />
 
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
               <div className="flex items-center mb-3">
                 <MapPin className="w-5 h-5 text-blue-600 mr-2" />
                 <h4 className="font-semibold text-blue-900">Service Address</h4>
               </div>
               <p className="text-sm text-blue-800 mb-4">
-                Where should our team come to detail your vehicle? We service the Greater Montreal area.
+                🚗 <strong>Mobile Detailing Service</strong> - We come to you! Enter the address where you'd like your vehicle detailed.
               </p>
               
               <div className="space-y-4">
@@ -414,6 +580,14 @@ const BookingForm = () => {
       case 2:
         return (
           <div className="space-y-6">
+            {/* Enhanced header */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-3">
+                <Car className="w-6 h-6 text-blue-600" />
+              </div>
+              <p className="text-gray-600">Tell us about your vehicle so we can provide accurate pricing and service.</p>
+            </div>
+
             <ValidatedSelect
               label="Vehicle Type"
               required
@@ -426,14 +600,26 @@ const BookingForm = () => {
             />
 
             {values.vehicleType && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  💡 <strong>Good to know:</strong> Our pricing is tailored to your vehicle type. 
-                  {values.vehicleType === 'Sedan' && ' Sedans typically require less time and materials.'}
-                  {values.vehicleType === 'SUV' && ' SUVs have more surface area and may take additional time.'}
-                  {values.vehicleType === 'Truck' && ' Trucks require more time and materials due to their size.'}
-                  {values.vehicleType === 'Coupe' && ' Coupes are compact and efficient to detail.'}
-                </p>
+              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="text-2xl">
+                    {values.vehicleType === 'Sedan' && '🚗'}
+                    {values.vehicleType === 'SUV' && '🚙'}
+                    {values.vehicleType === 'Truck' && '🚚'}
+                    {values.vehicleType === 'Coupe' && '🏎️'}
+                  </div>
+                  <div>
+                    <p className="text-sm text-yellow-800">
+                      <strong>Great choice!</strong> Our pricing is optimized for your {values.vehicleType.toLowerCase()}.
+                    </p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      {values.vehicleType === 'Sedan' && 'Compact vehicles are quick and efficient to detail with our best rates.'}
+                      {values.vehicleType === 'SUV' && 'SUVs have more surface area but we love the extra space to work with!'}
+                      {values.vehicleType === 'Truck' && 'Trucks require extra attention but the results are always impressive.'}
+                      {values.vehicleType === 'Coupe' && 'Sporty coupes get our precision detailing treatment.'}
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -474,240 +660,482 @@ const BookingForm = () => {
                 {...getFieldProps('year')}
               />
             </div>
+
+            {values.vehicleType && values.make && values.model && values.year && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="font-medium text-green-800">
+                    Perfect! We'll detail your {values.year} {values.make} {values.model}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         );
 
       case 3:
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Services *</h3>
-              {!values.vehicleType && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <p className="text-blue-800 text-sm">
-                    💡 Please select your vehicle type in the previous step to see accurate pricing.
-                  </p>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Services and Add-ons Selection - Left Columns */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Enhanced header */}
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-3">
+                  <Sparkles className="w-6 h-6 text-blue-600" />
                 </div>
-              )}
-              {errors.services && (
-                <p className="text-red-600 text-sm mb-4">{errors.services}</p>
-              )}
-              <div className="space-y-3">
-                {services.map(service => {
-                  const price = getServicePrice(service);
-                  return (
-                    <div key={service.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center flex-1">
-                        <input
-                          type="checkbox"
-                          id={service.id}
-                          checked={values.services.includes(service.id)}
-                          onChange={() => handleServiceToggle(service.id)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <div className="ml-3 flex-1">
-                          <label htmlFor={service.id} className="text-sm font-medium text-gray-700 cursor-pointer block">
-                            {service.name}
-                          </label>
-                          {service.description && (
-                            <p className="text-xs text-gray-500 mt-1">{service.description}</p>
-                          )}
+                <p className="text-gray-600">Choose the services that will make your vehicle shine!</p>
+              </div>
+
+              {/* Services Selection */}
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <Sparkles className="w-5 h-5 mr-2 text-blue-600" />
+                  Select Services *
+                </h3>
+                
+                {!values.vehicleType && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-center space-x-2">
+                      <AlertTriangle className="w-5 h-5 text-blue-600" />
+                      <p className="text-blue-800 text-sm font-medium">
+                        Please complete vehicle information first to see accurate pricing.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {errors.services && (
+                  <p className="text-red-600 text-sm mb-4 font-medium">{errors.services}</p>
+                )}
+                
+                <div className="grid gap-4">
+                  {services.map(service => {
+                    const price = getServicePrice(service);
+                    const isSelected = values.services.includes(service.id);
+                    
+                    return (
+                      <div 
+                        key={service.id} 
+                        className={`group relative p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                          isSelected 
+                            ? 'border-blue-500 bg-blue-50 shadow-lg transform scale-[1.02]' 
+                            : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+                        }`}
+                        onClick={() => handleServiceToggle(service.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-start space-x-4 flex-1">
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                              isSelected 
+                                ? 'border-blue-500 bg-blue-500' 
+                                : 'border-gray-300 group-hover:border-blue-400'
+                            }`}>
+                              {isSelected && <CheckCircle className="w-4 h-4 text-white" />}
+                            </div>
+                            
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 text-lg">
+                                {service.name}
+                              </h4>
+                              {service.description && (
+                                <p className="text-gray-600 mt-2 text-sm leading-relaxed">
+                                  {service.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="text-right ml-6">
+                            <div className="text-2xl font-bold text-blue-600">
+                              ${price > 0 ? price : '—'}
+                            </div>
+                            {values.vehicleType && (
+                              <p className="text-xs text-gray-500 mt-1">{values.vehicleType} pricing</p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right ml-4">
-                        <span className="text-sm font-semibold text-blue-600">
-                          ${price > 0 ? price : '—'}
-                        </span>
-                        {values.vehicleType && (
-                          <p className="text-xs text-gray-500">{values.vehicleType}</p>
+                        
+                        {isSelected && (
+                          <div className="absolute top-3 right-3">
+                            <div className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                              Selected ✓
+                            </div>
+                          </div>
                         )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Add-ons Selection */}
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                  <DollarSign className="w-5 h-5 mr-2 text-green-600" />
+                  Optional Add-ons
+                </h3>
+                <p className="text-gray-600 mb-6">Enhance your service with these premium add-ons</p>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  {addOns.map(addOn => {
+                    const isSelected = values.addOns.includes(addOn.id);
+                    
+                    return (
+                      <div 
+                        key={addOn.id}
+                        onClick={() => handleAddOnToggle(addOn.id)}
+                        className={`relative p-5 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                          isSelected 
+                            ? 'border-green-500 bg-green-50 shadow-lg transform scale-[1.02]' 
+                            : 'border-gray-200 hover:border-green-300 hover:shadow-md'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-2">{addOn.name}</h4>
+                            {addOn.description && (
+                              <p className="text-sm text-gray-600 leading-relaxed">{addOn.description}</p>
+                            )}
+                          </div>
+                          <div className="ml-3 text-right">
+                            <div className="text-lg font-bold text-green-600">+${addOn.price}</div>
+                          </div>
+                        </div>
+                        
+                        {isSelected && (
+                          <div className="absolute top-3 right-3">
+                            <div className="bg-green-500 text-white p-1 rounded-full">
+                              <CheckCircle className="w-3 h-3" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Optional Add-ons</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                {addOns.map(addOn => (
-                  <div 
-                    key={addOn.id} 
-                    onClick={() => handleAddOnToggle(addOn.id)}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                      values.addOns.includes(addOn.id) 
-                        ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-500' 
-                        : 'border-gray-300 hover:border-blue-400'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <span className="font-medium text-gray-800 block">{addOn.name}</span>
-                        {addOn.description && (
-                          <p className="text-xs text-gray-500 mt-1">{addOn.description}</p>
-                        )}
-                      </div>
-                      <span className="font-semibold text-blue-600 ml-3">+${addOn.price}</span>
-                    </div>
-                  </div>
-                ))}
+            {/* Enhanced Pricing Calculator - Right Column */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-6">
+                <PricingCalculator
+                  vehicleType={values.vehicleType}
+                  selectedServices={values.services}
+                  selectedAddOns={values.addOns}
+                  services={services}
+                  addOns={addOns}
+                  onPricingUpdate={(pricing) => setDynamicPricing(pricing)}
+                  showBreakdown={true}
+                  showEstimate={true}
+                  className="shadow-lg"
+                />
               </div>
-            </div>
-
-            {/* Enhanced pricing display */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              {values.vehicleType && (values.services.length > 0 || values.addOns.length > 0) ? (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Services subtotal:</span>
-                    <span>${dynamicPricing.services?.reduce((sum, s) => sum + s.price, 0) || 0}</span>
-                  </div>
-                  {dynamicPricing.addOns?.length > 0 && (
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Add-ons subtotal:</span>
-                      <span>${dynamicPricing.addOns.reduce((sum, a) => sum + a.price, 0)}</span>
-                    </div>
-                  )}
-                  <div className="border-t pt-2 flex justify-between items-center">
-                    <span className="text-lg font-semibold text-gray-900">Total:</span>
-                    <span className="text-xl font-bold text-blue-600">${getTotalPrice()}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-900">Total:</span>
-                  <span className="text-xl font-bold text-blue-600">
-                    {values.vehicleType ? '$0' : 'Select vehicle type first'}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         );
 
       case 4:
         return (
-          <div className="space-y-6">
-            <ValidatedInput
-              label="Select Date"
-              required
-              type="date"
-              min={new Date().toISOString().split('T')[0]}
-              {...getFieldProps('date')}
-            />
+          <div className="space-y-8">
+            {/* Enhanced header */}
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-3">
+                <Calendar className="w-6 h-6 text-blue-600" />
+              </div>
+              <p className="text-gray-600">Choose your preferred date and time for the detailing service.</p>
+            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Time *
-              </label>
-              {errors.time && (
-                <p className="text-red-600 text-sm mb-2">{errors.time}</p>
-              )}
-              <div className="grid grid-cols-3 gap-3">
-                {timeSlots.map(time => (
-                  <button
-                    key={time}
-                    type="button"
-                    onClick={() => handleChange('time', time)}
-                    className={`p-3 text-sm font-medium rounded-md border transition-colors ${
-                      values.time === time
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {time}
-                  </button>
-                ))}
+            {/* Business Hours Info */}
+            {businessConfig && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+                <div className="flex items-center mb-3">
+                  <Clock className="w-6 h-6 text-blue-600 mr-3" />
+                  <h4 className="font-semibold text-blue-900 text-lg">Business Hours & Service Information</h4>
+                </div>
+                <div className="grid md:grid-cols-3 gap-4 text-sm text-blue-800">
+                  <div className="bg-white/50 rounded-lg p-3">
+                    <p className="font-medium">Operating Hours</p>
+                    <p>{businessConfig.operatingHours?.start}:00 AM - {businessConfig.operatingHours?.end}:00 PM</p>
+                    <p className="text-xs text-blue-600">Every day of the week</p>
+                  </div>
+                  <div className="bg-white/50 rounded-lg p-3">
+                    <p className="font-medium">Service Duration</p>
+                    <p>{businessConfig.serviceDuration} hours of detailing</p>
+                    <p className="text-xs text-blue-600">Professional quality work</p>
+                  </div>
+                  <div className="bg-white/50 rounded-lg p-3">
+                    <p className="font-medium">Advance Notice</p>
+                    <p>Minimum {businessConfig.minAdvanceHours} hours</p>
+                    <p className="text-xs text-blue-600">For scheduling preparation</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Availability Error Alert */}
+            {availabilityError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-red-800">Availability Issue</p>
+                    <p className="text-sm text-red-700">{availabilityError}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Calendar Component */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+                  Select Date
+                </h3>
+                <AvailabilityCalendar
+                  selectedDate={values.date}
+                  onDateSelect={handleDateSelect}
+                  businessConfig={businessConfig}
+                  className="shadow-lg"
+                />
+              </div>
+
+              {/* Time Slot Picker Component */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Clock className="w-5 h-5 mr-2 text-blue-600" />
+                  Select Time
+                </h3>
+                <TimeSlotPicker
+                  selectedDate={values.date}
+                  selectedTime={values.time}
+                  onTimeSelect={handleTimeSelect}
+                  availability={selectedDateAvailability}
+                  businessConfig={businessConfig}
+                  loading={loadingAvailability}
+                  className="shadow-lg"
+                />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Special Instructions (Optional)
-              </label>
+            {/* Special Instructions */}
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Special Instructions (Optional)</h3>
               <textarea
                 value={values.specialInstructions}
                 onChange={(e) => handleChange('specialInstructions', e.target.value)}
-                rows={3}
-                className="input-field"
-                placeholder="Any specific instructions for our team? (e.g., gate code, parking instructions, pet considerations)"
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Any specific instructions for our team? Examples:
+• Gate codes or building access instructions
+• Parking location details
+• Pet considerations
+• Preferred cleaning products
+• Areas that need special attention"
               />
+              <p className="text-sm text-gray-500 mt-2">
+                Help us provide the best service by sharing any relevant details about your location or preferences.
+              </p>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">Booking Summary</h4>
-              <div className="space-y-1 text-sm text-blue-800">
-                <p><span className="font-medium">Customer:</span> {values.firstName} {values.lastName}</p>
-                <p><span className="font-medium">Email:</span> {values.email}</p>
-                <p><span className="font-medium">Phone:</span> {values.phone}</p>
-                <p><span className="font-medium">Address:</span> {values.address}, {values.city} {values.postalCode}</p>
-                <p><span className="font-medium">Vehicle:</span> {values.year} {values.make} {values.model} ({values.vehicleType})</p>
-                <p><span className="font-medium">Services:</span> {dynamicPricing.services?.map(s => s.name).join(', ') || 'None selected'}</p>
-                {dynamicPricing.addOns?.length > 0 && (
-                  <p><span className="font-medium">Add-ons:</span> {dynamicPricing.addOns.map(a => a.name).join(', ')}</p>
-                )}
-                <p><span className="font-medium">Date & Time:</span> {values.date} at {values.time}</p>
-                <p><span className="font-medium">Total:</span> ${getTotalPrice()}</p>
+            {/* Enhanced Booking Summary */}
+            {values.date && values.time && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+                <h4 className="font-bold text-blue-900 mb-4 text-lg flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  Booking Summary
+                </h4>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-medium text-blue-900">Customer</p>
+                      <p className="text-blue-800">{values.firstName} {values.lastName}</p>
+                      <p className="text-sm text-blue-700">{values.email} • {values.phone}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-blue-900">Service Location</p>
+                      <p className="text-blue-800">{values.address}</p>
+                      <p className="text-sm text-blue-700">{values.city}, {values.postalCode}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-medium text-blue-900">Vehicle</p>
+                      <p className="text-blue-800">{values.year} {values.make} {values.model}</p>
+                      <p className="text-sm text-blue-700">{values.vehicleType}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-blue-900">Appointment</p>
+                      <p className="text-blue-800">{new Date(values.date).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}</p>
+                      <p className="text-sm text-blue-700">{values.time} • {estimatedDuration || '4 hours'}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 pt-4 border-t border-blue-200">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-blue-900">Services & Add-ons</p>
+                      <p className="text-sm text-blue-700">
+                        {dynamicPricing.services?.map(s => s.name).join(', ') || 'No services selected'}
+                        {dynamicPricing.addOns?.length > 0 && (
+                          <span> + {dynamicPricing.addOns.map(a => a.name).join(', ')}</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-blue-900">${getTotalPrice()}</p>
+                      <p className="text-sm text-blue-700">Total price</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         );
 
       case 5:
         if (bookingConfirmed) {
           return (
-            <div className="space-y-6 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Booking Confirmed!</h3>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-green-800 mb-2">
-                  <strong>Confirmation Code:</strong> #{bookingConfirmed.confirmationCode}
-                </p>
-                <p className="text-sm text-green-700">
-                  We've sent you a confirmation email and SMS. Our team will contact you 24 hours before your appointment.
-                </p>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-                <h4 className="font-semibold text-blue-900 mb-2">Appointment Details</h4>
-                <div className="space-y-1 text-sm text-blue-800">
-                  <p><span className="font-medium">Date:</span> {new Date(bookingConfirmed.date).toLocaleDateString()}</p>
-                  <p><span className="font-medium">Time:</span> {bookingConfirmed.time}</p>
-                  <p><span className="font-medium">Address:</span> {values.address}, {values.city}</p>
-                  <p><span className="font-medium">Total:</span> ${getTotalPrice()}</p>
+            <div className="text-center space-y-8">
+              {/* Success Animation */}
+              <div className="relative">
+                <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                  <CheckCircle className="w-12 h-12 text-green-600" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
+                  <span className="text-white text-sm">✓</span>
                 </div>
               </div>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={startNewBooking}
-              >
-                Book Another Service
-              </button>
+
+              <div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h3>
+                <p className="text-lg text-gray-600">Your detailing appointment has been successfully scheduled</p>
+              </div>
+
+              {/* Confirmation Details */}
+              <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                <div className="text-center mb-4">
+                  <p className="text-green-800 text-lg font-bold">
+                    Confirmation Code: #{bookingConfirmed.confirmationCode}
+                  </p>
+                  <p className="text-sm text-green-700 mt-2">
+                    📧 Confirmation email sent • 📱 SMS notification sent
+                  </p>
+                </div>
+                
+                <div className="bg-white rounded-lg p-4">
+                  <h4 className="font-semibold text-green-900 mb-3">What happens next?</h4>
+                  <div className="space-y-2 text-sm text-green-800">
+                    <div className="flex items-center space-x-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span>We'll call you 24 hours before your appointment</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span>Our team will arrive at your specified time</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span>Professional detailing service at your location</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Appointment Details Card */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-left">
+                <h4 className="font-bold text-blue-900 mb-4 text-center">📅 Appointment Details</h4>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="font-medium text-blue-900">Date & Time</p>
+                    <p className="text-blue-800">{new Date(bookingConfirmed.date).toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}</p>
+                    <p className="text-blue-700">{bookingConfirmed.time}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-blue-900">Service Location</p>
+                    <p className="text-blue-800">{values.address}</p>
+                    <p className="text-blue-700">{values.city}, {values.postalCode}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-blue-900">Vehicle</p>
+                    <p className="text-blue-800">{values.year} {values.make} {values.model}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-blue-900">Total Investment</p>
+                    <p className="text-blue-800 text-lg font-bold">${getTotalPrice()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  type="button"
+                  className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center space-x-2"
+                  onClick={startNewBooking}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Book Another Service</span>
+                </button>
+                <a
+                  href={`/lookup`}
+                  className="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium text-center"
+                >
+                  Track This Booking
+                </a>
+              </div>
+
+              {/* Contact Info */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 text-center">
+                  Questions about your booking? Contact us at{' '}
+                  <a href="tel:+15144374816" className="text-blue-600 hover:text-blue-700 font-medium">
+                    (514) 437-4816
+                  </a>
+                  {' '}or{' '}
+                  <a href="mailto:info@primedetailing.ca" className="text-blue-600 hover:text-blue-700 font-medium">
+                    info@primedetailing.ca
+                  </a>
+                </p>
+              </div>
             </div>
           );
         }
 
         return (
-          <div className="space-y-6 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-              <Phone className="w-8 h-8 text-blue-600" />
+          <div className="text-center space-y-8">
+            {/* SMS Verification */}
+            <div>
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Phone className="w-10 h-10 text-blue-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">SMS Verification</h3>
+              <p className="text-gray-600 max-w-md mx-auto">
+                {smsState.codeSent ? (
+                  <>We've sent a 6-digit verification code to <strong>{values.phone}</strong>. Please enter it below to confirm your booking.</>
+                ) : (
+                  <>We'll send a verification code to <strong>{values.phone}</strong> to secure your booking.</>
+                )}
+              </p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">SMS Verification</h3>
-            <p className="text-gray-600">
-              {smsState.codeSent ? (
-                <>Enter the 6-digit verification code sent to <strong>{values.phone}</strong></>
-              ) : (
-                <>We'll send a verification code to <strong>{values.phone}</strong> to confirm your booking.</>
-              )}
-            </p>
 
             {smsState.codeSent && (
               <div className="max-w-sm mx-auto">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Verification Code
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Enter Verification Code
                 </label>
                 <input
                   type="text"
@@ -716,36 +1144,44 @@ const BookingForm = () => {
                     ...prev, 
                     verificationCode: e.target.value.replace(/\D/g, '').slice(0, 6) 
                   }))}
-                  className="input-field text-center text-lg tracking-widest"
+                  className="w-full px-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-2xl tracking-[0.5em] font-mono"
                   placeholder="000000"
                   maxLength="6"
                   disabled={apiLoading}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  {smsState.attemptsRemaining} attempts remaining
-                </p>
+                <div className="flex justify-between items-center mt-3">
+                  <p className="text-xs text-gray-500">
+                    {smsState.attemptsRemaining} attempts remaining
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Code expires in 10 minutes
+                  </p>
+                </div>
               </div>
             )}
 
             {smsState.codeSent ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <button
                   type="button"
                   onClick={verifySMSCode}
                   disabled={apiLoading || smsState.verificationCode.length !== 6}
-                  className={`btn-primary w-full ${
+                  className={`w-full max-w-sm mx-auto bg-blue-600 text-white py-4 px-6 rounded-lg font-medium text-lg transition-all duration-200 ${
                     (apiLoading || smsState.verificationCode.length !== 6) 
                       ? 'opacity-50 cursor-not-allowed' 
-                      : ''
+                      : 'hover:bg-blue-700 transform hover:scale-105'
                   }`}
                 >
                   {apiLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Verifying...
-                    </>
+                    <div className="flex items-center justify-center space-x-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Verifying...</span>
+                    </div>
                   ) : (
-                    'Verify Code'
+                    <div className="flex items-center justify-center space-x-2">
+                      <Shield className="w-5 h-5" />
+                      <span>Confirm Booking</span>
+                    </div>
                   )}
                 </button>
                 
@@ -753,16 +1189,19 @@ const BookingForm = () => {
                   type="button"
                   onClick={resendVerificationCode}
                   disabled={apiLoading}
-                  className="text-blue-600 hover:text-blue-700 text-sm underline disabled:opacity-50"
+                  className="text-blue-600 hover:text-blue-700 text-sm underline disabled:opacity-50 transition-colors"
                 >
-                  Didn't receive the code? Resend
+                  Didn't receive the code? Resend SMS
                 </button>
               </div>
             ) : (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  Click "Send Verification Code" to receive your SMS verification code.
-                </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
+                <div className="flex items-center space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                  <p className="text-sm text-yellow-800 font-medium">
+                    Ready to confirm your booking? Click the button below to receive your verification code.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -775,31 +1214,36 @@ const BookingForm = () => {
 
   return (
     <ErrorBoundary>
-      <div className="max-w-2xl mx-auto">
-        {/* Enhanced Progress Steps */}
-        <div className="flex items-center justify-between mb-8 overflow-x-auto">
+      <div className="max-w-6xl mx-auto">
+        {/* Enhanced Progress Steps with Icons */}
+        <div className="flex items-center justify-between mb-12 overflow-x-auto">
           {steps.map((step, index) => (
             <React.Fragment key={step.number}>
-              <div className="flex items-center min-w-0">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+              <div className="flex flex-col items-center min-w-0 flex-1">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
                   step.number <= currentStep 
-                    ? 'bg-blue-600 text-white' 
+                    ? 'bg-blue-600 text-white shadow-lg' 
                     : 'bg-gray-200 text-gray-600'
-                }`}>
+                } ${step.number === currentStep ? 'ring-4 ring-blue-200' : ''}`}>
                   {currentStep > step.number || bookingConfirmed ? (
-                    <CheckCircle className="w-5 h-5" />
+                    <CheckCircle className="w-6 h-6" />
                   ) : (
-                    step.number
+                    step.icon || step.number
                   )}
                 </div>
-                <div className={`ml-2 text-sm font-medium ${
+                <div className={`mt-2 text-center ${
                   step.number <= currentStep ? 'text-gray-900' : 'text-gray-500'
-                } hidden sm:block`}>
-                  {step.title}
+                }`}>
+                  <div className="text-sm font-medium hidden sm:block">
+                    {step.title}
+                  </div>
+                  <div className="text-xs text-gray-500 hidden md:block mt-1">
+                    {step.description}
+                  </div>
                 </div>
               </div>
               {index < steps.length - 1 && (
-                <div className={`flex-1 h-1 mx-2 transition-colors ${
+                <div className={`flex-1 h-1 mx-4 transition-colors duration-300 ${
                   step.number < currentStep || (step.number === 4 && bookingConfirmed) 
                     ? 'bg-blue-600' 
                     : 'bg-gray-200'
@@ -809,37 +1253,37 @@ const BookingForm = () => {
           ))}
         </div>
 
-        {/* Step Content */}
-        <div className="card p-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {currentStep === 1 && "Contact & Service Address"}
-              {currentStep === 2 && "Vehicle Information"}
-              {currentStep === 3 && "Select Services"}
-              {currentStep === 4 && "Choose Date & Time"}
-              {currentStep === 5 && (bookingConfirmed ? "Booking Confirmed" : "Verification")}
+        {/* Enhanced Step Content */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+              {currentStep === 1 && <><MapPin className="w-6 h-6 mr-3 text-blue-600" /> Contact & Service Address</>}
+              {currentStep === 2 && <><Car className="w-6 h-6 mr-3 text-blue-600" /> Vehicle Information</>}
+              {currentStep === 3 && <><Sparkles className="w-6 h-6 mr-3 text-blue-600" /> Select Services</>}
+              {currentStep === 4 && <><Calendar className="w-6 h-6 mr-3 text-blue-600" /> Choose Date & Time</>}
+              {currentStep === 5 && <><Shield className="w-6 h-6 mr-3 text-blue-600" /> {bookingConfirmed ? "Booking Confirmed" : "Verification"}</>}
             </h2>
-            <p className="text-gray-600 mt-1">
-              Step {currentStep} of 5
+            <p className="text-gray-600 mt-2">
+              Step {currentStep} of 5 • {steps[currentStep - 1]?.description}
             </p>
           </div>
 
           {renderStep()}
 
-          {/* Navigation Buttons */}
+          {/* Enhanced Navigation Buttons */}
           {!bookingConfirmed && (
-            <div className="flex justify-between mt-8">
+            <div className="flex justify-between mt-12 pt-8 border-t border-gray-200">
               <button
                 type="button"
                 onClick={prevStep}
                 disabled={currentStep === 1}
-                className={`flex items-center px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                   currentStep === 1
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 transform hover:scale-105'
                 }`}
               >
-                <ChevronLeft className="w-4 h-4 mr-1" />
+                <ChevronLeft className="w-5 h-5 mr-2" />
                 Previous
               </button>
 
@@ -848,21 +1292,21 @@ const BookingForm = () => {
                   type="button"
                   onClick={nextStep}
                   disabled={!canProceed() || apiLoading}
-                  className={`flex items-center px-6 py-2 rounded-md font-medium transition-colors ${
+                  className={`flex items-center px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
                     canProceed() && !apiLoading
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 transform hover:scale-105 shadow-lg'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
                 >
                   {apiLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       {currentStep === 4 ? 'Sending...' : 'Loading...'}
                     </>
                   ) : (
                     <>
-                      {currentStep === 4 ? 'Send Verification Code' : 'Next'}
-                      <ChevronRight className="w-4 h-4 ml-1" />
+                      {currentStep === 4 ? 'Send Verification Code' : 'Continue'}
+                      <ChevronRight className="w-5 h-5 ml-2" />
                     </>
                   )}
                 </button>

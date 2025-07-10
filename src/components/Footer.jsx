@@ -1,7 +1,7 @@
-// src/components/Footer.jsx (Updated with Detailer Section)
+// src/components/Footer.jsx (Enhanced with Booking Lookup)
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Car, Phone, Mail, MapPin, Clock, Users } from 'lucide-react';
+import { Car, Phone, Mail, MapPin, Clock, Users, Search, Calendar } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -38,11 +38,11 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Our Services</h4>
             <ul className="space-y-2 text-gray-300">
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Exterior Detailing</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Interior Detailing</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Paint Protection</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Ceramic Coating</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Mobile Service</a></li>
+              <li><Link to="/services" className="hover:text-blue-400 transition-colors">Exterior Detailing</Link></li>
+              <li><Link to="/services" className="hover:text-blue-400 transition-colors">Interior Detailing</Link></li>
+              <li><Link to="/services" className="hover:text-blue-400 transition-colors">Paint Protection</Link></li>
+              <li><Link to="/services" className="hover:text-blue-400 transition-colors">Ceramic Coating</Link></li>
+              <li><Link to="/services" className="hover:text-blue-400 transition-colors">Mobile Service</Link></li>
             </ul>
           </div>
 
@@ -72,15 +72,43 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Detailer Section - NEW */}
+          {/* Enhanced Quick Links with Booking Lookup */}
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-gray-300 mb-6">
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Book Appointment</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Our Services</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">Contact Us</a></li>
-              <li><a href="#" className="hover:text-blue-400 transition-colors">About Us</a></li>
+              <li>
+                <Link to="/booking" className="flex items-center hover:text-blue-400 transition-colors">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Book Appointment
+                </Link>
+              </li>
+              <li>
+                <Link to="/services" className="hover:text-blue-400 transition-colors">Our Services</Link>
+              </li>
+              <li>
+                <Link to="/contact" className="hover:text-blue-400 transition-colors">Contact Us</Link>
+              </li>
+              <li>
+                <Link to="/gallery" className="hover:text-blue-400 transition-colors">Gallery</Link>
+              </li>
             </ul>
+            
+            {/* Booking Lookup Feature */}
+            <div className="bg-blue-800 rounded-lg p-4 border border-blue-700 mb-4">
+              <div className="flex items-center mb-2">
+                <Search className="w-4 h-4 text-blue-300 mr-2" />
+                <h5 className="font-medium text-blue-300">Track Your Booking</h5>
+              </div>
+              <p className="text-sm text-blue-200 mb-3">
+                Check your appointment status and get updates on your detailing service.
+              </p>
+              <Link
+                to="/lookup"
+                className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-500 transition-colors w-full text-center"
+              >
+                Track My Appointment
+              </Link>
+            </div>
             
             {/* Detailer Access */}
             <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
@@ -111,6 +139,7 @@ const Footer = () => {
               <a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-blue-400 transition-colors">Terms of Service</a>
               <a href="#" className="hover:text-blue-400 transition-colors">FAQ</a>
+              <Link to="/lookup" className="hover:text-blue-400 transition-colors">Track Booking</Link>
             </div>
           </div>
         </div>

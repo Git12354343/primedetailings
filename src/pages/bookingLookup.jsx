@@ -1,5 +1,5 @@
-// src/pages/BookingLookup.jsx - Customer booking status lookup
-import React, { useState } from 'react';
+// src/pages/BookingLookup.jsx - FIXED VERSION
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, 
@@ -24,14 +24,41 @@ const BookingLookup = () => {
     phone: ''
   });
   const [booking, setBooking] = useState(null);
+  const [services, setServices] = useState([]);
+  const [addOns, setAddOns] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Fetch services and addons when component mounts
+  useEffect(() => {
+    const fetchServicesAndAddOns = async () => {
+      try {
+        const [servicesResponse, addOnsResponse] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_URL}/services`),
+          fetch(`${import.meta.env.VITE_API_URL}/services/addons`)
+        ]);
+
+        const servicesData = await servicesResponse.json();
+        const addOnsData = await addOnsResponse.json();
+
+        if (servicesData.success) {
+          setServices(servicesData.services);
+        }
+
+        if (addOnsData.success) {
+          setAddOns(addOnsData.addOns);
+        }
+      } catch (error) {
+        console.error('Error fetching services/addons:', error);
+      }
+    };
+
+    fetchServicesAndAddOns();
+  }, []);
+
   const formatPhoneNumber = (value) => {
-    // Remove all non-digits
     const cleaned = value.replace(/\D/g, '');
     
-    // Format as (XXX) XXX-XXXX
     if (cleaned.length >= 6) {
       return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
     } else if (cleaned.length >= 3) {
@@ -44,6 +71,68 @@ const BookingLookup = () => {
   const handlePhoneChange = (e) => {
     const formatted = formatPhoneNumber(e.target.value);
     setSearchData({ ...searchData, phone: formatted });
+  };
+
+  // FIXED: Helper function to resolve service IDs to names
+  const resolveServiceNames = (serviceData) => {
+    try {
+      let serviceIds = [];
+      if (typeof serviceData === 'string') {
+        serviceIds = JSON.parse(serviceData || '[]');
+      } else if (Array.isArray(serviceData)) {
+        serviceIds = serviceData;
+      }
+
+      // Check if they are already names (strings) or IDs (numbers)
+      const areIds = serviceIds.length > 0 && serviceIds.every(item => 
+        !isNaN(parseInt(item)) || typeof item === 'number'
+      );
+
+      if (areIds && services.length > 0) {
+        // Map IDs to names
+        return serviceIds.map(id => {
+          const service = services.find(s => s.id === parseInt(id));
+          return service ? service.name : `Service ID: ${id}`;
+        });
+      } else {
+        // Already names or services not loaded yet
+        return serviceIds;
+      }
+    } catch (error) {
+      console.error('Error resolving service names:', error);
+      return [];
+    }
+  };
+
+  // FIXED: Helper function to resolve add-on IDs to names
+  const resolveAddOnNames = (addOnData) => {
+    try {
+      let addOnIds = [];
+      if (typeof addOnData === 'string') {
+        addOnIds = JSON.parse(addOnData || '[]');
+      } else if (Array.isArray(addOnData)) {
+        addOnIds = addOnData;
+      }
+
+      // Check if they are already names (strings) or IDs (numbers)
+      const areIds = addOnIds.length > 0 && addOnIds.every(item => 
+        !isNaN(parseInt(item)) || typeof item === 'number'
+      );
+
+      if (areIds && addOns.length > 0) {
+        // Map IDs to names
+        return addOnIds.map(id => {
+          const addOn = addOns.find(a => a.id === parseInt(id));
+          return addOn ? addOn.name : `Add-on ID: ${id}`;
+        });
+      } else {
+        // Already names or add-ons not loaded yet
+        return addOnIds;
+      }
+    } catch (error) {
+      console.error('Error resolving add-on names:', error);
+      return [];
+    }
   };
 
   const handleSearch = async (e) => {
@@ -63,11 +152,12 @@ const BookingLookup = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Verify phone number matches (remove formatting for comparison)
+        // Verify phone number matches
         const searchPhone = searchData.phone.replace(/\D/g, '');
-        const bookingPhone = data.booking.phoneNumber.replace(/\D/g, '');
+        const bookingPhone = data.booking.customer?.phoneNumber?.replace(/\D/g, '') || 
+                           data.booking.phoneNumber?.replace(/\D/g, '') || '';
         
-        if (searchPhone === bookingPhone.slice(-10)) { // Compare last 10 digits
+        if (searchPhone === bookingPhone.slice(-10)) {
           setBooking(data.booking);
         } else {
           setError('Phone number does not match our records');
@@ -98,6 +188,20 @@ const BookingLookup = () => {
           color: 'text-blue-600 bg-blue-100',
           label: 'Confirmed',
           description: 'Your booking is confirmed! We will contact you 24 hours before your appointment.'
+        };
+      case 'EN_ROUTE':
+        return {
+          icon: <Car className="w-5 h-5" />,
+          color: 'text-indigo-600 bg-indigo-100',
+          label: 'En Route',
+          description: 'Our detailer is on the way to your location.'
+        };
+      case 'STARTED':
+        return {
+          icon: <RefreshCw className="w-5 h-5" />,
+          color: 'text-orange-600 bg-orange-100',
+          label: 'Started',
+          description: 'Our detailer has arrived and started working on your vehicle.'
         };
       case 'IN_PROGRESS':
         return {
@@ -146,19 +250,47 @@ const BookingLookup = () => {
     return `${hour12}:${minutes} ${ampm}`;
   };
 
-  const parseServices = (services) => {
-    try {
-      return Array.isArray(services) ? services : JSON.parse(services || '[]');
-    } catch {
-      return [];
+  // Get customer info with fallback to both old and new format
+  const getCustomerInfo = (booking) => {
+    if (booking.customer) {
+      return {
+        firstName: booking.customer.firstName,
+        lastName: booking.customer.lastName,
+        email: booking.customer.email,
+        phoneNumber: booking.customer.phoneNumber,
+        address: booking.customer.address,
+        city: booking.customer.city,
+        postalCode: booking.customer.postalCode
+      };
+    } else {
+      return {
+        firstName: booking.firstName,
+        lastName: booking.lastName,
+        email: booking.email,
+        phoneNumber: booking.phoneNumber,
+        address: booking.address,
+        city: booking.city,
+        postalCode: booking.postalCode
+      };
     }
   };
 
-  const parseExtras = (extras) => {
-    try {
-      return Array.isArray(extras) ? extras : JSON.parse(extras || '[]');
-    } catch {
-      return [];
+  // Get vehicle info with fallback
+  const getVehicleInfo = (booking) => {
+    if (booking.vehicle) {
+      return {
+        make: booking.vehicle.make,
+        model: booking.vehicle.model,
+        year: booking.vehicle.year,
+        type: booking.vehicle.type
+      };
+    } else {
+      return {
+        make: booking.make,
+        model: booking.model,
+        year: booking.year,
+        type: booking.vehicleType
+      };
     }
   };
 
@@ -339,11 +471,11 @@ const BookingLookup = () => {
                     </div>
                   )}
 
-                  {booking.status === 'IN_PROGRESS' && (
+                  {(booking.status === 'EN_ROUTE' || booking.status === 'STARTED' || booking.status === 'IN_PROGRESS') && (
                     <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                       <p className="text-sm text-orange-800 font-medium">🚧 Work in Progress</p>
                       <p className="text-xs text-orange-700 mt-1">
-                        Our professional team is currently detailing your vehicle. We'll update you when complete.
+                        Our professional team is currently working on your vehicle. We'll update you when complete.
                       </p>
                     </div>
                   )}
@@ -399,9 +531,16 @@ const BookingLookup = () => {
                         Customer Information
                       </h4>
                       <div className="space-y-2 text-sm">
-                        <p><span className="font-medium">Name:</span> {booking.firstName} {booking.lastName}</p>
-                        <p><span className="font-medium">Email:</span> {booking.email}</p>
-                        <p><span className="font-medium">Phone:</span> {booking.phoneNumber}</p>
+                        {(() => {
+                          const customer = getCustomerInfo(booking);
+                          return (
+                            <>
+                              <p><span className="font-medium">Name:</span> {customer.firstName} {customer.lastName}</p>
+                              <p><span className="font-medium">Email:</span> {customer.email}</p>
+                              <p><span className="font-medium">Phone:</span> {customer.phoneNumber}</p>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -425,8 +564,15 @@ const BookingLookup = () => {
                         Service Location
                       </h4>
                       <div className="text-sm">
-                        <p>{booking.address}</p>
-                        <p>{booking.city}, {booking.postalCode}</p>
+                        {(() => {
+                          const customer = getCustomerInfo(booking);
+                          return (
+                            <>
+                              <p>{customer.address}</p>
+                              <p>{customer.city}, {customer.postalCode}</p>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -437,13 +583,20 @@ const BookingLookup = () => {
                         Vehicle
                       </h4>
                       <div className="text-sm">
-                        <p className="font-medium">{booking.vehicle}</p>
-                        <p className="text-gray-600 capitalize">{booking.vehicleType}</p>
+                        {(() => {
+                          const vehicle = getVehicleInfo(booking);
+                          return (
+                            <>
+                              <p className="font-medium">{vehicle.year} {vehicle.make} {vehicle.model}</p>
+                              <p className="text-gray-600 capitalize">{vehicle.type}</p>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
 
-                  {/* Services */}
+                  {/* Services - FIXED */}
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <h4 className="font-medium text-gray-900 mb-3 flex items-center">
                       <Wrench className="w-4 h-4 mr-2 text-blue-600" />
@@ -453,35 +606,52 @@ const BookingLookup = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-2">Services:</p>
                         <div className="flex flex-wrap gap-2">
-                          {parseServices(booking.services).map((service, index) => (
-                            <span
-                              key={index}
-                              className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
-                            >
-                              {service}
-                            </span>
-                          ))}
+                          {(() => {
+                            // Try to use backend-resolved services first, otherwise resolve locally
+                            const serviceNames = booking.resolvedServices && booking.resolvedServices.length > 0 
+                              ? booking.resolvedServices 
+                              : resolveServiceNames(booking.services);
+                            
+                            return serviceNames.map((service, index) => (
+                              <span
+                                key={index}
+                                className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                              >
+                                {service}
+                              </span>
+                            ));
+                          })()}
                         </div>
                       </div>
                       
-                      {parseExtras(booking.extras).length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                            <Package className="w-4 h-4 mr-1" />
-                            Add-ons:
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {parseExtras(booking.extras).map((extra, index) => (
-                              <span
-                                key={index}
-                                className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
-                              >
-                                {extra}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      {(() => {
+                        // Try to use backend-resolved add-ons first, otherwise resolve locally
+                        const addOnNames = booking.resolvedAddOns && booking.resolvedAddOns.length > 0 
+                          ? booking.resolvedAddOns 
+                          : resolveAddOnNames(booking.extras);
+                        
+                        if (addOnNames.length > 0) {
+                          return (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                <Package className="w-4 h-4 mr-1" />
+                                Add-ons:
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {addOnNames.map((extra, index) => (
+                                  <span
+                                    key={index}
+                                    className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
+                                  >
+                                    {extra}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
 
