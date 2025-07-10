@@ -1,9 +1,52 @@
-// backend/controllers/bookingController.js (Complete Fixed Version)
+// backend/controllers/bookingController.js (COMPLETE FIXED VERSION)
 const { PrismaClient } = require('@prisma/client');
 const { generateConfirmationCode } = require('../utils/helpers');
 const { sendBookingConfirmation, sendBookingUpdate } = require('../utils/emailService');
 
 const prisma = new PrismaClient();
+
+// Helper function to format booking data consistently
+const formatBookingData = (booking) => ({
+  id: booking.id,
+  confirmationCode: booking.confirmationCode,
+  customer: {
+    firstName: booking.firstName || 'Unknown',
+    lastName: booking.lastName || '',
+    phoneNumber: booking.phoneNumber || 'Unknown',
+    email: booking.email || '',
+    address: booking.address || 'Unknown',
+    city: booking.city || '',
+    postalCode: booking.postalCode || ''
+  },
+  vehicle: {
+    type: booking.vehicleType || 'Unknown',
+    make: booking.make || 'Unknown',
+    model: booking.model || '',
+    year: booking.year || null
+  },
+  services: booking.services || '[]',
+  extras: booking.extras || '[]',
+  date: booking.date,
+  time: booking.time,
+  status: booking.status,
+  detailerId: booking.detailerId,
+  detailer: booking.detailer ? {
+    id: booking.detailer.id,
+    name: booking.detailer.name,
+    email: booking.detailer.email,
+    phone: booking.detailer.phone
+  } : null,
+  specialInstructions: booking.specialInstructions,
+  notes: booking.notes,
+  totalPrice: booking.totalPrice ? parseFloat(booking.totalPrice) : null,
+  enRouteAt: booking.enRouteAt,
+  startedAt: booking.startedAt,
+  arrivedAt: booking.arrivedAt,
+  completedAt: booking.completedAt,
+  estimatedDuration: booking.estimatedDuration,
+  createdAt: booking.createdAt,
+  updatedAt: booking.updatedAt
+});
 
 // Get assigned bookings for a detailer with pagination
 const getAssignedBookings = async (req, res) => {
@@ -29,7 +72,7 @@ const getAssignedBookings = async (req, res) => {
         { detailerId: null } // Show unassigned bookings too
       ],
       status: {
-        in: status ? [status] : ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED']
+        in: status ? [status] : ['PENDING', 'CONFIRMED', 'EN_ROUTE', 'STARTED', 'IN_PROGRESS', 'COMPLETED']
       }
     };
 
@@ -38,129 +81,29 @@ const getAssignedBookings = async (req, res) => {
 
     const bookings = await prisma.booking.findMany({
       where,
+      include: {
+        detailer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
+          }
+        }
+      },
       orderBy: [
         { date: 'asc' },
         { time: 'asc' }
       ],
       skip,
-      take: limit,
-      select: {
-        id: true,
-        confirmationCode: true,
-        firstName: true,
-        lastName: true,
-        phoneNumber: true,
-        email: true,
-        address: true,
-        city: true,
-        vehicleType: true,
-        make: true,
-        model: true,
-        year: true,
-        services: true,
-        extras: true,
-        date: true,
-        time: true,
-        status: true,
-        specialInstructions: true,
-        notes: true,
-        totalPrice: true,
-        detailerId: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      take: limit
     });
-
-    // Get all unique service and add-on IDs from all bookings
-    const allServiceIds = new Set();
-    const allAddOnIds = new Set();
-
-    bookings.forEach(booking => {
-      try {
-        const serviceIds = JSON.parse(booking.services || '[]');
-        const addOnIds = JSON.parse(booking.extras || '[]');
-        
-        serviceIds.forEach(id => allServiceIds.add(parseInt(id)));
-        addOnIds.forEach(id => allAddOnIds.add(parseInt(id)));
-      } catch (error) {
-        console.error('Error parsing service/addon IDs for booking', booking.id, error);
-      }
-    });
-
-    // Fetch all services and add-ons in bulk
-    const [allServices, allAddOns] = await Promise.all([
-      prisma.service.findMany({
-        where: { id: { in: Array.from(allServiceIds) } },
-        select: { id: true, name: true }
-      }),
-      prisma.addOn.findMany({
-        where: { id: { in: Array.from(allAddOnIds) } },
-        select: { id: true, name: true }
-      })
-    ]);
-
-    // Create lookup maps for quick access
-    const serviceMap = new Map(allServices.map(service => [service.id, service.name]));
-    const addOnMap = new Map(allAddOns.map(addOn => [addOn.id, addOn.name]));
-
-    // Helper function to resolve service names
-    const resolveServiceNames = (serviceIds) => {
-      try {
-        const ids = JSON.parse(serviceIds || '[]');
-        return ids.map(id => {
-          const parsedId = parseInt(id);
-          return serviceMap.get(parsedId) || `Service #${id}`;
-        });
-      } catch (error) {
-        console.error('Error resolving service names:', error);
-        return [];
-      }
-    };
-
-    // Helper function to resolve add-on names
-    const resolveAddOnNames = (addOnIds) => {
-      try {
-        const ids = JSON.parse(addOnIds || '[]');
-        return ids.map(id => {
-          const parsedId = parseInt(id);
-          return addOnMap.get(parsedId) || `Add-on #${id}`;
-        });
-      } catch (error) {
-        console.error('Error resolving add-on names:', error);
-        return [];
-      }
-    };
 
     res.json({
       success: true,
       bookings: bookings.map(booking => ({
-        id: booking.id,
-        confirmationCode: booking.confirmationCode,
-        customer: {
-          firstName: booking.firstName,
-          lastName: booking.lastName,
-          phoneNumber: booking.phoneNumber,
-          email: booking.email,
-          address: booking.address,
-          city: booking.city
-        },
-        vehicle: {
-          type: booking.vehicleType,
-          make: booking.make,
-          model: booking.model,
-          year: booking.year
-        },
-        services: resolveServiceNames(booking.services),
-        extras: resolveAddOnNames(booking.extras),
-        date: booking.date,
-        time: booking.time,
-        status: booking.status,
-        specialInstructions: booking.specialInstructions,
-        notes: booking.notes,
-        totalPrice: booking.totalPrice ? parseFloat(booking.totalPrice) : null,
-        isAssigned: booking.detailerId === detailerId,
-        createdAt: booking.createdAt,
-        updatedAt: booking.updatedAt
+        ...formatBookingData(booking),
+        isAssigned: booking.detailerId === detailerId
       })),
       pagination: {
         page,
@@ -322,19 +265,7 @@ const createBooking = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
-      booking: {
-        id: booking.id,
-        confirmationCode: booking.confirmationCode,
-        customer: {
-          firstName: booking.firstName,
-          lastName: booking.lastName,
-          email: booking.email
-        },
-        date: booking.date,
-        time: booking.time,
-        totalPrice: parseFloat(booking.totalPrice),
-        status: booking.status
-      }
+      booking: formatBookingData(booking)
     });
 
   } catch (error) {
@@ -373,6 +304,9 @@ const markBookingCompleted = async (req, res) => {
     const booking = await prisma.booking.findUnique({
       where: {
         id: parseInt(bookingId)
+      },
+      include: {
+        detailer: true
       }
     });
 
@@ -400,7 +334,7 @@ const markBookingCompleted = async (req, res) => {
     }
 
     // Check if booking can be completed
-    if (!['PENDING', 'CONFIRMED', 'IN_PROGRESS'].includes(booking.status)) {
+    if (!['PENDING', 'CONFIRMED', 'EN_ROUTE', 'STARTED', 'IN_PROGRESS'].includes(booking.status)) {
       return res.status(400).json({
         success: false,
         message: `Cannot complete booking with status ${booking.status}`
@@ -410,6 +344,7 @@ const markBookingCompleted = async (req, res) => {
     // Prepare update data
     const updateData = {
       status: 'COMPLETED',
+      completedAt: new Date(),
       updatedAt: new Date()
     };
 
@@ -425,7 +360,10 @@ const markBookingCompleted = async (req, res) => {
 
     const updatedBooking = await prisma.booking.update({
       where: { id: parseInt(bookingId) },
-      data: updateData
+      data: updateData,
+      include: {
+        detailer: true
+      }
     });
 
     // Send completion notification email
@@ -438,13 +376,7 @@ const markBookingCompleted = async (req, res) => {
     res.json({
       success: true,
       message: 'Booking marked as completed successfully',
-      booking: {
-        id: updatedBooking.id,
-        confirmationCode: updatedBooking.confirmationCode,
-        status: updatedBooking.status,
-        notes: updatedBooking.notes,
-        updatedAt: updatedBooking.updatedAt
-      }
+      booking: formatBookingData(updatedBooking)
     });
 
   } catch (error) {
@@ -480,11 +412,11 @@ const updateBookingStatus = async (req, res) => {
     }
 
     // Validate status
-    const validStatuses = ['PENDING', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED'];
+    const validStatuses = ['PENDING', 'CONFIRMED', 'EN_ROUTE', 'STARTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED'];
     if (!status || !validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status. Must be: PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, or CANCELED'
+        message: 'Invalid status. Must be: PENDING, CONFIRMED, EN_ROUTE, STARTED, IN_PROGRESS, COMPLETED, or CANCELED'
       });
     }
 
@@ -492,6 +424,9 @@ const updateBookingStatus = async (req, res) => {
     const booking = await prisma.booking.findUnique({
       where: {
         id: parseInt(bookingId)
+      },
+      include: {
+        detailer: true
       }
     });
 
@@ -515,13 +450,7 @@ const updateBookingStatus = async (req, res) => {
       return res.json({
         success: true,
         message: `Booking is already ${status}`,
-        booking: {
-          id: booking.id,
-          confirmationCode: booking.confirmationCode,
-          status: booking.status,
-          notes: booking.notes,
-          updatedAt: booking.updatedAt
-        }
+        booking: formatBookingData(booking)
       });
     }
 
@@ -529,7 +458,9 @@ const updateBookingStatus = async (req, res) => {
     const canTransition = (currentStatus, newStatus) => {
       const transitions = {
         'PENDING': ['CONFIRMED', 'CANCELED'],
-        'CONFIRMED': ['IN_PROGRESS', 'CANCELED'],
+        'CONFIRMED': ['EN_ROUTE', 'CANCELED'],
+        'EN_ROUTE': ['STARTED', 'CANCELED'],
+        'STARTED': ['IN_PROGRESS', 'CANCELED'],
         'IN_PROGRESS': ['COMPLETED', 'CANCELED'],
         'COMPLETED': [], // Cannot change from completed
         'CANCELED': [] // Cannot change from canceled
@@ -546,7 +477,9 @@ const updateBookingStatus = async (req, res) => {
         allowedTransitions: (() => {
           const transitions = {
             'PENDING': ['CONFIRMED', 'CANCELED'],
-            'CONFIRMED': ['IN_PROGRESS', 'CANCELED'],
+            'CONFIRMED': ['EN_ROUTE', 'CANCELED'],
+            'EN_ROUTE': ['STARTED', 'CANCELED'],
+            'STARTED': ['IN_PROGRESS', 'CANCELED'],
             'IN_PROGRESS': ['COMPLETED', 'CANCELED'],
             'COMPLETED': [],
             'CANCELED': []
@@ -562,20 +495,36 @@ const updateBookingStatus = async (req, res) => {
       updatedAt: new Date()
     };
 
+    // Add timestamp fields based on status
+    switch (status) {
+      case 'EN_ROUTE':
+        updateData.enRouteAt = new Date();
+        break;
+      case 'STARTED':
+        updateData.startedAt = new Date();
+        break;
+      case 'COMPLETED':
+        updateData.completedAt = new Date();
+        break;
+    }
+
     // Add notes if provided
     if (typeof notes === 'string') {
       updateData.notes = notes.trim();
     }
 
-    // If booking doesn't have a detailer assigned and status is IN_PROGRESS, assign current detailer
-    if (!booking.detailerId && status === 'IN_PROGRESS') {
+    // If booking doesn't have a detailer assigned and status is progressing, assign current detailer
+    if (!booking.detailerId && ['EN_ROUTE', 'STARTED', 'IN_PROGRESS', 'COMPLETED'].includes(status)) {
       updateData.detailerId = detailerId;
     }
 
     // Update booking
     const updatedBooking = await prisma.booking.update({
       where: { id: parseInt(bookingId) },
-      data: updateData
+      data: updateData,
+      include: {
+        detailer: true
+      }
     });
 
     // Send status update notification
@@ -588,13 +537,7 @@ const updateBookingStatus = async (req, res) => {
     res.json({
       success: true,
       message: `Booking status updated to ${status}`,
-      booking: {
-        id: updatedBooking.id,
-        confirmationCode: updatedBooking.confirmationCode,
-        status: updatedBooking.status,
-        notes: updatedBooking.notes,
-        updatedAt: updatedBooking.updatedAt
-      }
+      booking: formatBookingData(updatedBooking)
     });
 
   } catch (error) {
@@ -638,79 +581,9 @@ const getBookingByCode = async (req, res) => {
       });
     }
 
-    // Helper function to resolve service names
-    const resolveServiceNames = async (serviceIds) => {
-      try {
-        const ids = JSON.parse(serviceIds || '[]');
-        if (ids.length === 0) return [];
-        
-        const services = await prisma.service.findMany({
-          where: { id: { in: ids.map(id => parseInt(id)) } },
-          select: { id: true, name: true }
-        });
-        
-        return ids.map(id => {
-          const service = services.find(s => s.id === parseInt(id));
-          return service ? service.name : `Service #${id}`;
-        });
-      } catch (error) {
-        console.error('Error resolving service names:', error);
-        return [];
-      }
-    };
-
-    // Helper function to resolve add-on names
-    const resolveAddOnNames = async (addOnIds) => {
-      try {
-        const ids = JSON.parse(addOnIds || '[]');
-        if (ids.length === 0) return [];
-        
-        const addOns = await prisma.addOn.findMany({
-          where: { id: { in: ids.map(id => parseInt(id)) } },
-          select: { id: true, name: true }
-        });
-        
-        return ids.map(id => {
-          const addOn = addOns.find(a => a.id === parseInt(id));
-          return addOn ? addOn.name : `Add-on #${id}`;
-        });
-      } catch (error) {
-        console.error('Error resolving add-on names:', error);
-        return [];
-      }
-    };
-
-    // Resolve service and add-on names
-    const [resolvedServices, resolvedExtras] = await Promise.all([
-      resolveServiceNames(booking.services),
-      resolveAddOnNames(booking.extras)
-    ]);
-
     res.json({
       success: true,
-      booking: {
-        id: booking.id,
-        confirmationCode: booking.confirmationCode,
-        customer: {
-          firstName: booking.firstName,
-          lastName: booking.lastName,
-          phoneNumber: booking.phoneNumber
-        },
-        vehicle: {
-          type: booking.vehicleType,
-          make: booking.make,
-          model: booking.model,
-          year: booking.year
-        },
-        services: resolvedServices,
-        extras: resolvedExtras,
-        date: booking.date,
-        time: booking.time,
-        status: booking.status,
-        totalPrice: booking.totalPrice ? parseFloat(booking.totalPrice) : null,
-        detailer: booking.detailer,
-        createdAt: booking.createdAt
-      }
+      booking: formatBookingData(booking)
     });
 
   } catch (error) {
@@ -749,6 +622,9 @@ const updateBookingNotes = async (req, res) => {
     const booking = await prisma.booking.findUnique({
       where: {
         id: parseInt(bookingId)
+      },
+      include: {
+        detailer: true
       }
     });
 
@@ -773,18 +649,16 @@ const updateBookingNotes = async (req, res) => {
       data: { 
         notes: typeof notes === 'string' ? notes.trim() : '',
         updatedAt: new Date()
+      },
+      include: {
+        detailer: true
       }
     });
 
     res.json({
       success: true,
       message: 'Notes updated successfully',
-      booking: {
-        id: updatedBooking.id,
-        confirmationCode: updatedBooking.confirmationCode,
-        notes: updatedBooking.notes,
-        updatedAt: updatedBooking.updatedAt
-      }
+      booking: formatBookingData(updatedBooking)
     });
 
   } catch (error) {
@@ -812,6 +686,9 @@ const debugBooking = async (req, res) => {
     const booking = await prisma.booking.findUnique({
       where: {
         id: parseInt(bookingId)
+      },
+      include: {
+        detailer: true
       }
     });
 
@@ -830,18 +707,14 @@ const debugBooking = async (req, res) => {
       });
     }
 
-    // Check database schema
-    const tableInfo = await prisma.$queryRaw`DESCRIBE bookings`;
-    console.log('Table Schema:', tableInfo);
-
     res.json({
       success: true,
       debug: {
-        booking: booking,
+        booking: formatBookingData(booking),
+        rawBooking: booking,
         detailerId: detailerId,
         detailerInfo: req.detailer,
         canAccess: !booking.detailerId || booking.detailerId === detailerId,
-        tableSchema: tableInfo,
         bookingHasDetailerId: booking.hasOwnProperty('detailerId'),
         detailerIdValue: booking.detailerId,
         detailerIdType: typeof booking.detailerId

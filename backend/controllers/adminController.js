@@ -1,7 +1,49 @@
-// backend/controllers/adminController.js (Updated with new endpoints)
+// backend/controllers/adminController.js (FIXED VERSION)
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
+
+// Helper function to format booking data consistently
+const formatBookingData = (booking) => ({
+  id: booking.id,
+  confirmationCode: booking.confirmationCode,
+  customer: {
+    firstName: booking.firstName || 'Unknown',
+    lastName: booking.lastName || '',
+    phoneNumber: booking.phoneNumber || 'Unknown',
+    email: booking.email || '',
+    address: booking.address || 'Unknown',
+    city: booking.city || '',
+    postalCode: booking.postalCode || ''
+  },
+  vehicle: {
+    type: booking.vehicleType || 'Unknown',
+    make: booking.make || 'Unknown', 
+    model: booking.model || '',
+    year: booking.year || null
+  },
+  services: booking.services || '[]',
+  extras: booking.extras || '[]',
+  date: booking.date,
+  time: booking.time,
+  status: booking.status,
+  detailerId: booking.detailerId,
+  detailer: booking.detailer ? {
+    id: booking.detailer.id,
+    name: booking.detailer.name,
+    email: booking.detailer.email
+  } : null,
+  specialInstructions: booking.specialInstructions,
+  notes: booking.notes,
+  totalPrice: booking.totalPrice,
+  enRouteAt: booking.enRouteAt,
+  startedAt: booking.startedAt,
+  arrivedAt: booking.arrivedAt,
+  completedAt: booking.completedAt,
+  estimatedDuration: booking.estimatedDuration,
+  createdAt: booking.createdAt,
+  updatedAt: booking.updatedAt
+});
 
 // Assign booking to detailer
 const assignBookingToDetailer = async (req, res) => {
@@ -97,28 +139,7 @@ const getUnassignedBookings = async (req, res) => {
 
     res.json({
       success: true,
-      bookings: unassignedBookings.map(booking => ({
-        id: booking.id,
-        confirmationCode: booking.confirmationCode,
-        customer: {
-          firstName: booking.firstName,
-          lastName: booking.lastName,
-          phoneNumber: booking.phoneNumber
-        },
-        vehicle: {
-          type: booking.vehicleType,
-          make: booking.make,
-          model: booking.model,
-          year: booking.year
-        },
-        services: booking.services,
-        extras: booking.extras,
-        date: booking.date,
-        time: booking.time,
-        status: booking.status,
-        detailerId: booking.detailerId,
-        createdAt: booking.createdAt
-      }))
+      bookings: unassignedBookings.map(formatBookingData)
     });
 
   } catch (error) {
@@ -130,7 +151,7 @@ const getUnassignedBookings = async (req, res) => {
   }
 };
 
-// Get all bookings (NEW ENDPOINT)
+// Get all bookings with proper formatting
 const getAllBookings = async (req, res) => {
   try {
     const allBookings = await prisma.booking.findMany({
@@ -151,30 +172,7 @@ const getAllBookings = async (req, res) => {
 
     res.json({
       success: true,
-      bookings: allBookings.map(booking => ({
-        id: booking.id,
-        confirmationCode: booking.confirmationCode,
-        customer: {
-          firstName: booking.firstName,
-          lastName: booking.lastName,
-          phoneNumber: booking.phoneNumber
-        },
-        vehicle: {
-          type: booking.vehicleType,
-          make: booking.make,
-          model: booking.model,
-          year: booking.year
-        },
-        services: booking.services,
-        extras: booking.extras,
-        date: booking.date,
-        time: booking.time,
-        status: booking.status,
-        detailerId: booking.detailerId,
-        detailer: booking.detailer,
-        createdAt: booking.createdAt,
-        updatedAt: booking.updatedAt
-      }))
+      bookings: allBookings.map(formatBookingData)
     });
 
   } catch (error) {
@@ -186,7 +184,7 @@ const getAllBookings = async (req, res) => {
   }
 };
 
-// Get assigned bookings (NEW ENDPOINT)
+// Get assigned bookings
 const getAssignedBookings = async (req, res) => {
   try {
     const assignedBookings = await prisma.booking.findMany({
@@ -212,30 +210,7 @@ const getAssignedBookings = async (req, res) => {
 
     res.json({
       success: true,
-      bookings: assignedBookings.map(booking => ({
-        id: booking.id,
-        confirmationCode: booking.confirmationCode,
-        customer: {
-          firstName: booking.firstName,
-          lastName: booking.lastName,
-          phoneNumber: booking.phoneNumber
-        },
-        vehicle: {
-          type: booking.vehicleType,
-          make: booking.make,
-          model: booking.model,
-          year: booking.year
-        },
-        services: booking.services,
-        extras: booking.extras,
-        date: booking.date,
-        time: booking.time,
-        status: booking.status,
-        detailerId: booking.detailerId,
-        detailer: booking.detailer,
-        createdAt: booking.createdAt,
-        updatedAt: booking.updatedAt
-      }))
+      bookings: assignedBookings.map(formatBookingData)
     });
 
   } catch (error) {
@@ -262,7 +237,7 @@ const getActiveDetailers = async (req, res) => {
             bookings: {
               where: {
                 status: {
-                  in: ['CONFIRMED', 'IN_PROGRESS']
+                  in: ['CONFIRMED', 'EN_ROUTE', 'STARTED', 'IN_PROGRESS']
                 }
               }
             }
@@ -334,7 +309,7 @@ const autoAssignBooking = async (req, res) => {
               where: {
                 date: booking.date,
                 status: {
-                  in: ['CONFIRMED', 'IN_PROGRESS']
+                  in: ['CONFIRMED', 'EN_ROUTE', 'STARTED', 'IN_PROGRESS']
                 }
               }
             }
@@ -392,8 +367,8 @@ const autoAssignBooking = async (req, res) => {
 module.exports = {
   assignBookingToDetailer,
   getUnassignedBookings,
-  getAllBookings,        // NEW
-  getAssignedBookings,   // NEW
+  getAllBookings,
+  getAssignedBookings,
   getActiveDetailers,
   autoAssignBooking
 };

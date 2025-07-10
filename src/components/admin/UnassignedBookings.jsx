@@ -4,7 +4,13 @@ import { Search, CheckCircle } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 import BookingCard from './BookingCard';
 
-const UnassignedBookings = ({ bookings, detailers, onRefresh }) => {
+const UnassignedBookings = ({ 
+  bookings, 
+  detailers, 
+  onRefresh, 
+  availableServices = [], 
+  availableAddOns = [] 
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [assigningBooking, setAssigningBooking] = useState(null);
@@ -129,6 +135,8 @@ const UnassignedBookings = ({ bookings, detailers, onRefresh }) => {
               onAutoAssign={handleAutoAssign}
               isAssigning={assigningBooking === booking.id}
               showAssignActions={true}
+              availableServices={availableServices}
+              availableAddOns={availableAddOns}
             />
           ))
         )}

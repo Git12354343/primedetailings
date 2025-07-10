@@ -11,6 +11,7 @@ import {
   X, 
   Loader2 
 } from 'lucide-react';
+import { ServiceDisplay, ExtrasDisplay } from '../../utils/serviceUtils';
 
 const BookingCard = ({ 
   booking, 
@@ -18,7 +19,9 @@ const BookingCard = ({
   onAssign, 
   onAutoAssign, 
   isAssigning, 
-  showAssignActions = true 
+  showAssignActions = true,
+  availableServices = [],
+  availableAddOns = []
 }) => {
   const [selectedDetailer, setSelectedDetailer] = useState('');
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
@@ -125,42 +128,15 @@ const BookingCard = ({
       {/* Services */}
       <div className="mb-4">
         <h4 className="text-sm font-medium text-gray-900 mb-2">Services:</h4>
-        <div className="flex flex-wrap gap-2">
-          {(() => {
-            try {
-              const services = Array.isArray(booking.services) 
-                ? booking.services 
-                : JSON.parse(booking.services || '[]');
-              return services.map((service, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
-                >
-                  {service}
-                </span>
-              ));
-            } catch (e) {
-              return <span className="text-gray-500 text-xs">No services</span>;
-            }
-          })()}
-          {(() => {
-            try {
-              const extras = Array.isArray(booking.extras) 
-                ? booking.extras 
-                : JSON.parse(booking.extras || '[]');
-              return extras.map((extra, index) => (
-                <span
-                  key={index}
-                  className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
-                >
-                  {extra}
-                </span>
-              ));
-            } catch (e) {
-              return null;
-            }
-          })()}
-        </div>
+        <ServiceDisplay 
+          services={booking?.services}
+          availableServices={availableServices}
+        />
+        <ExtrasDisplay 
+          extras={booking?.extras}
+          availableAddOns={availableAddOns}
+          className="mt-2"
+        />
       </div>
 
       {/* Special Instructions */}

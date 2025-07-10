@@ -13,8 +13,9 @@ import {
   RefreshCw,
   Search
 } from 'lucide-react';
+import { ServiceDisplay, ExtrasDisplay } from '../../utils/serviceUtils';
 
-const LiveJobFeed = ({ jobs = [], onJobClick, onRefresh }) => {
+const LiveJobFeed = ({ jobs = [], onJobClick, onRefresh, availableServices = [], availableAddOns = [] }) => {
   const [filteredJobs, setFilteredJobs] = useState(jobs);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -343,44 +344,11 @@ const LiveJobFeed = ({ jobs = [], onJobClick, onRefresh }) => {
                           </div>
 
                           {/* Services */}
-                          {job?.services && (
-                            <div className="flex flex-wrap gap-1 mb-2">
-                              {(() => {
-                                try {
-                                  const services = Array.isArray(job.services) 
-                                    ? job.services 
-                                    : JSON.parse(job.services || '[]');
-                                  return services.slice(0, 3).map((service, index) => (
-                                    <span
-                                      key={index}
-                                      className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
-                                    >
-                                      {service || 'Unknown Service'}
-                                    </span>
-                                  ));
-                                } catch (e) {
-                                  return <span className="text-xs text-gray-500">No services</span>;
-                                }
-                              })()}
-                              {(() => {
-                                try {
-                                  const services = Array.isArray(job.services) 
-                                    ? job.services 
-                                    : JSON.parse(job.services || '[]');
-                                  if (services.length > 3) {
-                                    return (
-                                      <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                                        +{services.length - 3} more
-                                      </span>
-                                    );
-                                  }
-                                  return null;
-                                } catch (e) {
-                                  return null;
-                                }
-                              })()}
-                            </div>
-                          )}
+                          <ServiceDisplay 
+                            services={job?.services}
+                            availableServices={availableServices}
+                            className="mb-2"
+                          />
                         </div>
 
                         {/* Time and Detailer Info */}

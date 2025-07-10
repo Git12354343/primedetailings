@@ -5,10 +5,6 @@ import {
   StickyNote, Calendar, Route, Play, Camera, Activity, Loader2
 } from 'lucide-react';
 
-// Import the components we created
-// import JobTimelineTracker from './JobTimelineTracker';
-// import StartNavigationComponent from './StartNavigationComponent';
-
 const ProfessionalJobCard = ({ 
   booking, 
   onStatusUpdate, 
@@ -20,6 +16,35 @@ const ProfessionalJobCard = ({
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
+
+  // Helper function to safely parse JSON services/extras
+  const parseServices = (services) => {
+    try {
+      if (Array.isArray(services)) return services;
+      if (typeof services === 'string') {
+        const parsed = JSON.parse(services);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error parsing services:', error);
+      return [];
+    }
+  };
+
+  const parseExtras = (extras) => {
+    try {
+      if (Array.isArray(extras)) return extras;
+      if (typeof extras === 'string') {
+        const parsed = JSON.parse(extras);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error parsing extras:', error);
+      return [];
+    }
+  };
 
   // Enhanced status tracking with more granular states
   const getStatus = () => {
@@ -274,6 +299,10 @@ const ProfessionalJobCard = ({
     );
   };
 
+  // Parse services and extras safely
+  const servicesList = parseServices(booking.services);
+  const extrasList = parseExtras(booking.extras);
+
   return (
     <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 hover:shadow-lg ${
       isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
@@ -418,13 +447,13 @@ const ProfessionalJobCard = ({
               <span className="font-medium text-gray-900 text-sm">Services</span>
             </div>
             <div className="flex flex-wrap gap-1 ml-6">
-              {booking.services && booking.services.length > 0 ? (
-                booking.services.map((service, index) => (
+              {servicesList.length > 0 ? (
+                servicesList.map((service, index) => (
                   <span
                     key={index}
                     className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
                   >
-                    {service}
+                    {typeof service === 'string' ? service : `Service #${service}`}
                   </span>
                 ))
               ) : (
@@ -434,19 +463,19 @@ const ProfessionalJobCard = ({
           </div>
           
           {/* Add-ons */}
-          {booking.extras && booking.extras.length > 0 && (
+          {extrasList.length > 0 && (
             <div>
               <div className="flex items-center mb-2">
                 <Package className="w-4 h-4 mr-2 text-green-600" />
                 <span className="font-medium text-gray-900 text-sm">Add-ons</span>
               </div>
               <div className="flex flex-wrap gap-1 ml-6">
-                {booking.extras.map((extra, index) => (
+                {extrasList.map((extra, index) => (
                   <span
                     key={index}
                     className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"
                   >
-                    {extra}
+                    {typeof extra === 'string' ? extra : `Add-on #${extra}`}
                   </span>
                 ))}
               </div>
