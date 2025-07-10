@@ -35,6 +35,11 @@ model Booking {
   specialInstructions String?       @db.Text
   totalPrice          Decimal?      @db.Decimal(8, 2)
   detailer            Detailer?     @relation(fields: [detailerId], references: [id])
+  enRouteAt           DateTime?
+  startedAt           DateTime?
+  arrivedAt           DateTime?
+  completedAt         DateTime?
+  estimatedDuration   Int?      // in minutes
 
   @@index([detailerId], map: "bookings_detailerId_fkey")
   @@map("bookings")
@@ -113,6 +118,8 @@ model AddOn {
 enum BookingStatus {
   PENDING
   CONFIRMED
+  EN_ROUTE      // New status
+  STARTED       // New status
   IN_PROGRESS
   COMPLETED
   CANCELED

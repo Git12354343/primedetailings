@@ -461,7 +461,7 @@ const markBookingCompleted = async (req, res) => {
 const updateBookingStatus = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { status, notes } = req.body;
+    const { status, notes, location } = req.body;
     const detailerId = req.detailer?.detailerId;
 
     // Enhanced validation

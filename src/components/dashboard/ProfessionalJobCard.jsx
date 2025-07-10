@@ -1,10 +1,13 @@
-// src/components/dashboard/ProfessionalJobCard.jsx
 import React, { useState } from 'react';
 import {
   User, Phone, Car, Wrench, Package, MapPin, Navigation, 
   MessageSquare, Timer, CheckCircle, AlertCircle, Clock, 
-  StickyNote, Calendar, Route, Play, Camera
+  StickyNote, Calendar, Route, Play, Camera, Activity, Loader2
 } from 'lucide-react';
+
+// Import the components we created
+// import JobTimelineTracker from './JobTimelineTracker';
+// import StartNavigationComponent from './StartNavigationComponent';
 
 const ProfessionalJobCard = ({ 
   booking, 
@@ -12,9 +15,25 @@ const ProfessionalJobCard = ({
   onEditNotes, 
   timeTracking, 
   calculateWorkTime, 
-  isActive 
+  isActive,
+  onStartNavigation 
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
+
+  // Enhanced status tracking with more granular states
+  const getStatus = () => {
+    // Map your existing statuses to enhanced timeline statuses
+    const statusMap = {
+      'CONFIRMED': 'CONFIRMED',
+      'EN_ROUTE': 'EN_ROUTE', 
+      'STARTED': 'STARTED',
+      'IN_PROGRESS': 'IN_PROGRESS',
+      'COMPLETED': 'COMPLETED'
+    };
+    
+    return statusMap[booking.status] || 'CONFIRMED';
+  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -36,8 +55,12 @@ const ProfessionalJobCard = ({
     switch (status) {
       case 'CONFIRMED':
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'IN_PROGRESS':
+      case 'EN_ROUTE':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'STARTED':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'IN_PROGRESS':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'COMPLETED':
         return 'bg-green-100 text-green-800 border-green-200';
       default:
@@ -49,8 +72,12 @@ const ProfessionalJobCard = ({
     switch (status) {
       case 'CONFIRMED':
         return <AlertCircle className="w-4 h-4" />;
+      case 'EN_ROUTE':
+        return <Navigation className="w-4 h-4" />;
+      case 'STARTED':
+        return <Play className="w-4 h-4" />;
       case 'IN_PROGRESS':
-        return <Clock className="w-4 h-4" />;
+        return <Activity className="w-4 h-4" />;
       case 'COMPLETED':
         return <CheckCircle className="w-4 h-4" />;
       default:
@@ -77,20 +104,25 @@ const ProfessionalJobCard = ({
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-      // Try to open Waze first, fallback to Google Maps
+      // Deep link format for mobile Google Maps
+      const googleMapsDeepLink = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
       const wazeUrl = `https://waze.com/ul?q=${encodedAddress}`;
-      const googleMapsUrl = `https://maps.google.com/maps?q=${encodedAddress}`;
       
-      // Try Waze first
-      window.open(wazeUrl, '_blank');
+      // Try to open native app first
+      window.location.href = googleMapsDeepLink;
       
-      // Fallback to Google Maps after a short delay
+      // Fallback to Waze after a short delay
       setTimeout(() => {
-        window.open(googleMapsUrl, '_blank');
+        window.open(wazeUrl, '_blank');
       }, 1000);
     } else {
-      // Desktop - use Google Maps
+      // Desktop - use standard Google Maps
       window.open(`https://maps.google.com/maps?q=${encodedAddress}`, '_blank');
+    }
+
+    // Trigger navigation callback
+    if (onStartNavigation) {
+      onStartNavigation(booking);
     }
   };
 
@@ -101,6 +133,145 @@ const ProfessionalJobCard = ({
   const handleSendSMS = (message) => {
     const smsBody = encodeURIComponent(message);
     window.open(`sms:${booking.customer.phoneNumber}?body=${smsBody}`, '_self');
+  };
+
+  // Enhanced timeline component embedded in the card
+  const TimelineProgress = () => {
+    const timelineStages = [
+      {
+        key: 'assigned',
+        label: 'Assigned',
+        icon: User,
+        status: 'CONFIRMED',
+        timestamp: booking?.createdAt
+      },
+      {
+        key: 'on_way',
+        label: 'En Route',
+        icon: Navigation,
+        status: 'EN_ROUTE',
+        timestamp: booking?.enRouteAt
+      },
+      {
+        key: 'started',
+        label: 'Started',
+        icon: Play,
+        status: 'STARTED',
+        timestamp: booking?.startedAt
+      },
+      {
+        key: 'in_progress',
+        label: 'Working',
+        icon: Activity,
+        status: 'IN_PROGRESS',
+        timestamp: timeTracking?.startTime
+      },
+      {
+        key: 'completed',
+        label: 'Done',
+        icon: CheckCircle,
+        status: 'COMPLETED',
+        timestamp: timeTracking?.endTime || booking?.completedAt
+      }
+    ];
+
+    const getCurrentStageIndex = () => {
+      const statusMap = {
+        'CONFIRMED': 0,
+        'EN_ROUTE': 1,
+        'STARTED': 2,
+        'IN_PROGRESS': 3,
+        'COMPLETED': 4
+      };
+      return statusMap[booking?.status] || 0;
+    };
+
+    const currentStageIndex = getCurrentStageIndex();
+
+    const formatTimestamp = (timestamp) => {
+      if (!timestamp) return null;
+      try {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit',
+          hour12: true 
+        });
+      } catch (error) {
+        return null;
+      }
+    };
+
+    return (
+      <div className="bg-gray-50 rounded-lg p-3 mb-3">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center">
+            <Timer className="w-4 h-4 text-blue-600 mr-2" />
+            <span className="text-sm font-medium text-gray-900">Progress</span>
+          </div>
+          <button
+            onClick={() => setShowTimeline(!showTimeline)}
+            className="text-xs text-blue-600 hover:text-blue-700"
+          >
+            {showTimeline ? 'Hide Details' : 'Show Details'}
+          </button>
+        </div>
+
+        {/* Mini progress bar */}
+        <div className="relative mb-2">
+          <div className="flex justify-between">
+            {timelineStages.map((stage, index) => {
+              const Icon = stage.icon;
+              const completed = index < currentStageIndex;
+              const current = index === currentStageIndex;
+              const timestamp = formatTimestamp(stage.timestamp);
+
+              return (
+                <div key={stage.key} className="flex flex-col items-center">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs transition-all duration-300 ${
+                    completed 
+                      ? 'bg-blue-600 text-white' 
+                      : current
+                      ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-600'
+                      : 'bg-gray-200 text-gray-400'
+                  }`}>
+                    {current && booking?.status !== 'COMPLETED' ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Icon className="w-3 h-3" />
+                    )}
+                  </div>
+                  {showTimeline && (
+                    <div className="mt-1 text-center">
+                      <div className="text-xs font-medium text-gray-700">{stage.label}</div>
+                      {timestamp && (
+                        <div className="text-xs text-gray-500">{timestamp}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Progress line */}
+          <div className="absolute top-3 left-3 right-3 h-0.5 bg-gray-300 -z-10">
+            <div 
+              className="h-full bg-blue-600 transition-all duration-500"
+              style={{ width: `${(currentStageIndex / (timelineStages.length - 1)) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Current status indicator */}
+        <div className="text-center">
+          <span className="text-xs text-gray-600">
+            {booking?.status === 'COMPLETED' ? 'Job completed!' : 
+             `Currently: ${timelineStages[currentStageIndex]?.label || 'Assigned'}`}
+          </span>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -146,7 +317,10 @@ const ProfessionalJobCard = ({
           </div>
         </div>
 
-        {/* Time Tracking */}
+        {/* Timeline Progress */}
+        <TimelineProgress />
+
+        {/* Active Work Time Tracking */}
         {timeTracking && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
             <div className="flex items-center justify-between">
@@ -193,7 +367,7 @@ const ProfessionalJobCard = ({
             </div>
           </div>
           
-          {/* Address with Directions */}
+          {/* Address with Enhanced Navigation */}
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -213,7 +387,7 @@ const ProfessionalJobCard = ({
                 className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium ml-3"
               >
                 <Navigation className="w-3 h-3 mr-1" />
-                Directions
+                Navigate
               </button>
             </div>
           </div>
@@ -307,30 +481,62 @@ const ProfessionalJobCard = ({
         </div>
       )}
 
-      {/* Action Buttons */}
+      {/* Enhanced Action Buttons */}
       <div className="p-4">
         <div className="space-y-2">
           {booking.status === 'CONFIRMED' && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2">
               <button
-                onClick={() => handleSendSMS("Hi! I'm on my way to your location for the detailing service. See you soon!")}
-                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                onClick={() => {
+                  handleGetDirections();
+                  handleStatusChange('EN_ROUTE');
+                }}
+                className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
               >
-                <Route className="w-4 h-4 mr-2" />
-                En Route
+                <Navigation className="w-4 h-4 mr-2" />
+                Start Navigation & Go En Route
               </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleSendSMS("Hi! I'm on my way to your location for the detailing service. See you soon!")}
+                  className="flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
+                >
+                  <Route className="w-3 h-3 mr-1" />
+                  Notify En Route
+                </button>
+                <button
+                  onClick={() => handleStatusChange('STARTED')}
+                  disabled={isUpdating}
+                  className="flex items-center justify-center px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs disabled:opacity-50"
+                >
+                  <Play className="w-3 h-3 mr-1" />
+                  Start Job
+                </button>
+              </div>
+            </div>
+          )}
+
+          {booking.status === 'EN_ROUTE' && (
+            <div className="space-y-2">
               <button
-                onClick={() => handleStatusChange('IN_PROGRESS')}
+                onClick={() => handleStatusChange('STARTED')}
                 disabled={isUpdating}
-                className="flex items-center justify-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium disabled:opacity-50"
+                className="w-full flex items-center justify-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium disabled:opacity-50"
               >
                 <Play className="w-4 h-4 mr-2" />
-                {isUpdating ? 'Starting...' : 'Start Job'}
+                {isUpdating ? 'Starting...' : 'Arrived - Start Job'}
+              </button>
+              <button
+                onClick={() => handleSendSMS("I've arrived at your location and will begin the detailing service shortly.")}
+                className="w-full flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
+              >
+                <MapPin className="w-3 h-3 mr-1" />
+                Notify Arrival
               </button>
             </div>
           )}
-          
-          {booking.status === 'IN_PROGRESS' && (
+
+          {(booking.status === 'STARTED' || booking.status === 'IN_PROGRESS') && (
             <div className="space-y-2">
               <button
                 onClick={() => handleStatusChange('COMPLETED')}
@@ -343,17 +549,17 @@ const ProfessionalJobCard = ({
               
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => handleSendSMS("I've arrived and will begin the detailing service shortly.")}
-                  className="flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
-                >
-                  <MapPin className="w-3 h-3 mr-1" />
-                  Arrived
-                </button>
-                <button
                   className="flex items-center justify-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-xs"
                 >
                   <Camera className="w-3 h-3 mr-1" />
-                  Photo
+                  Before Photo
+                </button>
+                <button
+                  onClick={() => handleSendSMS("Work is progressing well on your vehicle. Will update you when complete!")}
+                  className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs"
+                >
+                  <MessageSquare className="w-3 h-3 mr-1" />
+                  Progress Update
                 </button>
               </div>
             </div>
@@ -363,7 +569,7 @@ const ProfessionalJobCard = ({
             <div className="space-y-2">
               <div className="flex items-center justify-center py-3 bg-green-100 text-green-800 rounded-lg text-sm font-medium">
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Job Completed
+                Job Completed Successfully
               </div>
               
               <div className="grid grid-cols-2 gap-2">
@@ -372,7 +578,7 @@ const ProfessionalJobCard = ({
                   className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs"
                 >
                   <MessageSquare className="w-3 h-3 mr-1" />
-                  Done SMS
+                  Completion SMS
                 </button>
                 <button
                   className="flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
