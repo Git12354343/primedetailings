@@ -1,0 +1,260 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Booking {
+  id                  Int           @id @default(autoincrement())
+  firstName           String        @db.VarChar(100)
+  lastName            String        @db.VarChar(100)
+  phoneNumber         String        @db.VarChar(20)
+  vehicleType         String        @db.VarChar(50)
+  make                String        @db.VarChar(50)
+  model               String        @db.VarChar(50)
+  year                Int
+  services            String        @db.Text
+  extras              String?       @db.Text
+  date                DateTime      @db.Date
+  time                String        @db.VarChar(20)
+  status              BookingStatus @default(PENDING)
+  confirmationCode    String        @unique @db.VarChar(10)
+  detailerId          Int?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  address             String        @db.VarChar(255)
+  city                String        @db.VarChar(100)
+  email               String        @db.VarChar(255)
+  emailSent           Boolean       @default(false)
+  notes               String?       @db.Text
+  postalCode          String        @db.VarChar(10)
+  reminderSent        Boolean       @default(false)
+  specialInstructions String?       @db.Text
+  totalPrice          Decimal?      @db.Decimal(8, 2)
+  basePrice           Decimal?      @db.Decimal(8, 2)
+  dynamicPricing      String?       @db.Text // JSON of applied pricing rules
+  detailer            Detailer?     @relation(fields: [detailerId], references: [id])
+  enRouteAt           DateTime?
+  startedAt           DateTime?
+  arrivedAt           DateTime?
+  completedAt         DateTime?
+  estimatedDuration   Int?          // in minutes
+  canceledAt          DateTime?
+  cancellationFee     Decimal?      @db.Decimal(8, 2)
+  cancellationReason  String?       @db.Text
+  review              Review?
+  photos              BookingPhoto[]
+
+  @@index([detailerId], map: "bookings_detailerId_fkey")
+  @@index([status])
+  @@index([date])
+  @@map("bookings")
+}
+
+model Detailer {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  phone     String    @unique @db.VarChar(20)
+  email     String    @unique @db.VarChar(255)
+  password  String    @db.VarChar(255)
+  isActive  Boolean   @default(true)
+  rating    Decimal?  @db.Decimal(3, 2) // Average rating (0.00-5.00)
+  totalReviews Int    @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+  reviews   Review[]
+
+  @@map("detailers")
+}
+
+model Contact {
+  id        Int           @id @default(autoincrement())
+  name      String        @db.VarChar(100)
+  email     String        @db.VarChar(255)
+  phone     String?       @db.VarChar(20)
+  subject   String        @db.VarChar(200)
+  message   String        @db.Text
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  emailSent Boolean       @default(false)
+
+  @@map("contacts")
+}
+
+model Service {
+  id          Int              @id @default(autoincrement())
+  name        String           @db.VarChar(100)
+  description String?          @db.Text
+  category    ServiceCategory  @default(DETAILING)
+  isActive    Boolean          @default(true)
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  pricing     ServicePricing[]
+
+  @@map("services")
+}
+
+model ServicePricing {
+  id          Int      @id @default(autoincrement())
+  serviceId   Int
+  vehicleType String   @db.VarChar(50)
+  price       Decimal  @db.Decimal(8, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, vehicleType])
+  @@map("service_pricing")
+}
+
+model AddOn {
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(100)
+  description String?       @db.Text
+  category    AddOnCategory @default(ENHANCEMENT)
+  price       Decimal       @db.Decimal(8, 2)
+  isActive    Boolean       @default(true)
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("add_ons")
+}
+
+model Review {
+  id            Int      @id @default(autoincrement())
+  bookingId     Int      @unique
+  detailerId    Int
+  rating        Int      // 1-5 stars
+  comment       String?  @db.Text
+  customerName  String   @db.VarChar(100)
+  isPublic      Boolean  @default(true)
+  isVerified    Boolean  @default(true) // Verified from completed booking
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  detailer      Detailer @relation(fields: [detailerId], references: [id], onDelete: Cascade)
+
+  @@index([detailerId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+model BookingPhoto {
+  id         Int      @id @default(autoincrement())
+  bookingId  Int
+  photoType  PhotoType
+  url        String   @db.VarChar(500)
+  filename   String   @db.VarChar(255)
+  uploadedAt DateTime @default(now())
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_photos")
+}
+
+model ServicePackage {
+  id               Int      @id @default(autoincrement())
+  name             String   @db.VarChar(100)
+  description      String?  @db.Text
+  serviceIds       String   @db.Text // JSON array of service IDs
+  vehicleType      String   @db.VarChar(50)
+  regularPrice     Decimal  @db.Decimal(8, 2)
+  packagePrice     Decimal  @db.Decimal(8, 2)
+  savingsAmount    Decimal  @db.Decimal(8, 2)
+  savingsPercent   Int      // Percentage saved
+  isPopular        Boolean  @default(false)
+  isFeatured       Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  estimatedMinutes Int?
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("service_packages")
+}
+
+model Subscription {
+  id              Int                @id @default(autoincrement())
+  customerId      String             @db.VarChar(100)
+  customerName    String             @db.VarChar(100)
+  customerEmail   String             @db.VarChar(255)
+  customerPhone   String             @db.VarChar(20)
+  planType        SubscriptionPlan
+  status          SubscriptionStatus @default(ACTIVE)
+  monthlyPrice    Decimal            @db.Decimal(8, 2)
+  vehicleType     String             @db.VarChar(50)
+  servicesPerMonth Int               @default(1)
+  servicesUsed    Int                @default(0)
+  startDate       DateTime           @default(now())
+  nextBillingDate DateTime
+  endDate         DateTime?
+  canceledAt      DateTime?
+  cancellationReason String?         @db.Text
+  autoRenew       Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  EN_ROUTE      // New status
+  STARTED       // New status
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum ContactStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  ARCHIVED
+}
+
+enum ServiceCategory {
+  DETAILING
+  PROTECTION
+  RESTORATION
+  MAINTENANCE
+  SPECIALTY
+}
+
+enum AddOnCategory {
+  ENHANCEMENT
+  PROTECTION
+  CLEANING
+  RESTORATION
+}
+
+enum PhotoType {
+  BEFORE
+  AFTER
+  DURING
+}
+
+enum SubscriptionPlan {
+  MONTHLY_BASIC      // 1 wash per month
+  MONTHLY_PREMIUM    // 2 washes per month
+  SEASONAL_PROTECTION // 4 protection services per year
+  FLEET_MONTHLY      // For multiple vehicles
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELED
+  EXPIRED
+}
