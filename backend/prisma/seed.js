@@ -1,46 +1,75 @@
+// prisma/seed.js  — creates a detailer in both Supabase Auth AND the DB table
 const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('Start seeding...');
+// Service-role client so we can create Auth users without email confirmation
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-  // --- Create a specific detailer account ---
+async function main() {
+  console.log('🌱 Start seeding...');
+
   const email = 'zakhs93@gmail.com';
   const password = 'detailing123';
+  const name = 'Zak H';
+  const phone = '514-555-9393';
 
-  // Check if the detailer already exists to avoid errors
-  const existingDetailer = await prisma.detailer.findUnique({
-    where: { email: email },
-  });
+  // 1. Check if detailer already exists in DB
+  const existingDetailer = await prisma.detailer.findUnique({ where: { email } });
 
   if (existingDetailer) {
-    console.log(`Detailer with email ${email} already exists. Skipping.`);
-  } else {
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create the new detailer
-    const newDetailer = await prisma.detailer.create({
-      data: {
-        name: 'Zak H', // You can change the name if you like
-        email: email,
-        phone: '514-555-9393', // Placeholder phone number
-        password: hashedPassword,
-        isActive: true,
-      },
-    });
-    console.log(`✅ Created new detailer: ${newDetailer.name} (Email: ${newDetailer.email})`);
+    console.log(`ℹ️  Detailer ${email} already exists in DB. Skipping.`);
+    return;
   }
 
-  console.log('\nSeeding finished.');
+  // 2. Create Supabase Auth user
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true   // skip confirmation email in dev
+  });
+
+  if (authError) {
+    // If the user already exists in Supabase Auth, fetch their ID
+    if (authError.message?.includes('already registered')) {
+      console.log('ℹ️  Supabase Auth user already exists, looking up ID...');
+      const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+      const existing = listData?.users?.find(u => u.email === email);
+      if (existing) {
+        await createDetailerRecord(existing.id, name, email, phone);
+      }
+      return;
+    }
+    throw new Error(`Supabase Auth error: ${authError.message}`);
+  }
+
+  // 3. Create detailer record in DB, linked to Supabase Auth user
+  await createDetailerRecord(authData.user.id, name, email, phone);
+
+  console.log('\n✅ Seeding finished.');
+}
+
+async function createDetailerRecord(supabaseUserId, name, email, phone) {
+  const detailer = await prisma.detailer.create({
+    data: {
+      name,
+      email,
+      phone,
+      supabaseUserId,
+      isActive: true
+    }
+  });
+  console.log(`✅ Created detailer: ${detailer.name} (${detailer.email}), Supabase ID: ${supabaseUserId}`);
 }
 
 main()
   .catch((e) => {
-    console.error('An error occurred during seeding:');
-    console.error(e);
+    console.error('❌ Seeding error:', e);
     process.exit(1);
   })
   .finally(async () => {

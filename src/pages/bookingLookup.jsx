@@ -34,9 +34,9 @@ const BookingLookup = () => {
     const fetchServicesAndAddOns = async () => {
       try {
         const [servicesResponse, addOnsResponse] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_URL}/services`),
-          fetch(`${import.meta.env.VITE_API_URL}/services/addons`)
-        ]);
+        fetch(`${import.meta.env.VITE_API_URL}/services/active`),
+        fetch(`${import.meta.env.VITE_API_URL}/services/addons/active`)
+          ]);
 
         const servicesData = await servicesResponse.json();
         const addOnsData = await addOnsResponse.json();

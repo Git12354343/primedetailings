@@ -1,14 +1,17 @@
 // backend/routes/auth.js
 const express = require('express');
-const { loginDetailer, verifyDetailer } = require('../controllers/authController');
+const { loginDetailer, verifyDetailer, logoutDetailer } = require('../controllers/authController');
 const verifyToken = require('../middleware/verifyToken');
 
 const router = express.Router();
 
-// Login route
+// Login route — now uses Supabase Auth under the hood
 router.post('/login', loginDetailer);
 
-// Verify token route (protected)
+// Verify token (protected)
 router.get('/verify', verifyToken, verifyDetailer);
+
+// Logout route — invalidates Supabase session
+router.post('/logout', verifyToken, logoutDetailer);
 
 module.exports = router;

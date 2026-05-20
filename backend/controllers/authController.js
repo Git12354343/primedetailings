@@ -1,29 +1,20 @@
 // backend/controllers/authController.js
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const { createClient } = require('@supabase/supabase-js');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-// Generate JWT token
-const generateToken = (detailer) => {
-  return jwt.sign(
-    { 
-      detailerId: detailer.id, 
-      email: detailer.email, 
-      name: detailer.name 
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-};
+// Supabase admin client (service role) — used ONLY on the server
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-// Login detailer
+// ─── Login detailer ──────────────────────────────────────────────────────────
 const loginDetailer = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -31,19 +22,36 @@ const loginDetailer = async (req, res) => {
       });
     }
 
-    // Find detailer by email
-    const detailer = await prisma.detailer.findUnique({
-      where: { email: email.toLowerCase() }
+    // Authenticate via Supabase Auth
+    const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+      email: email.toLowerCase(),
+      password
     });
 
-    if (!detailer) {
+    if (authError || !authData.user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
-    // Check if detailer is active
+    // Look up the detailer record linked to this Supabase user
+    const detailer = await prisma.detailer.findFirst({
+      where: {
+        OR: [
+          { supabaseUserId: authData.user.id },
+          { email: email.toLowerCase() }
+        ]
+      }
+    });
+
+    if (!detailer) {
+      return res.status(401).json({
+        success: false,
+        message: 'Detailer account not found. Contact admin.'
+      });
+    }
+
     if (!detailer.isActive) {
       return res.status(403).json({
         success: false,
@@ -51,24 +59,20 @@ const loginDetailer = async (req, res) => {
       });
     }
 
-    // Compare password
-    const isPasswordValid = await bcrypt.compare(password, detailer.password);
-    
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
+    // Keep supabaseUserId in sync if it wasn't set yet
+    if (!detailer.supabaseUserId) {
+      await prisma.detailer.update({
+        where: { id: detailer.id },
+        data: { supabaseUserId: authData.user.id }
       });
     }
 
-    // Generate JWT token
-    const token = generateToken(detailer);
-
-    // Return success response
+    // Return the Supabase session JWT — the frontend stores this
     res.json({
       success: true,
       message: 'Login successful',
-      token,
+      // access_token is a valid JWT signed by Supabase — used as Bearer token
+      token: authData.session.access_token,
       detailer: {
         id: detailer.id,
         name: detailer.name,
@@ -86,11 +90,17 @@ const loginDetailer = async (req, res) => {
   }
 };
 
-// Verify token and get detailer info
+// ─── Verify token & return detailer info ────────────────────────────────────
 const verifyDetailer = async (req, res) => {
   try {
-    const detailer = await prisma.detailer.findUnique({
-      where: { id: req.detailer.detailerId },
+    // req.detailer is populated by verifyToken middleware
+    const detailer = await prisma.detailer.findFirst({
+      where: {
+        OR: [
+          { supabaseUserId: req.detailer.sub },
+          { email: req.detailer.email }
+        ]
+      },
       select: {
         id: true,
         name: true,
@@ -107,10 +117,7 @@ const verifyDetailer = async (req, res) => {
       });
     }
 
-    res.json({
-      success: true,
-      detailer
-    });
+    res.json({ success: true, detailer });
 
   } catch (error) {
     console.error('Verify detailer error:', error);
@@ -121,7 +128,24 @@ const verifyDetailer = async (req, res) => {
   }
 };
 
+// ─── Logout ──────────────────────────────────────────────────────────────────
+const logoutDetailer = async (req, res) => {
+  try {
+    // Sign out the user from Supabase (invalidates the session server-side)
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (token) {
+      // Set the session so Supabase knows which user to sign out
+      await supabaseAdmin.auth.admin.signOut(token).catch(() => {});
+    }
+    res.json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ success: false, message: 'Server error during logout' });
+  }
+};
+
 module.exports = {
   loginDetailer,
-  verifyDetailer
+  verifyDetailer,
+  logoutDetailer
 };

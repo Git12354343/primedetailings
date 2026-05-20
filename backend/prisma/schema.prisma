@@ -1,10 +1,12 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Booking {
@@ -34,14 +36,14 @@ model Booking {
   reminderSent        Boolean       @default(false)
   specialInstructions String?       @db.Text
   totalPrice          Decimal?      @db.Decimal(8, 2)
-  detailer            Detailer?     @relation(fields: [detailerId], references: [id])
   enRouteAt           DateTime?
   startedAt           DateTime?
   arrivedAt           DateTime?
   completedAt         DateTime?
-  estimatedDuration   Int?      // in minutes
+  estimatedDuration   Int?
+  detailer            Detailer?     @relation(fields: [detailerId], references: [id])
 
-  @@index([detailerId], map: "bookings_detailerId_fkey")
+  @@index([detailerId])
   @@map("bookings")
 }
 
@@ -50,7 +52,9 @@ model Detailer {
   name      String    @db.VarChar(100)
   phone     String    @unique @db.VarChar(20)
   email     String    @unique @db.VarChar(255)
-  password  String    @db.VarChar(255)
+  // password field removed — auth handled by Supabase Auth
+  // supabaseUserId links this record to a Supabase Auth user
+  supabaseUserId String? @unique @db.VarChar(255)
   isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -103,7 +107,7 @@ model ServicePricing {
 
 model AddOn {
   id          Int           @id @default(autoincrement())
-  name        String        @db.VarChar(100)
+  name        String        @unique @db.VarChar(100)
   description String?       @db.Text
   category    AddOnCategory @default(ENHANCEMENT)
   price       Decimal       @db.Decimal(8, 2)
@@ -118,8 +122,8 @@ model AddOn {
 enum BookingStatus {
   PENDING
   CONFIRMED
-  EN_ROUTE      // New status
-  STARTED       // New status
+  EN_ROUTE
+  STARTED
   IN_PROGRESS
   COMPLETED
   CANCELED
