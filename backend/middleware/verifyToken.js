@@ -1,10 +1,15 @@
 // backend/middleware/verifyToken.js
-// Verifies Supabase-issued JWTs (same interface as before — just updated validation)
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');  // ← ADD THIS
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    realtime: {
+      transport: ws   // ← ADD THIS
+    }
+  }
 );
 
 const verifyToken = async (req, res, next) => {
@@ -18,7 +23,6 @@ const verifyToken = async (req, res, next) => {
   }
 
   try {
-    // Validate the token against Supabase Auth — returns the user payload
     const { data, error } = await supabaseAdmin.auth.getUser(token);
 
     if (error || !data?.user) {
@@ -28,12 +32,10 @@ const verifyToken = async (req, res, next) => {
       });
     }
 
-    // Populate req.detailer with the Supabase user payload
-    // Fields: sub (user id), email — same shape downstream controllers expect
     req.detailer = {
-      sub: data.user.id,           // Supabase UUID
+      sub: data.user.id,
       email: data.user.email,
-      detailerId: data.user.id     // alias for any controller using detailerId
+      detailerId: data.user.id
     };
 
     next();

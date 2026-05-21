@@ -1,13 +1,19 @@
 // backend/controllers/authController.js
 const { createClient } = require('@supabase/supabase-js');
 const { PrismaClient } = require('@prisma/client');
+const ws = require('ws');  // ← ADD THIS
 
 const prisma = new PrismaClient();
 
-// Supabase admin client (service role) — used ONLY on the server
+// Supabase admin client — pass ws as transport for Node.js 20
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    realtime: {
+      transport: ws   // ← ADD THIS
+    }
+  }
 );
 
 // ─── Login detailer ──────────────────────────────────────────────────────────
@@ -22,7 +28,6 @@ const loginDetailer = async (req, res) => {
       });
     }
 
-    // Authenticate via Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
       email: email.toLowerCase(),
       password
@@ -35,7 +40,6 @@ const loginDetailer = async (req, res) => {
       });
     }
 
-    // Look up the detailer record linked to this Supabase user
     const detailer = await prisma.detailer.findFirst({
       where: {
         OR: [
@@ -59,7 +63,6 @@ const loginDetailer = async (req, res) => {
       });
     }
 
-    // Keep supabaseUserId in sync if it wasn't set yet
     if (!detailer.supabaseUserId) {
       await prisma.detailer.update({
         where: { id: detailer.id },
@@ -67,11 +70,9 @@ const loginDetailer = async (req, res) => {
       });
     }
 
-    // Return the Supabase session JWT — the frontend stores this
     res.json({
       success: true,
       message: 'Login successful',
-      // access_token is a valid JWT signed by Supabase — used as Bearer token
       token: authData.session.access_token,
       detailer: {
         id: detailer.id,
@@ -90,10 +91,9 @@ const loginDetailer = async (req, res) => {
   }
 };
 
-// ─── Verify token & return detailer info ────────────────────────────────────
+// ─── Verify token ─────────────────────────────────────────────────────────────
 const verifyDetailer = async (req, res) => {
   try {
-    // req.detailer is populated by verifyToken middleware
     const detailer = await prisma.detailer.findFirst({
       where: {
         OR: [
@@ -128,13 +128,11 @@ const verifyDetailer = async (req, res) => {
   }
 };
 
-// ─── Logout ──────────────────────────────────────────────────────────────────
+// ─── Logout ───────────────────────────────────────────────────────────────────
 const logoutDetailer = async (req, res) => {
   try {
-    // Sign out the user from Supabase (invalidates the session server-side)
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (token) {
-      // Set the session so Supabase knows which user to sign out
       await supabaseAdmin.auth.admin.signOut(token).catch(() => {});
     }
     res.json({ success: true, message: 'Logged out successfully' });
