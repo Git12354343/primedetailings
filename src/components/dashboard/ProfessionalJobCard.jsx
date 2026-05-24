@@ -1,634 +1,252 @@
 import React, { useState } from 'react';
 import {
-  User, Phone, Car, Wrench, Package, MapPin, Navigation, 
-  MessageSquare, Timer, CheckCircle, AlertCircle, Clock, 
-  StickyNote, Calendar, Route, Play, Camera, Activity, Loader2
+  User, Phone, Car, Wrench, Package, MapPin, Navigation,
+  MessageSquare, CheckCircle, AlertCircle, Clock,
+  StickyNote, Route, Play, Camera, Activity, Loader2,
+  ChevronDown, ChevronUp, DollarSign
 } from 'lucide-react';
 
-const ProfessionalJobCard = ({ 
-  booking, 
-  onStatusUpdate, 
-  onEditNotes, 
-  timeTracking, 
-  calculateWorkTime, 
-  isActive,
-  onStartNavigation 
-}) => {
+const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
+const GOLD_S = '#c9a84c';
+
+const STATUS_CONFIG = {
+  CONFIRMED:   { label: 'Confirmed',   color: GOLD_S,      bg: 'rgba(201,168,76,0.1)',   border: 'rgba(201,168,76,0.25)' },
+  EN_ROUTE:    { label: 'En Route',    color: '#60a5fa',   bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.25)' },
+  STARTED:     { label: 'Started',     color: '#f97316',   bg: 'rgba(249,115,22,0.1)',   border: 'rgba(249,115,22,0.25)' },
+  IN_PROGRESS: { label: 'In Progress', color: '#f97316',   bg: 'rgba(249,115,22,0.1)',   border: 'rgba(249,115,22,0.25)' },
+  COMPLETED:   { label: 'Completed',   color: '#34d399',   bg: 'rgba(52,211,153,0.1)',   border: 'rgba(52,211,153,0.25)' },
+  PENDING:     { label: 'Pending',     color: '#9ca3af',   bg: 'rgba(156,163,175,0.08)', border: 'rgba(156,163,175,0.15)' },
+};
+
+const parse = (v) => {
+  try { return Array.isArray(v) ? v : JSON.parse(v || '[]'); }
+  catch { return []; }
+};
+
+const formatDate = (d) => new Date(d).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+
+const ActionBtn = ({ onClick, disabled, gold, children, small }) => (
+  <button onClick={onClick} disabled={disabled}
+    className={`flex items-center justify-center gap-1.5 rounded-xl font-semibold transition-all active:scale-95 ${small ? 'text-xs py-2 px-3' : 'text-sm py-2.5 px-4'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+    style={gold
+      ? { background: GOLD, color: '#0a0a0a' }
+      : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.75)' }}>
+    {children}
+  </button>
+);
+
+const ProfessionalJobCard = ({ booking, onStatusUpdate, onEditNotes, timeTracking, calculateWorkTime, isActive, onStartNavigation }) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [showTimeline, setShowTimeline] = useState(false);
+  const [expanded, setExpanded]     = useState(false);
 
-  // Helper function to safely parse JSON services/extras
-  const parseServices = (services) => {
-    try {
-      if (Array.isArray(services)) return services;
-      if (typeof services === 'string') {
-        const parsed = JSON.parse(services);
-        return Array.isArray(parsed) ? parsed : [];
-      }
-      return [];
-    } catch (error) {
-      console.error('Error parsing services:', error);
-      return [];
-    }
-  };
+  const status = STATUS_CONFIG[booking.status] || STATUS_CONFIG.PENDING;
+  const services = parse(booking.services);
+  const extras   = parse(booking.extras);
+  const customer = booking.customer || booking;
+  const vehicle  = booking.vehicle  || booking;
 
-  const parseExtras = (extras) => {
-    try {
-      if (Array.isArray(extras)) return extras;
-      if (typeof extras === 'string') {
-        const parsed = JSON.parse(extras);
-        return Array.isArray(parsed) ? parsed : [];
-      }
-      return [];
-    } catch (error) {
-      console.error('Error parsing extras:', error);
-      return [];
-    }
-  };
+  const custName  = `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
+  const custPhone = customer.phoneNumber || customer.phone || '';
+  const custAddr  = `${customer.address || ''}, ${customer.city || ''}`.trim().replace(/^,\s*/, '');
+  const vehLabel  = `${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}`.trim();
 
-  // Enhanced status tracking with more granular states
-  const getStatus = () => {
-    // Map your existing statuses to enhanced timeline statuses
-    const statusMap = {
-      'CONFIRMED': 'CONFIRMED',
-      'EN_ROUTE': 'EN_ROUTE', 
-      'STARTED': 'STARTED',
-      'IN_PROGRESS': 'IN_PROGRESS',
-      'COMPLETED': 'COMPLETED'
-    };
-    
-    return statusMap[booking.status] || 'CONFIRMED';
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatTime = (timeString) => {
-    const [hours, minutes] = timeString.split(':');
-    const hour12 = hours % 12 || 12;
-    const ampm = hours < 12 ? 'AM' : 'PM';
-    return `${hour12}:${minutes} ${ampm}`;
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'CONFIRMED':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'EN_ROUTE':
-        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-      case 'STARTED':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'IN_PROGRESS':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800 border-green-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'CONFIRMED':
-        return <AlertCircle className="w-4 h-4" />;
-      case 'EN_ROUTE':
-        return <Navigation className="w-4 h-4" />;
-      case 'STARTED':
-        return <Play className="w-4 h-4" />;
-      case 'IN_PROGRESS':
-        return <Activity className="w-4 h-4" />;
-      case 'COMPLETED':
-        return <CheckCircle className="w-4 h-4" />;
-      default:
-        return <AlertCircle className="w-4 h-4" />;
-    }
-  };
-
-  const handleStatusChange = async (newStatus) => {
-    if (booking.status === newStatus) return;
-    
+  const update = async (newStatus) => {
+    if (booking.status === newStatus || isUpdating) return;
     setIsUpdating(true);
-    try {
-      await onStatusUpdate(booking.id, newStatus);
-    } finally {
-      setIsUpdating(false);
-    }
+    try { await onStatusUpdate(booking.id, newStatus); }
+    finally { setIsUpdating(false); }
   };
 
-  const handleGetDirections = () => {
-    const address = `${booking.customer.address}, ${booking.customer.city}`;
-    const encodedAddress = encodeURIComponent(address);
-    
-    // Check if mobile device
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-      // Deep link format for mobile Google Maps
-      const googleMapsDeepLink = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
-      const wazeUrl = `https://waze.com/ul?q=${encodedAddress}`;
-      
-      // Try to open native app first
-      window.location.href = googleMapsDeepLink;
-      
-      // Fallback to Waze after a short delay
-      setTimeout(() => {
-        window.open(wazeUrl, '_blank');
-      }, 1000);
-    } else {
-      // Desktop - use standard Google Maps
-      window.open(`https://maps.google.com/maps?q=${encodedAddress}`, '_blank');
-    }
-
-    // Trigger navigation callback
-    if (onStartNavigation) {
-      onStartNavigation(booking);
-    }
+  const getDirections = () => {
+    const addr = encodeURIComponent(custAddr);
+    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+    window.open(isMobile
+      ? `https://www.google.com/maps/dir/?api=1&destination=${addr}`
+      : `https://maps.google.com/maps?q=${addr}`, '_blank');
+    if (onStartNavigation) onStartNavigation(booking);
   };
 
-  const handleCallCustomer = () => {
-    window.open(`tel:${booking.customer.phoneNumber}`, '_self');
-  };
-
-  const handleSendSMS = (message) => {
-    const smsBody = encodeURIComponent(message);
-    window.open(`sms:${booking.customer.phoneNumber}?body=${smsBody}`, '_self');
-  };
-
-  // Enhanced timeline component embedded in the card
-  const TimelineProgress = () => {
-    const timelineStages = [
-      {
-        key: 'assigned',
-        label: 'Assigned',
-        icon: User,
-        status: 'CONFIRMED',
-        timestamp: booking?.createdAt
-      },
-      {
-        key: 'on_way',
-        label: 'En Route',
-        icon: Navigation,
-        status: 'EN_ROUTE',
-        timestamp: booking?.enRouteAt
-      },
-      {
-        key: 'started',
-        label: 'Started',
-        icon: Play,
-        status: 'STARTED',
-        timestamp: booking?.startedAt
-      },
-      {
-        key: 'in_progress',
-        label: 'Working',
-        icon: Activity,
-        status: 'IN_PROGRESS',
-        timestamp: timeTracking?.startTime
-      },
-      {
-        key: 'completed',
-        label: 'Done',
-        icon: CheckCircle,
-        status: 'COMPLETED',
-        timestamp: timeTracking?.endTime || booking?.completedAt
-      }
-    ];
-
-    const getCurrentStageIndex = () => {
-      const statusMap = {
-        'CONFIRMED': 0,
-        'EN_ROUTE': 1,
-        'STARTED': 2,
-        'IN_PROGRESS': 3,
-        'COMPLETED': 4
-      };
-      return statusMap[booking?.status] || 0;
-    };
-
-    const currentStageIndex = getCurrentStageIndex();
-
-    const formatTimestamp = (timestamp) => {
-      if (!timestamp) return null;
-      try {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: '2-digit',
-          hour12: true 
-        });
-      } catch (error) {
-        return null;
-      }
-    };
-
-    return (
-      <div className="bg-gray-50 rounded-lg p-3 mb-3">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <Timer className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="text-sm font-medium text-gray-900">Progress</span>
-          </div>
-          <button
-            onClick={() => setShowTimeline(!showTimeline)}
-            className="text-xs text-blue-600 hover:text-blue-700"
-          >
-            {showTimeline ? 'Hide Details' : 'Show Details'}
-          </button>
-        </div>
-
-        {/* Mini progress bar */}
-        <div className="relative mb-2">
-          <div className="flex justify-between">
-            {timelineStages.map((stage, index) => {
-              const Icon = stage.icon;
-              const completed = index < currentStageIndex;
-              const current = index === currentStageIndex;
-              const timestamp = formatTimestamp(stage.timestamp);
-
-              return (
-                <div key={stage.key} className="flex flex-col items-center">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs transition-all duration-300 ${
-                    completed 
-                      ? 'bg-blue-600 text-white' 
-                      : current
-                      ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-600'
-                      : 'bg-gray-200 text-gray-400'
-                  }`}>
-                    {current && booking?.status !== 'COMPLETED' ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Icon className="w-3 h-3" />
-                    )}
-                  </div>
-                  {showTimeline && (
-                    <div className="mt-1 text-center">
-                      <div className="text-xs font-medium text-gray-700">{stage.label}</div>
-                      {timestamp && (
-                        <div className="text-xs text-gray-500">{timestamp}</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          
-          {/* Progress line */}
-          <div className="absolute top-3 left-3 right-3 h-0.5 bg-gray-300 -z-10">
-            <div 
-              className="h-full bg-blue-600 transition-all duration-500"
-              style={{ width: `${(currentStageIndex / (timelineStages.length - 1)) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Current status indicator */}
-        <div className="text-center">
-          <span className="text-xs text-gray-600">
-            {booking?.status === 'COMPLETED' ? 'Job completed!' : 
-             `Currently: ${timelineStages[currentStageIndex]?.label || 'Assigned'}`}
-          </span>
-        </div>
-      </div>
-    );
-  };
-
-  // Parse services and extras safely
-  const servicesList = parseServices(booking.services);
-  const extrasList = parseExtras(booking.extras);
+  const sms = (msg) => window.open(`sms:${custPhone}?body=${encodeURIComponent(msg)}`, '_self');
 
   return (
-    <div className={`bg-white rounded-lg shadow-md border-2 transition-all duration-200 hover:shadow-lg ${
-      isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
-    }`}>
-      {/* Card Header */}
-      <div className="p-4 border-b border-gray-100">
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <User className="w-5 h-5 mr-2 text-blue-600" />
-              {booking.customer.firstName} {booking.customer.lastName}
-            </h3>
-            <p className="text-sm text-gray-500">#{booking.confirmationCode}</p>
+    <div className="rounded-2xl overflow-hidden transition-all"
+      style={{
+        background: isActive ? 'rgba(201,168,76,0.06)' : 'rgba(255,255,255,0.03)',
+        border: isActive ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.08)',
+        boxShadow: isActive ? '0 0 30px rgba(201,168,76,0.1)' : 'none',
+      }}>
+
+      {/* Card header */}
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          {/* Status badge */}
+          <span className="text-xs font-bold px-2.5 py-1 rounded-lg"
+            style={{ background: status.bg, border: `1px solid ${status.border}`, color: status.color }}>
+            {status.label}
+          </span>
+          {/* Time badge */}
+          <div className="flex items-center gap-1 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <Clock className="w-3 h-3" />
+            <span>{booking.time}</span>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className={`px-3 py-1 rounded-full text-xs font-medium border flex items-center ${getStatusColor(booking.status)}`}>
-              {getStatusIcon(booking.status)}
-              <span className="ml-1">{booking.status.replace('_', ' ')}</span>
-            </div>
-            
-            <button
-              onClick={() => onEditNotes(booking)}
-              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-              title="Add Notes"
-            >
-              <StickyNote className="w-4 h-4" />
+        </div>
+
+        {/* Customer */}
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+            style={{ background: 'rgba(201,168,76,0.12)', color: GOLD_S }}>
+            {custName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-white truncate">{custName}</p>
+            <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>{formatDate(booking.date)}</p>
+          </div>
+        </div>
+
+        {/* Address */}
+        <div className="flex items-start gap-2 mb-3">
+          <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }} />
+          <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.5)' }}>{custAddr}</p>
+        </div>
+
+        {/* Vehicle */}
+        <div className="flex items-center gap-2">
+          <Car className="w-3.5 h-3.5 flex-shrink-0" style={{ color: GOLD_S }} />
+          <p className="text-xs font-semibold text-white">{vehLabel}</p>
+          {vehicle.type && <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>· {vehicle.type}</span>}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '0 16px' }} />
+
+      {/* Services preview */}
+      <div className="px-4 py-3">
+        <div className="flex flex-wrap gap-1.5">
+          {services.slice(0, 3).map((s, i) => (
+            <span key={i} className="text-xs px-2 py-0.5 rounded-md"
+              style={{ background: 'rgba(201,168,76,0.08)', color: GOLD_S, border: '1px solid rgba(201,168,76,0.15)' }}>
+              {typeof s === 'string' ? s : `Service #${s}`}
+            </span>
+          ))}
+          {services.length > 3 && (
+            <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)' }}>
+              +{services.length - 3} more
+            </span>
+          )}
+          {extras.slice(0, 2).map((a, i) => (
+            <span key={i} className="text-xs px-2 py-0.5 rounded-md"
+              style={{ background: 'rgba(52,211,153,0.08)', color: '#6ee7b7', border: '1px solid rgba(52,211,153,0.15)' }}>
+              +{typeof a === 'string' ? a : `Add-on #${a}`}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Expandable details */}
+      {expanded && (
+        <div className="px-4 pb-3 space-y-3">
+          {/* Contact row */}
+          <div className="flex gap-2">
+            <a href={`tel:${custPhone}`}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
+              <Phone className="w-3.5 h-3.5" /> Call
+            </a>
+            <button onClick={() => sms("Hi! I'll be arriving for your detailing appointment soon.")}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
+              <MessageSquare className="w-3.5 h-3.5" /> SMS
+            </button>
+            <button onClick={() => onEditNotes(booking)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
+              <StickyNote className="w-3.5 h-3.5" /> Notes
             </button>
           </div>
-        </div>
 
-        {/* Time and Date */}
-        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-          <div className="flex items-center">
-            <Calendar className="w-4 h-4 mr-1" />
-            <span>{formatDate(booking.date)}</span>
-          </div>
-          <div className="flex items-center">
-            <Clock className="w-4 h-4 mr-1" />
-            <span>{formatTime(booking.time)}</span>
-          </div>
-        </div>
-
-        {/* Timeline Progress */}
-        <TimelineProgress />
-
-        {/* Active Work Time Tracking */}
-        {timeTracking && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Timer className="w-4 h-4 text-blue-600 mr-2" />
-                <span className="text-sm font-medium text-blue-900">Work Time</span>
-              </div>
-              <span className="text-sm font-bold text-blue-900">{calculateWorkTime()}</span>
+          {/* Special instructions */}
+          {booking.specialInstructions && (
+            <div className="p-3 rounded-xl text-xs leading-relaxed"
+              style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', color: 'rgba(255,255,255,0.65)' }}>
+              <span className="font-semibold" style={{ color: GOLD_S }}>Note: </span>
+              {booking.specialInstructions}
             </div>
-            {timeTracking.isActive && (
-              <div className="mt-2 flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
-                <span className="text-xs text-blue-700">Currently working...</span>
-              </div>
-            )}
-          </div>
+          )}
+
+          {/* Active timer */}
+          {isActive && (
+            <div className="flex items-center gap-2 p-3 rounded-xl"
+              style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+              <Activity className="w-3.5 h-3.5 animate-pulse" style={{ color: GOLD_S }} />
+              <span className="text-xs font-semibold" style={{ color: GOLD_S }}>Active · {calculateWorkTime()}</span>
+            </div>
+          )}
+
+          {/* Job value */}
+          {booking.totalPrice && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Job value</span>
+              <span className="text-sm font-black" style={{
+                background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              }}>${parseFloat(booking.totalPrice).toFixed(2)}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Expand toggle */}
+      <button onClick={() => setExpanded(e => !e)}
+        className="w-full flex items-center justify-center gap-1 py-2 text-xs transition-all"
+        style={{ color: 'rgba(255,255,255,0.25)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        {expanded ? <><ChevronUp className="w-3.5 h-3.5" /> Less</> : <><ChevronDown className="w-3.5 h-3.5" /> More</>}
+      </button>
+
+      {/* Action buttons */}
+      <div className="px-4 pb-4 space-y-2">
+        {booking.status === 'CONFIRMED' && (
+          <>
+            <ActionBtn gold onClick={() => { getDirections(); update('EN_ROUTE'); }} disabled={isUpdating}>
+              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+              Start Navigation · Go En Route
+            </ActionBtn>
+            <ActionBtn onClick={() => update('STARTED')} disabled={isUpdating} small>
+              <Play className="w-3.5 h-3.5" /> Skip to Started
+            </ActionBtn>
+          </>
         )}
-      </div>
 
-      {/* Customer Contact & Location */}
-      <div className="p-4 border-b border-gray-100">
-        <div className="space-y-3">
-          {/* Phone and SMS Actions */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center text-gray-600">
-              <Phone className="w-4 h-4 mr-2" />
-              <span className="text-sm">{booking.customer.phoneNumber}</span>
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={handleCallCustomer}
-                className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
-              >
-                <Phone className="w-3 h-3 mr-1" />
-                Call
-              </button>
-              <button
-                onClick={() => handleSendSMS("Hi! I'm your detailer from Prime Detailing. I'll be there soon!")}
-                className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs"
-              >
-                <MessageSquare className="w-3 h-3 mr-1" />
-                SMS
-              </button>
-            </div>
-          </div>
-          
-          {/* Address with Enhanced Navigation */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center mb-1">
-                  <MapPin className="w-4 h-4 mr-2 text-red-500" />
-                  <span className="font-medium text-gray-900 text-sm">Service Location</span>
-                </div>
-                <p className="text-sm text-gray-700 ml-6">
-                  {booking.customer.address}
-                </p>
-                <p className="text-sm text-gray-600 ml-6">
-                  {booking.customer.city}
-                </p>
-              </div>
-              <button
-                onClick={handleGetDirections}
-                className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium ml-3"
-              >
-                <Navigation className="w-3 h-3 mr-1" />
-                Navigate
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+        {booking.status === 'EN_ROUTE' && (
+          <>
+            <ActionBtn gold onClick={() => update('STARTED')} disabled={isUpdating}>
+              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              Arrived — Start Job
+            </ActionBtn>
+            <ActionBtn onClick={() => sms("I've arrived and will begin shortly.")} small>
+              <MapPin className="w-3.5 h-3.5" /> Notify Arrival
+            </ActionBtn>
+          </>
+        )}
 
-      {/* Vehicle Info */}
-      <div className="p-4 border-b border-gray-100">
-        <div className="bg-gray-50 rounded-lg p-3">
-          <div className="flex items-center mb-2">
-            <Car className="w-4 h-4 mr-2 text-blue-600" />
-            <span className="font-medium text-gray-900 text-sm">Vehicle</span>
-          </div>
-          <p className="text-sm text-gray-700 ml-6">
-            {booking.vehicle.year} {booking.vehicle.make} {booking.vehicle.model}
-          </p>
-          <p className="text-xs text-gray-500 ml-6 capitalize">{booking.vehicle.type}</p>
-        </div>
-      </div>
+        {(booking.status === 'STARTED' || booking.status === 'IN_PROGRESS') && (
+          <>
+            <ActionBtn gold onClick={() => update('COMPLETED')} disabled={isUpdating}>
+              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+              Complete Job
+            </ActionBtn>
+            <div className="grid grid-cols-2 gap-2">
+              <ActionBtn onClick={() => sms("Work is progressing well. Will update when complete!")} small>
+                <MessageSquare className="w-3.5 h-3.5" /> Progress SMS
+              </ActionBtn>
+              <ActionBtn small><Camera className="w-3.5 h-3.5" /> Before Photo</ActionBtn>
+            </div>
+          </>
+        )}
 
-      {/* Services and Add-ons */}
-      <div className="p-4 border-b border-gray-100">
-        <div className="space-y-3">
-          {/* Services */}
-          <div>
-            <div className="flex items-center mb-2">
-              <Wrench className="w-4 h-4 mr-2 text-blue-600" />
-              <span className="font-medium text-gray-900 text-sm">Services</span>
-            </div>
-            <div className="flex flex-wrap gap-1 ml-6">
-              {servicesList.length > 0 ? (
-                servicesList.map((service, index) => (
-                  <span
-                    key={index}
-                    className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
-                  >
-                    {typeof service === 'string' ? service : `Service #${service}`}
-                  </span>
-                ))
-              ) : (
-                <span className="text-gray-500 text-xs">No services listed</span>
-              )}
-            </div>
-          </div>
-          
-          {/* Add-ons */}
-          {extrasList.length > 0 && (
-            <div>
-              <div className="flex items-center mb-2">
-                <Package className="w-4 h-4 mr-2 text-green-600" />
-                <span className="font-medium text-gray-900 text-sm">Add-ons</span>
-              </div>
-              <div className="flex flex-wrap gap-1 ml-6">
-                {extrasList.map((extra, index) => (
-                  <span
-                    key={index}
-                    className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"
-                  >
-                    {typeof extra === 'string' ? extra : `Add-on #${extra}`}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Special Instructions */}
-      {booking.specialInstructions && (
-        <div className="p-4 border-b border-gray-100">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <div className="flex items-center mb-1">
-              <AlertCircle className="w-4 h-4 mr-2 text-yellow-600" />
-              <span className="text-sm font-medium text-yellow-800">Special Instructions</span>
-            </div>
-            <p className="text-sm text-yellow-700 ml-6">{booking.specialInstructions}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Notes */}
-      {booking.notes && (
-        <div className="p-4 border-b border-gray-100">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="flex items-center mb-1">
-              <StickyNote className="w-4 h-4 mr-2 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Your Notes</span>
-            </div>
-            <p className="text-sm text-blue-700 ml-6 line-clamp-2">{booking.notes}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Enhanced Action Buttons */}
-      <div className="p-4">
-        <div className="space-y-2">
-          {booking.status === 'CONFIRMED' && (
-            <div className="space-y-2">
-              <button
-                onClick={() => {
-                  handleGetDirections();
-                  handleStatusChange('EN_ROUTE');
-                }}
-                className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                <Navigation className="w-4 h-4 mr-2" />
-                Start Navigation & Go En Route
-              </button>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleSendSMS("Hi! I'm on my way to your location for the detailing service. See you soon!")}
-                  className="flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
-                >
-                  <Route className="w-3 h-3 mr-1" />
-                  Notify En Route
-                </button>
-                <button
-                  onClick={() => handleStatusChange('STARTED')}
-                  disabled={isUpdating}
-                  className="flex items-center justify-center px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-xs disabled:opacity-50"
-                >
-                  <Play className="w-3 h-3 mr-1" />
-                  Start Job
-                </button>
-              </div>
-            </div>
-          )}
-
-          {booking.status === 'EN_ROUTE' && (
-            <div className="space-y-2">
-              <button
-                onClick={() => handleStatusChange('STARTED')}
-                disabled={isUpdating}
-                className="w-full flex items-center justify-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium disabled:opacity-50"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                {isUpdating ? 'Starting...' : 'Arrived - Start Job'}
-              </button>
-              <button
-                onClick={() => handleSendSMS("I've arrived at your location and will begin the detailing service shortly.")}
-                className="w-full flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
-              >
-                <MapPin className="w-3 h-3 mr-1" />
-                Notify Arrival
-              </button>
-            </div>
-          )}
-
-          {(booking.status === 'STARTED' || booking.status === 'IN_PROGRESS') && (
-            <div className="space-y-2">
-              <button
-                onClick={() => handleStatusChange('COMPLETED')}
-                disabled={isUpdating}
-                className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium disabled:opacity-50"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                {isUpdating ? 'Completing...' : 'Complete Job'}
-              </button>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  className="flex items-center justify-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-xs"
-                >
-                  <Camera className="w-3 h-3 mr-1" />
-                  Before Photo
-                </button>
-                <button
-                  onClick={() => handleSendSMS("Work is progressing well on your vehicle. Will update you when complete!")}
-                  className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs"
-                >
-                  <MessageSquare className="w-3 h-3 mr-1" />
-                  Progress Update
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {booking.status === 'COMPLETED' && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-center py-3 bg-green-100 text-green-800 rounded-lg text-sm font-medium">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Job Completed Successfully
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleSendSMS("Your vehicle detailing is complete! Thank you for choosing Prime Detailing.")}
-                  className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs"
-                >
-                  <MessageSquare className="w-3 h-3 mr-1" />
-                  Completion SMS
-                </button>
-                <button
-                  className="flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
-                >
-                  <Camera className="w-3 h-3 mr-1" />
-                  After Photo
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Job Value */}
-        {booking.totalPrice && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Job Value:</span>
-              <span className="text-lg font-bold text-green-600">
-                ${parseFloat(booking.totalPrice).toFixed(2)}
-              </span>
-            </div>
+        {booking.status === 'COMPLETED' && (
+          <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold"
+            style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', color: '#6ee7b7' }}>
+            <CheckCircle className="w-4 h-4" /> Completed
           </div>
         )}
       </div>

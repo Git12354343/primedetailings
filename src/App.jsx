@@ -1,227 +1,183 @@
-// src/EnhancedApp.jsx
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { Suspense, lazy, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import { NotificationProvider } from './components/NotificationSystem';
 import { ContentSkeleton } from './components/LoadingSkeleton';
 
-// Layout components (load immediately)
+// Layout
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
-// Lazy load pages for better performance
-const Home = lazy(() => import('./pages/Home'));
-const Services = lazy(() => import('./pages/Services'));
-const Booking = lazy(() => import('./pages/Booking'));
-const Contact = lazy(() => import('./pages/Contact'));
-const Gallery = lazy(() => import('./pages/Gallery'));
-const BookingLookup = lazy(() => import('./pages/BookingLookup'));
-const DetailerLogin = lazy(() => import('./pages/DetailerLogin'));
-const DetailerDashboard = lazy(() => import('./pages/DetailerDashboard'));
-const AdminPage = lazy(() => import('./pages/AdminPage'));
+// New luxury components
+import LoadingScreen    from './components/LoadingScreen';
+import ScrollProgressBar from './components/ScrollProgressBar';
+import StickyBookBar    from './components/StickyBookBar';
+import FloatingQuote   from './components/FloatingQuote';
+import PageTransition   from './components/PageTransition';
 
-// Enhanced loading component
-const PageLoadingFallback = ({ pageName = "page" }) => (
-  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-    <div className="max-w-md w-full mx-auto p-8">
-      <div className="text-center mb-8">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent mb-4"></div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Loading {pageName}...</h2>
-        <p className="text-gray-600">Please wait while we prepare your experience.</p>
+// Pages (lazy)
+const Home             = lazy(() => import('./pages/Home'));
+const Services         = lazy(() => import('./pages/Services'));
+const Booking          = lazy(() => import('./pages/Booking'));
+const Contact          = lazy(() => import('./pages/Contact'));
+const Gallery          = lazy(() => import('./pages/Gallery'));
+const BookingLookup    = lazy(() => import('./pages/BookingLookup'));
+const DetailerLogin    = lazy(() => import('./pages/DetailerLogin'));
+const DetailerDashboard = lazy(() => import('./pages/DetailerDashboard'));
+const AdminPage        = lazy(() => import('./pages/AdminPage'));
+
+// ── Page loading fallback (dark themed) ─────────────────────────────────
+const PageLoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}>
+    <div className="flex flex-col items-center gap-4">
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #c9a84c, #f5d376)' }}
+      >
+        <span className="text-black font-black text-sm">PD</span>
       </div>
-      <ContentSkeleton lines={4} />
+      <div className="w-6 h-6 rounded-full border-2 border-yellow-500 border-t-transparent animate-spin" />
     </div>
   </div>
 );
 
-// Layout wrapper for public pages
+// ── Public layout (navbar + footer + sticky bar) ─────────────────────────
 const PublicLayout = ({ children }) => (
   <ErrorBoundary>
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0a' }}>
       <Navbar />
       <main className="flex-1">
-        <Suspense fallback={<PageLoadingFallback pageName="content" />}>
+        <Suspense fallback={<PageLoadingFallback />}>
           {children}
         </Suspense>
       </main>
       <Footer />
+      <StickyBookBar />
+      <FloatingQuote />
     </div>
   </ErrorBoundary>
 );
 
-// Protected route wrapper for authenticated pages
+// ── Protected layout (no navbar/footer) ─────────────────────────────────
 const ProtectedLayout = ({ children }) => (
   <ErrorBoundary>
-    <Suspense fallback={<PageLoadingFallback pageName="dashboard" />}>
+    <Suspense fallback={<PageLoadingFallback />}>
       {children}
     </Suspense>
   </ErrorBoundary>
 );
 
-// Main App component
+// ── Animated routes wrapper (needs to be inside Router) ──────────────────
+const AnimatedRoutes = () => {
+  const location = useLocation();
+
+  return (
+    <>
+      <ScrollProgressBar />
+
+      <PageTransition>
+        <Routes location={location} key={location.key}>
+          {/* Auth / dashboard — no layout */}
+          <Route path="/detailer-login"     element={<ProtectedLayout><DetailerLogin /></ProtectedLayout>} />
+          <Route path="/detailer-dashboard" element={<ProtectedLayout><DetailerDashboard /></ProtectedLayout>} />
+          <Route path="/admin"              element={<ProtectedLayout><AdminPage /></ProtectedLayout>} />
+
+          {/* Public pages */}
+          <Route path="/"        element={<PublicLayout><Home /></PublicLayout>} />
+          <Route path="/services" element={<PublicLayout><Services /></PublicLayout>} />
+          <Route path="/booking"  element={<PublicLayout><Booking /></PublicLayout>} />
+          <Route path="/contact"  element={<PublicLayout><Contact /></PublicLayout>} />
+          <Route path="/gallery"  element={<PublicLayout><Gallery /></PublicLayout>} />
+          <Route path="/lookup"        element={<PublicLayout><BookingLookup /></PublicLayout>} />
+          <Route path="/track"         element={<PublicLayout><BookingLookup /></PublicLayout>} />
+          <Route path="/track-booking" element={<PublicLayout><BookingLookup /></PublicLayout>} />
+
+          {/* 404 */}
+          <Route path="*" element={<PublicLayout><NotFoundPage /></PublicLayout>} />
+        </Routes>
+      </PageTransition>
+    </>
+  );
+};
+
+// ── Root app ─────────────────────────────────────────────────────────────
 function EnhancedApp() {
+  const [appReady, setAppReady] = useState(false);
+
   return (
     <ErrorBoundary>
       <NotificationProvider>
-        <Router>
-          <div className="App">
-            <Routes>
-              {/* Authentication Routes (No Layout) */}
-              <Route 
-                path="/detailer-login" 
-                element={
-                  <ProtectedLayout>
-                    <DetailerLogin />
-                  </ProtectedLayout>
-                } 
-              />
-              
-              <Route 
-                path="/detailer-dashboard" 
-                element={
-                  <ProtectedLayout>
-                    <DetailerDashboard />
-                  </ProtectedLayout>
-                } 
-              />
-              
-              <Route 
-                path="/admin" 
-                element={
-                  <ProtectedLayout>
-                    <AdminPage />
-                  </ProtectedLayout>
-                } 
-              />
-              
-              {/* Public Website Routes (With Layout) */}
-              <Route 
-                path="/" 
-                element={
-                  <PublicLayout>
-                    <Home />
-                  </PublicLayout>
-                } 
-              />
-              
-              <Route 
-                path="/services" 
-                element={
-                  <PublicLayout>
-                    <Services />
-                  </PublicLayout>
-                } 
-              />
-              
-              <Route 
-                path="/booking" 
-                element={
-                  <PublicLayout>
-                    <Booking />
-                  </PublicLayout>
-                } 
-              />
-              
-              <Route 
-                path="/contact" 
-                element={
-                  <PublicLayout>
-                    <Contact />
-                  </PublicLayout>
-                } 
-              />
+        {/* Branded loading splash — shown once on first load */}
+        {!appReady && <LoadingScreen onDone={() => setAppReady(true)} />}
 
-              <Route 
-                path="/gallery" 
-                element={
-                  <PublicLayout>
-                    <Gallery />
-                  </PublicLayout>
-                } 
-              />
-
-              {/* Booking Lookup Route - NEW */}
-              <Route 
-                path="/lookup" 
-                element={
-                  <PublicLayout>
-                    <BookingLookup />
-                  </PublicLayout>
-                } 
-              />
-
-              {/* Alternative routes for booking lookup */}
-              <Route 
-                path="/track" 
-                element={
-                  <PublicLayout>
-                    <BookingLookup />
-                  </PublicLayout>
-                } 
-              />
-
-              <Route 
-                path="/track-booking" 
-                element={
-                  <PublicLayout>
-                    <BookingLookup />
-                  </PublicLayout>
-                } 
-              />
-              
-              {/* 404 Fallback */}
-              <Route 
-                path="*" 
-                element={
-                  <PublicLayout>
-                    <NotFoundPage />
-                  </PublicLayout>
-                } 
-              />
-            </Routes>
-          </div>
-        </Router>
+        <div style={{ visibility: appReady ? 'visible' : 'hidden' }}>
+          <Router>
+            <AnimatedRoutes />
+          </Router>
+        </div>
       </NotificationProvider>
     </ErrorBoundary>
   );
 }
 
-// Enhanced 404 Page Component
+// ── 404 Page (luxury dark) ────────────────────────────────────────────────
 const NotFoundPage = () => (
-  <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-    <div className="max-w-md w-full text-center">
-      <div className="mb-8">
-        <h1 className="text-9xl font-bold text-gray-300">404</h1>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Page Not Found</h2>
-        <p className="text-gray-600 mb-8">
-          Sorry, we couldn't find the page you're looking for. The page might have been moved, deleted, or you entered the wrong URL.
-        </p>
-        
-        <div className="space-y-4">
-          <a
-            href="/"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            Go Back Home
-          </a>
-          
-          <div className="text-sm text-gray-500">
-            <p>Need help? <a href="/contact" className="text-blue-600 hover:text-blue-700">Contact us</a></p>
-          </div>
-        </div>
+  <div
+    className="min-h-screen flex items-center justify-center px-4"
+    style={{ background: '#0a0a0a' }}
+  >
+    <div className="text-center max-w-md">
+      {/* Big 404 */}
+      <div
+        className="text-8xl font-black mb-4 leading-none"
+        style={{
+          background: 'linear-gradient(135deg, #c9a84c40, #c9a84c20)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+        }}
+      >
+        404
       </div>
-      
-      {/* Quick Links */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Quick Links</h3>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <a href="/services" className="text-blue-600 hover:text-blue-700">Our Services</a>
-          <a href="/booking" className="text-blue-600 hover:text-blue-700">Book Now</a>
-          <a href="/lookup" className="text-blue-600 hover:text-blue-700">Track Booking</a>
-          <a href="/contact" className="text-blue-600 hover:text-blue-700">Contact</a>
-          <a href="/gallery" className="text-blue-600 hover:text-blue-700">Gallery</a>
-          <a href="/detailer-login" className="text-blue-600 hover:text-blue-700">Staff Login</a>
-        </div>
+
+      <h2 className="text-2xl font-black text-white mb-3">Page Not Found</h2>
+      <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+        The page you're looking for doesn't exist or has been moved.
+      </p>
+
+      <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+        <a
+          href="/"
+          className="btn-luxury px-6 py-3 rounded-xl text-sm font-bold tracking-wide inline-flex items-center justify-center gap-2"
+        >
+          Go Home
+        </a>
+        <a
+          href="/booking"
+          className="btn-ghost-luxury px-6 py-3 rounded-xl text-sm font-semibold inline-flex items-center justify-center"
+        >
+          Book Now
+        </a>
+      </div>
+
+      {/* Quick links */}
+      <div
+        className="grid grid-cols-2 gap-2 rounded-2xl p-4"
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+      >
+        {[
+          { label: 'Services',      href: '/services' },
+          { label: 'Book Now',      href: '/booking' },
+          { label: 'Track Booking', href: '/lookup' },
+          { label: 'Contact',       href: '/contact' },
+        ].map(({ label, href }) => (
+          <a
+            key={href}
+            href={href}
+            className="py-2 px-3 rounded-lg text-sm text-gray-400 hover:text-yellow-400 transition-colors text-center"
+            style={{ background: 'rgba(255,255,255,0.03)' }}
+          >
+            {label}
+          </a>
+        ))}
       </div>
     </div>
   </div>

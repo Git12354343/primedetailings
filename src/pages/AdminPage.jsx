@@ -1,32 +1,33 @@
-// src/pages/AdminPage.jsx - Updated to use your NotificationProvider
+// src/pages/AdminPage.jsx
 import React, { useState, useEffect } from 'react';
 import { NotificationProvider } from '../components/notifications/NotificationProvider';
-import AdminLogin from '../components/admin/AdminLogin';
+import AdminLogin     from '../components/admin/AdminLogin';
 import AdminDashboard from '../components/admin/AdminDashboard';
 
 const AdminPage = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminToken, setAdminToken] = useState(null);
 
+  // Restore token from sessionStorage on mount (survives page reload, not tab close)
   useEffect(() => {
-    const isAuth = localStorage.getItem('adminAuthenticated') === 'true';
-    setIsAuthenticated(isAuth);
+    const stored = sessionStorage.getItem('adminToken');
+    if (stored) setAdminToken(stored);
   }, []);
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
+  const handleLogin = (token) => {
+    setAdminToken(token);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminAuthenticated');
-    setIsAuthenticated(false);
+    sessionStorage.removeItem('adminToken');
+    setAdminToken(null);
   };
 
   return (
     <NotificationProvider>
-      {!isAuthenticated ? (
+      {!adminToken ? (
         <AdminLogin onLogin={handleLogin} />
       ) : (
-        <AdminDashboard onLogout={handleLogout} />
+        <AdminDashboard adminToken={adminToken} onLogout={handleLogout} />
       )}
     </NotificationProvider>
   );

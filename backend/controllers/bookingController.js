@@ -1,10 +1,24 @@
 // backend/controllers/bookingController.js (Enhanced with Availability Integration)
 const { PrismaClient } = require('@prisma/client');
-const { generateConfirmationCode } = require('../utils/helpers');
-const { sendBookingConfirmation, sendBookingUpdate } = require('../utils/emailService');
+const emailService = require('../services/emailService');
 const { isTimeSlotAvailable, BUSINESS_CONFIG } = require('./availabilityController');
 
 const prisma = new PrismaClient();
+
+// Email helpers — safe wrappers around emailService
+const sendBookingConfirmation = (booking) => emailService.sendBookingConfirmation(booking).catch(e => console.error('Confirmation email failed:', e));
+const sendBookingUpdate = (booking, status) => {
+  if (typeof emailService.sendBookingUpdate === 'function') {
+    return emailService.sendBookingUpdate(booking, status).catch(e => console.error('Update email failed:', e));
+  }
+  return Promise.resolve();
+};
+
+// Confirmation code generator
+const generateConfirmationCode = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+};
 
 // Helper function to format booking data consistently
 const formatBookingData = (booking) => ({
@@ -145,12 +159,9 @@ const getAssignedBookings = async (req, res) => {
     const status = req.query.status;
     const skip = (page - 1) * limit;
 
-    // Build where clause - show bookings assigned to this detailer OR unassigned bookings
+    // Privacy fix: only show bookings assigned to THIS detailer
     const where = {
-      OR: [
-        { detailerId: detailerId },
-        { detailerId: null } // Show unassigned bookings too
-      ],
+      detailerId: detailerId,
       status: {
         in: status ? [status] : ['PENDING', 'CONFIRMED', 'EN_ROUTE', 'STARTED', 'IN_PROGRESS', 'COMPLETED']
       }
@@ -555,15 +566,14 @@ const updateBookingStatus = async (req, res) => {
     // Enhanced status transition validation
     const canTransition = (currentStatus, newStatus) => {
       const transitions = {
-        'PENDING': ['CONFIRMED', 'CANCELED'],
-        'CONFIRMED': ['EN_ROUTE', 'CANCELED'],
-        'EN_ROUTE': ['STARTED', 'CANCELED'],
-        'STARTED': ['IN_PROGRESS', 'CANCELED'],
+        'PENDING':     ['CONFIRMED', 'CANCELED'],
+        'CONFIRMED':   ['EN_ROUTE', 'STARTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED'],
+        'EN_ROUTE':    ['STARTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED'],
+        'STARTED':     ['IN_PROGRESS', 'COMPLETED', 'CANCELED'],
         'IN_PROGRESS': ['COMPLETED', 'CANCELED'],
-        'COMPLETED': [], // Cannot change from completed
-        'CANCELED': [] // Cannot change from canceled
+        'COMPLETED':   [],
+        'CANCELED':    []
       };
-      
       return transitions[currentStatus]?.includes(newStatus) || false;
     };
 
@@ -574,13 +584,13 @@ const updateBookingStatus = async (req, res) => {
         message: `Cannot change status from ${booking.status} to ${status}`,
         allowedTransitions: (() => {
           const transitions = {
-            'PENDING': ['CONFIRMED', 'CANCELED'],
-            'CONFIRMED': ['EN_ROUTE', 'CANCELED'],
-            'EN_ROUTE': ['STARTED', 'CANCELED'],
-            'STARTED': ['IN_PROGRESS', 'CANCELED'],
+            'PENDING':     ['CONFIRMED', 'CANCELED'],
+            'CONFIRMED':   ['EN_ROUTE', 'STARTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED'],
+            'EN_ROUTE':    ['STARTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED'],
+            'STARTED':     ['IN_PROGRESS', 'COMPLETED', 'CANCELED'],
             'IN_PROGRESS': ['COMPLETED', 'CANCELED'],
-            'COMPLETED': [],
-            'CANCELED': []
+            'COMPLETED':   [],
+            'CANCELED':    []
           };
           return transitions[booking.status] || [];
         })()
@@ -854,64 +864,71 @@ const updateBookingNotes = async (req, res) => {
   }
 };
 
-// Debug endpoint for troubleshooting
-const debugBooking = async (req, res) => {
+
+// Resend confirmation email to customer by confirmation code
+const resendConfirmationEmail = async (req, res) => {
   try {
-    const { bookingId } = req.params;
-    const detailerId = req.detailer?.detailerId;
-
-    console.log('=== DEBUG BOOKING ===');
-    console.log('Booking ID:', bookingId, 'Type:', typeof bookingId);
-    console.log('Detailer ID:', detailerId, 'Type:', typeof detailerId);
-    console.log('Detailer Info:', req.detailer);
-
-    // Get the booking with all fields
-    const booking = await prisma.booking.findUnique({
-      where: {
-        id: parseInt(bookingId)
-      },
-      include: {
-        detailer: true
-      }
-    });
-
-    console.log('Found Booking:', booking);
-
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: 'Booking not found',
-        debug: {
-          bookingId: parseInt(bookingId),
-          detailerId: detailerId,
-          parsedBookingId: parseInt(bookingId),
-          isNaN: isNaN(parseInt(bookingId))
-        }
-      });
-    }
-
-    res.json({
-      success: true,
-      debug: {
-        booking: formatBookingData(booking),
-        rawBooking: booking,
-        detailerId: detailerId,
-        detailerInfo: req.detailer,
-        canAccess: !booking.detailerId || booking.detailerId === detailerId,
-        bookingHasDetailerId: booking.hasOwnProperty('detailerId'),
-        detailerIdValue: booking.detailerId,
-        detailerIdType: typeof booking.detailerId
-      }
-    });
-
+    const { code } = req.params;
+    if (!code) return res.status(400).json({ success: false, message: 'Confirmation code is required' });
+    const booking = await prisma.booking.findUnique({ where: { confirmationCode: code.toUpperCase() } });
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+    if (sendBookingConfirmation) await sendBookingConfirmation(booking);
+    res.json({ success: true, message: 'Confirmation email resent successfully' });
   } catch (error) {
-    console.error('Debug booking error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Debug error',
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    console.error('Resend confirmation email error:', error);
+    res.status(500).json({ success: false, message: 'Error resending confirmation email' });
+  }
+};
+
+// Reschedule a booking by confirmation code
+const rescheduleBooking = async (req, res) => {
+  try {
+    const { code } = req.params;
+    const { date, time } = req.body;
+    if (!code) return res.status(400).json({ success: false, message: 'Confirmation code is required' });
+    if (!date || !time) return res.status(400).json({ success: false, message: 'New date and time are required' });
+    const booking = await prisma.booking.findUnique({ where: { confirmationCode: code.toUpperCase() } });
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+    if (['COMPLETED', 'CANCELED'].includes(booking.status)) {
+      return res.status(400).json({ success: false, message: `Cannot reschedule a ${booking.status.toLowerCase()} booking` });
+    }
+    const timeSlotId = mapTimeToSlotId(time);
+    if (timeSlotId) {
+      const availability = await isTimeSlotAvailable(date, timeSlotId);
+      if (!availability.available) {
+        return res.status(409).json({ success: false, message: `Time slot unavailable: ${availability.reason}`, availabilityError: true });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid time slot selected' });
+    }
+    const updated = await prisma.booking.update({
+      where: { confirmationCode: code.toUpperCase() },
+      data: { date: new Date(date), time, updatedAt: new Date() }
     });
+    res.json({ success: true, message: 'Booking rescheduled successfully', booking: formatBookingData(updated) });
+  } catch (error) {
+    console.error('Reschedule booking error:', error);
+    res.status(500).json({ success: false, message: 'Error rescheduling booking' });
+  }
+};
+
+// Cancel a booking by confirmation code
+const cancelBooking = async (req, res) => {
+  try {
+    const { code } = req.params;
+    if (!code) return res.status(400).json({ success: false, message: 'Confirmation code is required' });
+    const booking = await prisma.booking.findUnique({ where: { confirmationCode: code.toUpperCase() } });
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+    if (booking.status === 'CANCELED') return res.status(400).json({ success: false, message: 'Booking is already canceled' });
+    if (booking.status === 'COMPLETED') return res.status(400).json({ success: false, message: 'Cannot cancel a completed booking' });
+    const updated = await prisma.booking.update({
+      where: { confirmationCode: code.toUpperCase() },
+      data: { status: 'CANCELED', updatedAt: new Date() }
+    });
+    res.json({ success: true, message: 'Booking canceled successfully', booking: formatBookingData(updated) });
+  } catch (error) {
+    console.error('Cancel booking error:', error);
+    res.status(500).json({ success: false, message: 'Error canceling booking' });
   }
 };
 
@@ -922,5 +939,7 @@ module.exports = {
   updateBookingStatus,
   getBookingByCode,
   updateBookingNotes,
-  debugBooking
+  resendConfirmationEmail,
+  rescheduleBooking,
+  cancelBooking,
 };

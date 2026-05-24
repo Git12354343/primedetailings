@@ -1,386 +1,302 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Activity, 
-  Clock, 
-  MapPin, 
-  User, 
-  Wrench,
-  Navigation,
-  Play,
-  CheckCircle,
-  AlertTriangle,
-  RefreshCw,
-  Filter,
-  Search
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import {
+  Activity, Clock, MapPin, User, Wrench,
+  Navigation, Play, CheckCircle, AlertTriangle,
+  RefreshCw, Search
 } from 'lucide-react';
 
-const LiveJobFeed = ({ 
-  jobs = [], 
-  onJobClick, 
-  onRefresh, 
+const STATUS_CONFIG = {
+  CONFIRMED:   { label: 'Confirmed',   color: '#60a5fa', bg: 'rgba(96,165,250,0.12)',   icon: User,       priority: 1 },
+  EN_ROUTE:    { label: 'En Route',    color: '#a78bfa', bg: 'rgba(167,139,250,0.12)',  icon: Navigation, priority: 2 },
+  STARTED:     { label: 'Started',     color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',   icon: Play,       priority: 3 },
+  IN_PROGRESS: { label: 'In Progress', color: '#f97316', bg: 'rgba(249,115,22,0.12)',   icon: Activity,   priority: 4 },
+  COMPLETED:   { label: 'Completed',   color: '#34d399', bg: 'rgba(52,211,153,0.12)',   icon: CheckCircle,priority: 5 },
+  PENDING:     { label: 'Pending',     color: '#94a3b8', bg: 'rgba(148,163,184,0.12)',  icon: Clock,      priority: 0 },
+  CANCELED:    { label: 'Cancelled',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)',    icon: AlertTriangle, priority: 6 },
+};
+
+const getStatusCfg = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.CONFIRMED;
+
+const LiveJobFeed = ({
+  bookings = [],   // AdminDashboard passes "bookings"
+  jobs,            // fallback alias
+  onJobClick,
+  onRefresh,
   refreshInterval = 30000,
-  showFilters = true 
+  statusCounts: externalCounts,
 }) => {
-  const [filteredJobs, setFilteredJobs] = useState(jobs);
-  const [searchTerm, setSearchTerm] = useState('');
+  // Accept either prop name
+  const allJobs = jobs ?? bookings;
+
+  const [searchTerm, setSearchTerm]     = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [lastRefresh, setLastRefresh]   = useState(() => new Date());
 
-  // Auto-refresh functionality
+  // Stable ref so the interval doesn't re-create on every render
+  const onRefreshRef = useRef(onRefresh);
+  useEffect(() => { onRefreshRef.current = onRefresh; }, [onRefresh]);
+
+  // Auto-refresh — stable interval, never causes re-render loop
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (onRefresh) {
-        onRefresh();
-        setLastRefresh(new Date());
-      }
+    if (!refreshInterval) return;
+    const id = setInterval(() => {
+      onRefreshRef.current?.();
+      setLastRefresh(new Date());
     }, refreshInterval);
+    return () => clearInterval(id);
+  }, [refreshInterval]); // only refreshInterval in deps — safe
 
-    return () => clearInterval(interval);
-  }, [onRefresh, refreshInterval]);
-
-  // Filter jobs based on search and status
-  useEffect(() => {
-    let filtered = jobs;
-
-    // Filter by status
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(job => job.status === statusFilter);
-    }
-
-    // Filter by search term
+  // Filtered jobs — memoized to avoid recompute on unrelated renders
+  const filteredJobs = useMemo(() => {
+    let result = allJobs;
+    if (statusFilter !== 'ALL') result = result.filter(j => j.status === statusFilter);
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(job => 
-        job.customer.firstName.toLowerCase().includes(term) ||
-        job.customer.lastName.toLowerCase().includes(term) ||
-        job.customer.address.toLowerCase().includes(term) ||
-        job.vehicle.make.toLowerCase().includes(term) ||
-        job.vehicle.model.toLowerCase().includes(term) ||
-        job.confirmationCode.toLowerCase().includes(term)
+      const t = searchTerm.toLowerCase();
+      result = result.filter(j =>
+        j.customer?.firstName?.toLowerCase().includes(t) ||
+        j.customer?.lastName?.toLowerCase().includes(t)  ||
+        j.customer?.address?.toLowerCase().includes(t)   ||
+        j.vehicle?.make?.toLowerCase().includes(t)       ||
+        j.vehicle?.model?.toLowerCase().includes(t)      ||
+        j.confirmationCode?.toLowerCase().includes(t)
       );
     }
+    return result;
+  }, [allJobs, statusFilter, searchTerm]);
 
-    setFilteredJobs(filtered);
-  }, [jobs, searchTerm, statusFilter]);
+  const counts = useMemo(() => ({
+    ALL:         allJobs.length,
+    PENDING:     allJobs.filter(j => j.status === 'PENDING').length,
+    CONFIRMED:   allJobs.filter(j => j.status === 'CONFIRMED').length,
+    EN_ROUTE:    allJobs.filter(j => j.status === 'EN_ROUTE').length,
+    STARTED:     allJobs.filter(j => j.status === 'STARTED').length,
+    IN_PROGRESS: allJobs.filter(j => j.status === 'IN_PROGRESS').length,
+    COMPLETED:   allJobs.filter(j => j.status === 'COMPLETED').length,
+  }), [allJobs]);
 
-  // Get status badge configuration
-  const getStatusConfig = (status) => {
-    const configs = {
-      'CONFIRMED': {
-        label: 'Assigned',
-        color: 'bg-gray-100 text-gray-800',
-        icon: User,
-        priority: 1
-      },
-      'EN_ROUTE': {
-        label: 'On the Way',
-        color: 'bg-blue-100 text-blue-800',
-        icon: Navigation,
-        priority: 2
-      },
-      'STARTED': {
-        label: 'Started',
-        color: 'bg-yellow-100 text-yellow-800',
-        icon: Play,
-        priority: 3
-      },
-      'IN_PROGRESS': {
-        label: 'In Progress',
-        color: 'bg-orange-100 text-orange-800',
-        icon: Activity,
-        priority: 4
-      },
-      'COMPLETED': {
-        label: 'Completed',
-        color: 'bg-green-100 text-green-800',
-        icon: CheckCircle,
-        priority: 5
-      }
-    };
-    return configs[status] || configs['CONFIRMED'];
-  };
+  const handleRefresh = useCallback(() => {
+    onRefreshRef.current?.();
+    setLastRefresh(new Date());
+  }, []);
 
-  // Calculate estimated time remaining
-  const getEstimatedTimeRemaining = (job) => {
-    if (job.status === 'COMPLETED') return 'Completed';
-    
-    // This would typically be calculated based on service duration and start time
-    const baseTime = job.services.length * 30; // 30 minutes per service
-    const extraTime = (job.extras?.length || 0) * 15; // 15 minutes per add-on
-    const totalMinutes = baseTime + extraTime;
-    
-    if (job.status === 'IN_PROGRESS' && job.startTime) {
-      const startTime = new Date(job.startTime);
-      const now = new Date();
-      const elapsedMinutes = Math.floor((now - startTime) / (1000 * 60));
-      const remaining = Math.max(0, totalMinutes - elapsedMinutes);
-      
-      if (remaining === 0) return 'Overdue';
-      return `${Math.floor(remaining / 60)}h ${remaining % 60}m`;
-    }
-    
-    return `~${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
-  };
+  const isDelayed = useCallback((job) => {
+    if (job.status === 'COMPLETED' || job.status === 'CANCELED') return false;
+    try {
+      const appt = new Date(`${job.date} ${job.time}`);
+      return Date.now() > appt.getTime() + 15 * 60 * 1000 && job.status === 'CONFIRMED';
+    } catch { return false; }
+  }, []);
 
-  // Check if job is late/delayed
-  const isJobDelayed = (job) => {
-    if (job.status === 'COMPLETED') return false;
-    
-    const appointmentTime = new Date(`${job.date} ${job.time}`);
-    const now = new Date();
-    const delayThreshold = 15 * 60 * 1000; // 15 minutes in milliseconds
-    
-    return now > appointmentTime + delayThreshold && job.status === 'CONFIRMED';
-  };
+  const sortedGroups = useMemo(() => {
+    const groups = filteredJobs.reduce((acc, job) => {
+      if (!acc[job.status]) acc[job.status] = [];
+      acc[job.status].push(job);
+      return acc;
+    }, {});
+    return Object.entries(groups).sort(([a], [b]) =>
+      getStatusCfg(a).priority - getStatusCfg(b).priority
+    );
+  }, [filteredJobs]);
 
-  // Group jobs by status for better organization
-  const groupedJobs = filteredJobs.reduce((groups, job) => {
-    const status = job.status;
-    if (!groups[status]) {
-      groups[status] = [];
-    }
-    groups[status].push(job);
-    return groups;
-  }, {});
-
-  // Sort status groups by priority
-  const sortedStatusGroups = Object.entries(groupedJobs).sort(([a], [b]) => {
-    const priorityA = getStatusConfig(a).priority;
-    const priorityB = getStatusConfig(b).priority;
-    return priorityA - priorityB;
-  });
-
-  const statusCounts = {
-    ALL: jobs.length,
-    CONFIRMED: jobs.filter(j => j.status === 'CONFIRMED').length,
-    EN_ROUTE: jobs.filter(j => j.status === 'EN_ROUTE').length,
-    STARTED: jobs.filter(j => j.status === 'STARTED').length,
-    IN_PROGRESS: jobs.filter(j => j.status === 'IN_PROGRESS').length,
-    COMPLETED: jobs.filter(j => j.status === 'COMPLETED').length
-  };
+  const STATUS_FILTERS = ['ALL', 'PENDING', 'CONFIRMED', 'EN_ROUTE', 'STARTED', 'IN_PROGRESS', 'COMPLETED'];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="rounded-2xl overflow-hidden"
+      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Activity className="w-5 h-5 text-blue-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Live Job Feed</h3>
-            <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-              {filteredJobs.length} active
-            </span>
+      <div className="flex items-center justify-between px-5 py-4"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(96,165,250,0.15)' }}>
+            <Activity className="w-4 h-4 text-blue-400" />
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500">
-              Last update: {lastRefresh.toLocaleTimeString()}
-            </span>
-            <button
-              onClick={() => {
-                if (onRefresh) {
-                  onRefresh();
-                  setLastRefresh(new Date());
-                }
-              }}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-              title="Refresh feed"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
+          <div>
+            <div className="text-white font-bold text-sm">Live Job Feed</div>
+            <div className="text-gray-500 text-xs">
+              {filteredJobs.length} jobs · Updated {lastRefresh.toLocaleTimeString()}
+            </div>
           </div>
+        </div>
+        <button onClick={handleRefresh}
+          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <RefreshCw className="w-4 h-4 text-gray-400" />
+        </button>
+      </div>
+
+      {/* Search + filters */}
+      <div className="px-5 py-3 space-y-3"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <Search className="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <input
+            className="bg-transparent text-white text-sm outline-none flex-1 placeholder-gray-600"
+            placeholder="Search by name, address, vehicle..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        {/* Status filter pills */}
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {STATUS_FILTERS.map(s => {
+            const cfg = s === 'ALL' ? null : getStatusCfg(s);
+            const isActive = statusFilter === s;
+            const count = counts[s] ?? 0;
+            if (s !== 'ALL' && count === 0) return null;
+            return (
+              <button key={s} onClick={() => setStatusFilter(s)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0"
+                style={{
+                  background: isActive ? (cfg?.bg ?? 'rgba(201,168,76,0.15)') : 'rgba(255,255,255,0.04)',
+                  border: isActive ? `1px solid ${cfg?.color ?? '#f5d376'}40` : '1px solid rgba(255,255,255,0.07)',
+                  color: isActive ? (cfg?.color ?? '#f5d376') : '#6b7280',
+                }}>
+                {s === 'ALL' ? `All (${count})` : `${cfg.label} (${count})`}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Filters */}
-      {showFilters && (
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search jobs by customer, address, or vehicle..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex space-x-2 overflow-x-auto">
-              {[
-                { key: 'ALL', label: 'All' },
-                { key: 'CONFIRMED', label: 'Assigned' },
-                { key: 'EN_ROUTE', label: 'En Route' },
-                { key: 'STARTED', label: 'Started' },
-                { key: 'IN_PROGRESS', label: 'In Progress' },
-                { key: 'COMPLETED', label: 'Completed' }
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setStatusFilter(key)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                    statusFilter === key
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {label} ({statusCounts[key]})
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Job Feed */}
-      <div className="max-h-96 overflow-y-auto">
+      {/* Job list */}
+      <div className="divide-y overflow-y-auto custom-scrollbar" style={{ maxHeight: '60vh', borderColor: 'rgba(255,255,255,0.06)' }}>
         {filteredJobs.length === 0 ? (
-          <div className="p-8 text-center">
-            <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h4>
-            <p className="text-gray-600">
-              {searchTerm || statusFilter !== 'ALL' 
-                ? 'Try adjusting your filters or search terms.'
-                : 'No active jobs at the moment.'
-              }
+          <div className="py-16 text-center">
+            <Activity className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">
+              {searchTerm || statusFilter !== 'ALL' ? 'No jobs match your filters.' : 'No jobs yet.'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
-            {sortedStatusGroups.map(([status, statusJobs]) => (
+          sortedGroups.map(([status, statusJobs]) => {
+            const cfg = getStatusCfg(status);
+            const Icon = cfg.icon;
+            return (
               <div key={status}>
-                {/* Status Group Header */}
-                <div className="px-6 py-2 bg-gray-50 border-b border-gray-100">
-                  <div className="flex items-center">
-                    {React.createElement(getStatusConfig(status).icon, { 
-                      className: "w-4 h-4 mr-2 text-gray-600" 
-                    })}
-                    <span className="text-sm font-medium text-gray-700">
-                      {getStatusConfig(status).label} ({statusJobs.length})
-                    </span>
-                  </div>
+                {/* Group header */}
+                <div className="flex items-center gap-2 px-5 py-2"
+                  style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.color }} />
+                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: cfg.color }}>
+                    {cfg.label} ({statusJobs.length})
+                  </span>
                 </div>
 
-                {/* Jobs in this status */}
-                {statusJobs.map((job) => {
-                  const statusConfig = getStatusConfig(job.status);
-                  const StatusIcon = statusConfig.icon;
-                  const isDelayed = isJobDelayed(job);
-                  const estimatedTime = getEstimatedTimeRemaining(job);
-
+                {statusJobs.map(job => {
+                  const delayed = isDelayed(job);
+                  const StatusIcon = cfg.icon;
                   return (
                     <div
                       key={job.id}
-                      onClick={() => onJobClick && onJobClick(job)}
-                      className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                        isDelayed ? 'border-l-4 border-red-500 bg-red-50' : ''
-                      }`}
+                      onClick={() => onJobClick?.(job)}
+                      className="px-5 py-4 cursor-pointer transition-all hover:bg-white/[0.03]"
+                      style={delayed ? { borderLeft: '3px solid #ef4444' } : {}}
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          {/* Customer and Job Info */}
-                          <div className="flex items-center mb-2">
-                            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusConfig.color} mr-3`}>
-                              <StatusIcon className="w-3 h-3 mr-1" />
-                              {statusConfig.label}
-                            </div>
-                            {isDelayed && (
-                              <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                <AlertTriangle className="w-3 h-3 mr-1" />
-                                Delayed
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex items-center mb-1">
-                            <User className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-                            <span className="font-medium text-gray-900 truncate">
-                              {job.customer.firstName} {job.customer.lastName}
+                          {/* Status + delayed badge */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                              style={{ background: cfg.bg, color: cfg.color }}>
+                              <StatusIcon className="w-3 h-3" />
+                              {cfg.label}
                             </span>
-                            <span className="text-sm text-gray-500 ml-2">
-                              #{job.confirmationCode}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center mb-1">
-                            <MapPin className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-                            <span className="text-sm text-gray-600 truncate">
-                              {job.customer.address}, {job.customer.city}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center mb-2">
-                            <Wrench className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-                            <span className="text-sm text-gray-600 truncate">
-                              {job.vehicle.year} {job.vehicle.make} {job.vehicle.model}
-                            </span>
-                          </div>
-
-                          {/* Services */}
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {job.services.slice(0, 3).map((service, index) => (
-                              <span
-                                key={index}
-                                className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
-                              >
-                                {service}
-                              </span>
-                            ))}
-                            {job.services.length > 3 && (
-                              <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                                +{job.services.length - 3} more
+                            {delayed && (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                                style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444' }}>
+                                <AlertTriangle className="w-3 h-3" /> Delayed
                               </span>
                             )}
                           </div>
-                        </div>
 
-                        {/* Time and Detailer Info */}
-                        <div className="ml-4 text-right flex-shrink-0">
-                          <div className="flex items-center text-sm text-gray-500 mb-1">
-                            <Clock className="w-4 h-4 mr-1" />
-                            {job.time}
-                          </div>
-                          
-                          <div className="text-sm font-medium text-gray-900 mb-1">
-                            {estimatedTime}
+                          {/* Customer */}
+                          <div className="flex items-center gap-2 mb-1">
+                            <User className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                            <span className="text-white font-semibold text-sm truncate">
+                              {job.customer?.firstName} {job.customer?.lastName}
+                            </span>
+                            <span className="text-gray-500 text-xs">#{job.confirmationCode}</span>
                           </div>
 
-                          {job.detailer && (
-                            <div className="text-xs text-gray-500">
-                              {job.detailer.name}
+                          {/* Address */}
+                          {job.customer?.address && (
+                            <div className="flex items-center gap-2 mb-1">
+                              <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                              <span className="text-gray-400 text-xs truncate">
+                                {job.customer.address}, {job.customer.city}
+                              </span>
                             </div>
                           )}
 
-                          {/* Priority Indicator */}
-                          {job.status === 'IN_PROGRESS' && (
-                            <div className="mt-2">
-                              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                          {/* Vehicle */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <Wrench className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                            <span className="text-gray-400 text-xs truncate">
+                              {job.vehicle?.year} {job.vehicle?.make} {job.vehicle?.model}
+                              {job.vehicle?.vehicleType && ` · ${job.vehicle.vehicleType}`}
+                            </span>
+                          </div>
+
+                          {/* Services tags */}
+                          {Array.isArray(job.services) && job.services.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {job.services.slice(0, 3).map((svc, i) => (
+                                <span key={i} className="text-xs px-2 py-0.5 rounded-full"
+                                  style={{ background: 'rgba(96,165,250,0.1)', color: '#93c5fd' }}>
+                                  {svc}
+                                </span>
+                              ))}
+                              {job.services.length > 3 && (
+                                <span className="text-xs px-2 py-0.5 rounded-full text-gray-500"
+                                  style={{ background: 'rgba(255,255,255,0.05)' }}>
+                                  +{job.services.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Right column */}
+                        <div className="text-right flex-shrink-0">
+                          <div className="flex items-center gap-1 text-gray-400 text-xs mb-1 justify-end">
+                            <Clock className="w-3 h-3" />
+                            {job.time}
+                          </div>
+                          {job.totalPrice && (
+                            <div className="text-xs font-bold mb-1" style={{
+                              background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+                              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                            }}>
+                              ${parseFloat(job.totalPrice).toFixed(0)}
+                            </div>
+                          )}
+                          {job.detailer && (
+                            <div className="text-xs text-gray-500">{job.detailer.name}</div>
+                          )}
+                          {status === 'IN_PROGRESS' && (
+                            <div className="mt-2 flex justify-end">
+                              <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* Progress Bar for In Progress Jobs */}
-                      {job.status === 'IN_PROGRESS' && job.startTime && (
+                      {/* Progress bar for IN_PROGRESS */}
+                      {status === 'IN_PROGRESS' && job.startedAt && (
                         <div className="mt-3">
-                          <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                            <span>Progress</span>
-                            <span>Started {new Date(job.startTime).toLocaleTimeString()}</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-orange-500 h-2 rounded-full transition-all duration-500"
-                              style={{ 
-                                width: `${Math.min(100, Math.max(10, 
-                                  ((new Date() - new Date(job.startTime)) / (1000 * 60 * 90)) * 100
-                                ))}%` 
-                              }}
-                            ></div>
+                          <div className="w-full h-1 rounded-full overflow-hidden"
+                            style={{ background: 'rgba(255,255,255,0.08)' }}>
+                            <div className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${Math.min(100, Math.max(5,
+                                  ((Date.now() - new Date(job.startedAt).getTime()) / (1000 * 60 * 90)) * 100
+                                ))}%`,
+                                background: 'linear-gradient(90deg, #f97316, #fb923c)',
+                              }} />
                           </div>
                         </div>
                       )}
@@ -388,26 +304,25 @@ const LiveJobFeed = ({
                   );
                 })}
               </div>
-            ))}
-          </div>
+            );
+          })
         )}
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <div className="flex items-center space-x-4">
-            <span>Live updates every {refreshInterval / 1000}s</span>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
-              <span>Connected</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <span>{filteredJobs.filter(j => j.status === 'IN_PROGRESS').length} active jobs</span>
-            <span>{filteredJobs.filter(j => isJobDelayed(j)).length} delayed</span>
-          </div>
+      <div className="flex items-center justify-between px-5 py-3"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+          Live · refreshes every {refreshInterval / 1000}s
+        </div>
+        <div className="text-xs text-gray-500">
+          {counts.IN_PROGRESS + counts.STARTED + counts.EN_ROUTE} active
+          {filteredJobs.filter(j => isDelayed(j)).length > 0 && (
+            <span className="text-red-400 ml-2">
+              · {filteredJobs.filter(j => isDelayed(j)).length} delayed
+            </span>
+          )}
         </div>
       </div>
     </div>

@@ -1,328 +1,333 @@
-// backend/controllers/availabilityController.js
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
+const { getConfig } = require('./scheduleController');
 
-// Business configuration
-const BUSINESS_CONFIG = {
-  // Operating hours
-  operatingHours: {
-    start: 8, // 8 AM
-    end: 18   // 6 PM
-  },
-  
-  // Service duration and buffer times (in hours)
-  serviceDuration: 4,    // 4 hours per service
-  bufferTime: 2,         // 2 hours buffer between appointments
-  totalSlotTime: 6,      // 4 hours service + 2 hours buffer
-  
-  // Working days (0 = Sunday, 1 = Monday, etc.)
-  workingDays: [0, 1, 2, 3, 4, 5, 6], // All days
-  
-  // Advance booking settings
-  minAdvanceHours: 24,   // Minimum 24 hours advance notice
-  maxAdvanceDays: 60,    // Maximum 60 days in advance
-  
-  // Time slots (considering 6-hour blocks: 4h service + 2h buffer)
+// ── Default config fallback ───────────────────────────────────────────────────
+const DEFAULT_CONFIG = {
+  workingDays:        [1, 2, 3, 4, 5],
+  operatingHours:     { start: 8, end: 18 },
   timeSlots: [
-    { id: 'morning', label: '8:00 AM', startHour: 8, endHour: 14 },   // 8 AM - 2 PM
-    { id: 'afternoon', label: '12:00 PM', startHour: 12, endHour: 18 } // 12 PM - 6 PM
-  ]
+    { id: 'morning',   label: '8:00 AM',  startHour: 8,  endHour: 14 },
+    { id: 'afternoon', label: '12:00 PM', startHour: 12, endHour: 18 },
+  ],
+  maxBookingsPerSlot: 1,
+  minAdvanceHours:    24,
+  maxAdvanceDays:     60,
+  serviceDuration:    4,
+  bufferTime:         2,
 };
 
-// Calculate if date/time is available for booking
-const isTimeSlotAvailable = async (date, timeSlot) => {
+// Safe async config loader — never throws
+const loadConfig = async () => {
   try {
-    const requestedDate = new Date(date);
-    const now = new Date();
-    
-    // Check if date is in the past
-    if (requestedDate < now.setHours(0, 0, 0, 0)) {
+    const cfg = await getConfig();
+    if (!cfg) return DEFAULT_CONFIG;
+    return {
+      ...DEFAULT_CONFIG,
+      ...cfg,
+      operatingHours: cfg.operatingHours ?? DEFAULT_CONFIG.operatingHours,
+      timeSlots:      (Array.isArray(cfg.timeSlots) && cfg.timeSlots.length)
+                        ? cfg.timeSlots : DEFAULT_CONFIG.timeSlots,
+      workingDays:    Array.isArray(cfg.workingDays) ? cfg.workingDays : DEFAULT_CONFIG.workingDays,
+    };
+  } catch {
+    return DEFAULT_CONFIG;
+  }
+};
+
+// Load admin-blocked dates from app_config table
+const loadAdminBlockedDates = async () => {
+  try {
+    const row = await prisma.appConfig.findUnique({ where: { key: 'blocked_dates' } });
+    if (row?.value && Array.isArray(row.value)) {
+      return new Set(row.value.map(b => b.date));
+    }
+  } catch {}
+  return new Set();
+};
+
+// ── isTimeSlotAvailable ───────────────────────────────────────────────────────
+const isTimeSlotAvailable = async (date, timeSlotId) => {
+  try {
+    const config  = await loadConfig();
+    const blocked = await loadAdminBlockedDates();
+
+    const requestedDate = new Date(date + 'T12:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (requestedDate < today) {
       return { available: false, reason: 'Date is in the past' };
     }
-    
-    // Check advance booking window
-    const hoursUntilBooking = (requestedDate.getTime() - new Date().getTime()) / (1000 * 60 * 60);
-    if (hoursUntilBooking < BUSINESS_CONFIG.minAdvanceHours) {
-      return { available: false, reason: `Minimum ${BUSINESS_CONFIG.minAdvanceHours} hours advance notice required` };
+    if (blocked.has(date)) {
+      return { available: false, reason: 'This date has been blocked by admin' };
     }
-    
-    const daysUntilBooking = hoursUntilBooking / 24;
-    if (daysUntilBooking > BUSINESS_CONFIG.maxAdvanceDays) {
-      return { available: false, reason: `Cannot book more than ${BUSINESS_CONFIG.maxAdvanceDays} days in advance` };
+
+    const hoursUntil = (requestedDate.getTime() - Date.now()) / (1000 * 60 * 60);
+    if (hoursUntil < config.minAdvanceHours) {
+      return { available: false, reason: `Minimum ${config.minAdvanceHours}h advance notice required` };
     }
-    
-    // Check if it's a working day
+    if (hoursUntil / 24 > config.maxAdvanceDays) {
+      return { available: false, reason: `Cannot book more than ${config.maxAdvanceDays} days in advance` };
+    }
+
     const dayOfWeek = requestedDate.getDay();
-    if (!BUSINESS_CONFIG.workingDays.includes(dayOfWeek)) {
+    if (!config.workingDays.includes(dayOfWeek)) {
       return { available: false, reason: 'Not a working day' };
     }
-    
-    // Find the time slot configuration
-    const slotConfig = BUSINESS_CONFIG.timeSlots.find(slot => slot.id === timeSlot);
+
+    const slotConfig = config.timeSlots.find(s => s.id === timeSlotId);
     if (!slotConfig) {
       return { available: false, reason: 'Invalid time slot' };
     }
-    
-    // Look for any booking on the same date that isn't canceled
-    const existingBookings = await prisma.booking.findMany({
+
+    const startOfDay = new Date(date + 'T00:00:00');
+    const endOfDay   = new Date(date + 'T23:59:59');
+
+    const existingCount = await prisma.booking.count({
       where: {
-        date: requestedDate,
-        status: {
-          not: 'CANCELED'
-        }
-      }
+        date:   { gte: startOfDay, lte: endOfDay },
+        time:   slotConfig.label,
+        status: { notIn: ['CANCELED', 'NO_SHOW'] },
+      },
     });
-    
-    // Since you work alone, any existing booking on the same date means unavailable
-    if (existingBookings.length > 0) {
-      return { 
-        available: false, 
-        reason: 'Time slot unavailable - another appointment scheduled',
-        conflictingBookings: existingBookings.length
-      };
+
+    if (existingCount >= config.maxBookingsPerSlot) {
+      return { available: false, reason: 'This time slot is fully booked', existingCount };
     }
-    
-    return { 
-      available: true, 
-      timeSlot: slotConfig,
-      estimatedDuration: `${BUSINESS_CONFIG.serviceDuration} hours`,
-      startTime: `${slotConfig.startHour.toString().padStart(2, '0')}:00`,
-      endTime: `${(slotConfig.startHour + BUSINESS_CONFIG.serviceDuration).toString().padStart(2, '0')}:00`
+
+    return {
+      available:      true,
+      timeSlot:       slotConfig,
+      startTime:      `${String(slotConfig.startHour).padStart(2, '0')}:00`,
+      endTime:        `${String(slotConfig.endHour).padStart(2, '0')}:00`,
+      existingCount,
+      slotsRemaining: config.maxBookingsPerSlot - existingCount,
     };
-    
   } catch (error) {
-    console.error('Error checking time slot availability:', error);
+    console.error('isTimeSlotAvailable error:', error);
     return { available: false, reason: 'Error checking availability' };
   }
 };
 
-// Get available dates and time slots for a date range
+// ── GET /api/availability ─────────────────────────────────────────────────────
 const getAvailability = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    
+
     if (!startDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Start date is required'
-      });
+      return res.status(400).json({ success: false, message: 'startDate is required' });
     }
-    
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : new Date(start.getTime() + (30 * 24 * 60 * 60 * 1000)); // Default 30 days
-    
+
+    const [config, blockedDates] = await Promise.all([loadConfig(), loadAdminBlockedDates()]);
+
+    const start = new Date(startDate + 'T12:00:00');
+    const end   = endDate
+      ? new Date(endDate   + 'T12:00:00')
+      : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    // Fetch all bookings in range — include time so we can count per slot
+    const bookings = await prisma.booking.findMany({
+      where: {
+        date:   { gte: new Date(startDate + 'T00:00:00'), lte: new Date((endDate || startDate) + 'T23:59:59') },
+        status: { notIn: ['CANCELED', 'NO_SHOW'] },
+      },
+      select: { date: true, time: true, status: true },
+    });
+
+    // Count bookings per date+slot key e.g. '2025-06-01::8:00 AM'
+    const countBySlot = {};
+    bookings.forEach(b => {
+      const d   = b.date.toISOString().split('T')[0];
+      const key = `${d}::${b.time}`;
+      countBySlot[key] = (countBySlot[key] || 0) + 1;
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const availability = [];
-    const currentDate = new Date(start);
-    
-    while (currentDate <= end) {
-      const dateStr = currentDate.toISOString().split('T')[0];
-      const dayAvailability = {
-        date: dateStr,
-        dayOfWeek: currentDate.getDay(),
-        isWorkingDay: BUSINESS_CONFIG.workingDays.includes(currentDate.getDay()),
-        timeSlots: []
-      };
-      
-      // Check each time slot for this date
-      for (const slot of BUSINESS_CONFIG.timeSlots) {
-        const availability = await isTimeSlotAvailable(dateStr, slot.id);
-        dayAvailability.timeSlots.push({
-          id: slot.id,
-          label: slot.label,
-          startHour: slot.startHour,
-          endHour: slot.endHour,
-          ...availability
-        });
+    const current = new Date(start);
+
+    while (current <= end) {
+      const dateStr    = current.toISOString().split('T')[0];
+      const dayOfWeek  = current.getDay();
+      const isPast     = new Date(dateStr + 'T00:00:00') < today;
+      const isBlocked  = blockedDates.has(dateStr);
+      const isWorking  = config.workingDays.includes(dayOfWeek);
+      const isAvailable = isWorking && !isBlocked && !isPast;
+
+      // Check min advance hours for today/tomorrow
+      let tooSoon = false;
+      if (!isPast && isWorking) {
+        const hoursUntil = (new Date(dateStr + 'T12:00:00').getTime() - Date.now()) / (1000 * 60 * 60);
+        tooSoon = hoursUntil < config.minAdvanceHours;
       }
-      
-      availability.push(dayAvailability);
-      currentDate.setDate(currentDate.getDate() + 1);
+
+      // Count per-slot bookings for this date and check availability individually
+      const buildSlot = (slot, reason = null) => {
+        const slotCount = countBySlot[`${dateStr}::${slot.label}`] || 0;
+        return {
+          id:        slot.id,
+          label:     slot.label,
+          startHour: slot.startHour,
+          endHour:   slot.endHour,
+          available: !reason && slotCount < config.maxBookingsPerSlot,
+          bookingCount: slotCount,
+          reason,
+        };
+      };
+
+      let timeSlots;
+      if (isPast) {
+        timeSlots = config.timeSlots.map(s => buildSlot(s, 'Past date'));
+      } else if (isBlocked) {
+        timeSlots = config.timeSlots.map(s => buildSlot(s, 'Blocked by admin'));
+      } else if (!isWorking) {
+        timeSlots = config.timeSlots.map(s => buildSlot(s, 'Not a working day'));
+      } else if (tooSoon) {
+        timeSlots = config.timeSlots.map(s => buildSlot(s, `Book at least ${config.minAdvanceHours}h in advance`));
+      } else {
+        timeSlots = config.timeSlots.map(s => buildSlot(s));
+      }
+
+      // Day is fully open if at least one slot is available
+      const totalBookingsOnDay = Object.entries(countBySlot)
+        .filter(([k]) => k.startsWith(dateStr + '::'))
+        .reduce((sum, [, v]) => sum + v, 0);
+
+      availability.push({
+        date:        dateStr,
+        dayOfWeek,
+        isWorkingDay: isAvailable && !tooSoon && timeSlots.some(s => s.available),
+        isBlocked,
+        isPast,
+        tooSoon,
+        bookingCount: totalBookingsOnDay,
+        timeSlots,
+      });
+
+      current.setDate(current.getDate() + 1);
     }
-    
+
     res.json({
       success: true,
       availability,
       businessConfig: {
-        operatingHours: BUSINESS_CONFIG.operatingHours,
-        serviceDuration: BUSINESS_CONFIG.serviceDuration,
-        bufferTime: BUSINESS_CONFIG.bufferTime,
-        minAdvanceHours: BUSINESS_CONFIG.minAdvanceHours,
-        maxAdvanceDays: BUSINESS_CONFIG.maxAdvanceDays,
-        timeSlots: BUSINESS_CONFIG.timeSlots
-      }
+        operatingHours:     config.operatingHours,
+        timeSlots:          config.timeSlots,
+        minAdvanceHours:    config.minAdvanceHours,
+        maxAdvanceDays:     config.maxAdvanceDays,
+        maxBookingsPerSlot: config.maxBookingsPerSlot,
+        workingDays:        config.workingDays,
+        serviceDuration:    config.serviceDuration || 4,
+        bufferTime:         config.bufferTime       || 2,
+      },
     });
-    
   } catch (error) {
-    console.error('Get availability error:', error);
+    console.error('getAvailability error:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching availability',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error:   process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
 
-// Check specific date/time availability
+// ── GET /api/availability/check ───────────────────────────────────────────────
 const checkTimeSlot = async (req, res) => {
   try {
-    const { date, timeSlot } = req.query;
-    
-    if (!date || !timeSlot) {
-      return res.status(400).json({
-        success: false,
-        message: 'Date and time slot are required'
-      });
+    const { date, timeSlot, time } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ success: false, message: 'date is required' });
     }
-    
-    const availability = await isTimeSlotAvailable(date, timeSlot);
-    
-    res.json({
-      success: true,
-      date,
-      timeSlot,
-      ...availability
-    });
-    
+
+    const config = await loadConfig();
+    let slotId = timeSlot;
+
+    if (!slotId && time) {
+      slotId = config.timeSlots.find(s => s.label === time)?.id;
+    }
+
+    if (!slotId) {
+      // No slot specified — just check if the date is open
+      const d = new Date(date + 'T12:00:00');
+      const blocked = await loadAdminBlockedDates();
+      const isWorking = config.workingDays.includes(d.getDay()) && !blocked.has(date);
+      return res.json({ success: true, date, available: isWorking });
+    }
+
+    const result = await isTimeSlotAvailable(date, slotId);
+    res.json({ success: true, date, timeSlot: slotId, ...result });
   } catch (error) {
-    console.error('Check time slot error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error checking time slot',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    console.error('checkTimeSlot error:', error);
+    res.status(500).json({ success: false, message: 'Error checking time slot' });
   }
 };
 
-// Get blocked dates (dates with existing bookings)
+// ── GET /api/availability/blocked ─────────────────────────────────────────────
 const getBlockedDates = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    
-    const start = startDate ? new Date(startDate) : new Date();
-    const end = endDate ? new Date(endDate) : new Date(Date.now() + (90 * 24 * 60 * 60 * 1000)); // 90 days default
-    
+    const start = startDate ? new Date(startDate + 'T00:00:00') : new Date();
+    const end   = endDate   ? new Date(endDate + 'T23:59:59')   : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+
     const bookings = await prisma.booking.findMany({
-      where: {
-        date: {
-          gte: start,
-          lte: end
-        },
-        status: {
-          not: 'CANCELED'
-        }
-      },
-      select: {
-        date: true,
-        time: true,
-        status: true,
-        confirmationCode: true
-      }
+      where: { date: { gte: start, lte: end }, status: { notIn: ['CANCELED', 'NO_SHOW'] } },
+      select: { date: true, time: true, status: true, confirmationCode: true },
     });
-    
-    // Create array of blocked dates
-    const blockedDates = bookings.map(booking => ({
-      date: booking.date.toISOString().split('T')[0],
-      time: booking.time,
-      status: booking.status,
-      confirmationCode: booking.confirmationCode
-    }));
-    
+
     res.json({
       success: true,
-      blockedDates,
-      totalBlocked: blockedDates.length
+      blockedDates: bookings.map(b => ({
+        date:             b.date.toISOString().split('T')[0],
+        time:             b.time,
+        status:           b.status,
+        confirmationCode: b.confirmationCode,
+      })),
     });
-    
   } catch (error) {
-    console.error('Get blocked dates error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching blocked dates',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    console.error('getBlockedDates error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching blocked dates' });
   }
 };
 
-// Validate booking request before creation
+// ── POST /api/availability/validate ──────────────────────────────────────────
 const validateBookingRequest = async (req, res) => {
   try {
-    const { date, time, services = [], addOns = [], vehicleType } = req.body;
-    
+    const { date, time } = req.body;
     if (!date || !time) {
-      return res.status(400).json({
-        success: false,
-        message: 'Date and time are required'
-      });
+      return res.status(400).json({ success: false, message: 'Date and time are required' });
     }
-    
-    // Map frontend time labels to our time slot IDs
-    const timeSlotMapping = {
-      '8:00 AM': 'morning',
-      '12:00 PM': 'afternoon'
-    };
-    
-    const timeSlotId = timeSlotMapping[time];
-    if (!timeSlotId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid time slot selected'
-      });
+
+    const config = await loadConfig();
+    const slotId = config.timeSlots.find(s => s.label === time)?.id;
+
+    if (!slotId) {
+      return res.status(400).json({ success: false, message: 'Invalid time slot' });
     }
-    
-    // Check availability
-    const availability = await isTimeSlotAvailable(date, timeSlotId);
-    
-    if (!availability.available) {
-      return res.status(409).json({
-        success: false,
-        message: availability.reason,
-        conflictingBookings: availability.conflictingBookings
-      });
+
+    const result = await isTimeSlotAvailable(date, slotId);
+    if (!result.available) {
+      return res.status(409).json({ success: false, message: result.reason });
     }
-    
-    // Calculate estimated duration
-    let estimatedDuration = BUSINESS_CONFIG.serviceDuration;
-    if (addOns && addOns.length > 0) {
-      estimatedDuration += addOns.length * 0.5; // 30 minutes per add-on
-    }
-    
-    res.json({
-      success: true,
-      validation: {
-        available: true,
-        date,
-        time,
-        timeSlot: availability.timeSlot,
-        estimatedDuration: `${estimatedDuration} hours`,
-        startTime: availability.startTime,
-        endTime: availability.endTime
-      }
-    });
-    
+
+    res.json({ success: true, validation: { available: true, date, time, timeSlot: result.timeSlot } });
   } catch (error) {
-    console.error('Validate booking request error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error validating booking request',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    console.error('validateBookingRequest error:', error);
+    res.status(500).json({ success: false, message: 'Error validating booking' });
   }
 };
 
-// Get business configuration
+// ── GET /api/availability/config ──────────────────────────────────────────────
 const getBusinessConfig = async (req, res) => {
   try {
-    res.json({
-      success: true,
-      config: BUSINESS_CONFIG
-    });
+    const config = await loadConfig();
+    res.json({ success: true, config });
   } catch (error) {
-    console.error('Get business config error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching business configuration'
-    });
+    console.error('getBusinessConfig error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching business config' });
   }
 };
 
@@ -333,5 +338,4 @@ module.exports = {
   validateBookingRequest,
   getBusinessConfig,
   isTimeSlotAvailable,
-  BUSINESS_CONFIG
 };

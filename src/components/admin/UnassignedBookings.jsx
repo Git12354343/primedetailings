@@ -90,40 +90,49 @@ const UnassignedBookings = ({
   });
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Unassigned Bookings</h2>
-        
-        {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row gap-3 p-5 rounded-2xl"
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex-1">
+          <h2 className="text-white font-bold text-lg mb-1">Unassigned Bookings</h2>
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''} need assignment
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(255,255,255,0.3)' }} />
             <input
               type="text"
-              placeholder="Search by name, phone, or confirmation code..."
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="pl-9 pr-4 py-2 text-sm rounded-xl w-48"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', outline: 'none' }}
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-3 py-2 text-sm rounded-xl"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', outline: 'none' }}
           >
-            <option value="ALL">All Status</option>
-            <option value="PENDING">Pending</option>
-            <option value="CONFIRMED">Confirmed</option>
+            <option value="ALL" style={{ background: '#1a1a1a' }}>All</option>
+            <option value="PENDING" style={{ background: '#1a1a1a' }}>Pending</option>
+            <option value="CONFIRMED" style={{ background: '#1a1a1a' }}>Confirmed</option>
           </select>
         </div>
       </div>
 
-      <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+      {/* List */}
+      <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
         {filteredBookings.length === 0 ? (
-          <div className="p-6 text-center">
-            <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">All caught up!</h3>
-            <p className="text-gray-600">No unassigned bookings at the moment.</p>
+          <div className="flex flex-col items-center py-16 rounded-2xl"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <CheckCircle className="w-10 h-10 mb-3" style={{ color: 'rgba(52,211,153,0.5)' }} />
+            <h3 className="text-white font-bold mb-1">All caught up!</h3>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>No unassigned bookings right now.</p>
           </div>
         ) : (
           filteredBookings.map((booking) => (

@@ -1,176 +1,276 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Droplets, Sparkles, Shield, Zap, ChevronRight, Package, Wrench, Star, Loader2 } from 'lucide-react';
+import {
+  Sparkles, Shield, Star, Package, Wrench, Zap, ChevronRight,
+  Clock, ArrowRight, Loader2
+} from 'lucide-react';
+import useServicesCache from '../hooks/useServicesCache';
 
-const ServicesOverview = () => {
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
 
-  // Map service categories to icons
-  const getCategoryIcon = (category) => {
-    switch (category) {
-      case 'DETAILING':
-        return <Sparkles className="w-8 h-8 text-blue-600" />;
-      case 'PROTECTION':
-        return <Shield className="w-8 h-8 text-blue-600" />;
-      case 'RESTORATION':
-        return <Star className="w-8 h-8 text-blue-600" />;
-      case 'MAINTENANCE':
-        return <Zap className="w-8 h-8 text-blue-600" />;
-      case 'SPECIALTY':
-        return <Wrench className="w-8 h-8 text-blue-600" />;
-      default:
-        return <Package className="w-8 h-8 text-blue-600" />;
-    }
-  };
+const CATEGORY_CONFIG = {
+  PROTECTION:  { icon: Shield,   color: '#c9a84c', bg: 'rgba(201,168,76,0.12)' },
+  RESTORATION: { icon: Star,     color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
+  DETAILING:   { icon: Sparkles, color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
+  SPECIALTY:   { icon: Wrench,   color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
+  MAINTENANCE: { icon: Zap,      color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
+  DEFAULT:     { icon: Package,  color: '#94a3b8', bg: 'rgba(148,163,184,0.12)' },
+};
 
-  // Get the lowest price across all vehicle types
-  const getStartingPrice = (servicePricing) => {
-    if (!servicePricing || Object.keys(servicePricing).length === 0) {
-      return 'Price on request';
-    }
-    
-    const prices = Object.values(servicePricing).filter(price => price > 0);
-    if (prices.length === 0) {
-      return 'Price on request';
-    }
-    
-    const minPrice = Math.min(...prices);
-    return `Starting at $${minPrice}`;
-  };
+const FALLBACK_SERVICES = [
+  { id: 1, name: 'Ceramic Coating',   category: 'PROTECTION',  description: 'Industry-leading 9H ceramic protection.' },
+  { id: 2, name: 'Paint Correction',  category: 'RESTORATION', description: 'Multi-stage machine polishing.' },
+  { id: 3, name: 'Interior Detailing',category: 'DETAILING',   description: 'Deep clean and conditioning.' },
+  { id: 4, name: 'Exterior Detailing',category: 'DETAILING',   description: 'Hand wash, clay bar, wax protection.' },
+  { id: 5, name: 'Engine Bay',        category: 'SPECIALTY',   description: 'Professional degreasing.' },
+  { id: 6, name: 'Express Detail',    category: 'MAINTENANCE', description: 'Quick maintenance detail.' },
+];
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/services/active`);
-        const data = await response.json();
+const getMinPrice = (p) => {
+  const v = Object.values(p || {}).filter(x => x > 0);
+  return v.length ? Math.min(...v) : null;
+};
 
-        if (data.success) {
-          // Sort by sortOrder and take top 4 services for overview
-          const sortedServices = data.services
-            .sort((a, b) => a.sortOrder - b.sortOrder)
-            .slice(0, 4);
-          setServices(sortedServices);
-        } else {
-          setError('Failed to load services');
-        }
-      } catch (error) {
-        console.error('Error fetching services:', error);
-        setError('Unable to load services');
-      } finally {
-        setLoading(false);
-      }
-    };
+const fmtDur = (m) => {
+  if (!m) return null;
+  const h = Math.floor(m / 60), min = m % 60;
+  return h ? (min ? `${h}h ${min}m` : `${h}h`) : `${min}m`;
+};
 
-    fetchServices();
-  }, []);
-
-  if (loading) {
-    return (
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-gray-600">Loading our services...</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-                Our Services
-              </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Professional car detailing services tailored to your vehicle's needs
-              </p>
-            </div>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
-              <p className="text-red-700 mb-4">{error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
-                className="text-red-600 hover:text-red-700 font-medium"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+// ── Package card (homepage) ────────────────────────────────────────────────
+const HomePkgCard = ({ pkg, index, visible }) => {
+  const min = getMinPrice(pkg.pricing);
+  const dur = fmtDur(pkg.estimatedDuration);
 
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Our Services
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Professional car detailing services tailored to your vehicle's needs
-          </p>
-        </div>
+    <div className={`relative rounded-2xl p-6 flex flex-col transition-all duration-700 group hover:-translate-y-1 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      style={{
+        background: pkg.isMostPopular ? 'rgba(201,168,76,0.06)' : 'rgba(255,255,255,0.03)',
+        border: pkg.isMostPopular ? '1px solid rgba(201,168,76,0.25)' : '1px solid rgba(255,255,255,0.08)',
+        transitionDelay: `${index * 80}ms`,
+        boxShadow: pkg.isMostPopular ? '0 0 40px rgba(201,168,76,0.1)' : 'none',
+      }}>
 
-        {services.length === 0 ? (
-          <div className="text-center">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
-              <p className="text-yellow-800">No services are currently available.</p>
-              <p className="text-yellow-600 text-sm mt-2">Please check back later or contact us directly.</p>
-            </div>
-          </div>
-        ) : (
-          <div className={`grid gap-8 ${
-            services.length === 1 ? 'max-w-sm mx-auto' :
-            services.length === 2 ? 'md:grid-cols-2 max-w-2xl mx-auto' :
-            services.length === 3 ? 'md:grid-cols-3 max-w-4xl mx-auto' :
-            'md:grid-cols-2 lg:grid-cols-4'
-          }`}>
-            {services.map((service) => (
-              <div key={service.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
-                <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
-                  {getCategoryIcon(service.category)}
+      {/* Badges */}
+      {pkg.isMostPopular && (
+        <div className="absolute -top-3 left-5 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
+          style={{ background: GOLD, color: '#0a0a0a' }}>
+          <Star className="w-3 h-3" /> Most Popular
+        </div>
+      )}
+
+      {pkg.tagline && (
+        <div className="text-xs text-gray-500 italic mb-2">{pkg.tagline}</div>
+      )}
+
+      <h3 className="text-white font-bold text-xl mb-2 group-hover:text-yellow-300 transition-colors">
+        {pkg.name}
+      </h3>
+      {pkg.description && (
+        <p className="text-gray-400 text-sm leading-relaxed mb-5 flex-1">{pkg.description}</p>
+      )}
+
+      {/* Highlights */}
+      {(pkg.includedServices || []).slice(0, 3).map((_, i) => null)}
+
+      {/* Price + CTA */}
+      <div className="flex items-center justify-between pt-4"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div>
+          {pkg.requiresQuote ? (
+            <div className="text-yellow-400 font-bold text-sm">Custom Quote</div>
+          ) : min ? (
+            <>
+              <div className="text-2xl font-black" style={{
+                background: GOLD, WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              }}>From ${min}</div>
+              {dur && (
+                <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
+                  <Clock className="w-3 h-3" /> {dur}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">
-                  {service.name}
-                </h3>
-                <p className="text-gray-600 mb-4 text-center line-clamp-3">
-                  {service.description || 'Professional detailing service tailored to your needs.'}
-                </p>
-                <p className="text-blue-600 font-semibold text-center">
-                  {getStartingPrice(service.pricing)}
-                </p>
-                
-                {/* Vehicle type pricing hints */}
-                {service.pricing && Object.keys(service.pricing).length > 1 && (
-                  <div className="mt-3 text-center">
-                    <p className="text-xs text-gray-500">
-                      Pricing varies by vehicle type
-                    </p>
-                  </div>
-                )}
+              )}
+            </>
+          ) : null}
+        </div>
+        <Link
+          to={`/booking`}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group-hover:gap-3"
+          style={{
+            background: pkg.isMostPopular ? GOLD : 'rgba(201,168,76,0.1)',
+            color: pkg.isMostPopular ? '#0a0a0a' : '#f5d376',
+            border: pkg.isMostPopular ? 'none' : '1px solid rgba(201,168,76,0.25)',
+          }}>
+          Book
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+// ── Service card (homepage overview) ──────────────────────────────────────
+const ServiceCard = ({ service, index, visible }) => {
+  const cfg = CATEGORY_CONFIG[service.category] || CATEGORY_CONFIG.DEFAULT;
+  const Icon = cfg.icon;
+  const min = getMinPrice(service.pricing);
+
+  return (
+    <div className={`service-card relative rounded-2xl p-5 cursor-pointer transition-all duration-700 group ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        transitionDelay: `${index * 70}ms`,
+      }}>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 service-icon"
+        style={{ background: cfg.bg }}>
+        <Icon className="w-5 h-5" style={{ color: cfg.color }} />
+      </div>
+      <h3 className="text-base font-bold text-white mb-2 group-hover:text-yellow-300 transition-colors">
+        {service.name}
+      </h3>
+      <p className="text-gray-400 text-sm leading-relaxed mb-4 line-clamp-2">
+        {service.description || 'Professional detailing service.'}
+      </p>
+      <div className="flex items-center justify-between mt-auto">
+        {min ? (
+          <span className="text-yellow-400 font-bold text-sm">From ${min}</span>
+        ) : (
+          <span className="text-gray-500 text-xs">Price on request</span>
+        )}
+        <span className="text-xs opacity-0 group-hover:opacity-100 transition-all" style={{ color: cfg.color }}>
+          Book →
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+const ServicesOverview = () => {
+  const { services: rawServices, loading } = useServicesCache();
+  const [packages, setPackages]           = useState([]);
+  const [pkgLoading, setPkgLoading]       = useState(true);
+  const [visible, setVisible]             = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.1 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/packages/active`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setPackages(d.packages); })
+      .catch(() => {})
+      .finally(() => setPkgLoading(false));
+  }, []);
+
+  const services = rawServices.length
+    ? rawServices.sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 6)
+    : FALLBACK_SERVICES;
+
+  const featuredPackages = packages.filter(p => p.isActive).slice(0, 3);
+
+  return (
+    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#0d0d0d' }}>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%)' }} />
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
+
+        {/* ── Popular Packages section ── */}
+        {(pkgLoading || featuredPackages.length > 0) && (
+          <div className="mb-20">
+            <div className={`text-center mb-10 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
+                style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                <Package className="w-3 h-3 text-yellow-400" />
+                <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Popular Packages</span>
               </div>
-            ))}
+              <h2 className="text-4xl sm:text-5xl font-black text-white mb-3">
+                Choose a{' '}
+                <span style={{ background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  Package
+                </span>
+              </h2>
+              <p className="text-gray-400 text-base max-w-lg mx-auto">
+                Ready-made packages designed for every need. Select one and you're done in minutes.
+              </p>
+            </div>
+
+            {pkgLoading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="w-6 h-6 animate-spin text-yellow-500" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                {featuredPackages.map((pkg, i) => (
+                  <HomePkgCard key={pkg.id} pkg={pkg} index={i} visible={visible} />
+                ))}
+              </div>
+            )}
+
+            {/* Dual CTA */}
+            <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 transition-all duration-700 delay-300 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+              <Link to="/booking"
+                className="btn-luxury inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold tracking-wide group">
+                Book a Package
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              <Link to="/booking"
+                className="btn-ghost-luxury inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold">
+                Build Your Own Detail →
+              </Link>
+            </div>
           </div>
         )}
 
-        <div className="text-center mt-12">
-          <Link
-            to="/services"
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center"
-          >
-            View All Services
-            <ChevronRight className="ml-2 w-5 h-5" />
-          </Link>
+        {/* ── Individual Services section ── */}
+        <div>
+          <div className={`text-center mb-10 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
+              style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
+              <Sparkles className="w-3 h-3 text-yellow-400" />
+              <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Individual Services</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
+              Or Pick{' '}
+              <span style={{ background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                Exactly
+              </span>{' '}
+              What You Need
+            </h2>
+            <p className="text-gray-400 text-base max-w-xl mx-auto">
+              Know what you want? Choose individual services and build your own detail.
+            </p>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="w-6 h-6 animate-spin text-yellow-500" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {services.map((s, i) => (
+                <ServiceCard key={s.id} service={s} index={i} visible={visible} />
+              ))}
+            </div>
+          )}
+
+          <div className={`text-center mt-10 transition-all duration-700 delay-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+            <Link to="/services"
+              className="btn-luxury inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-bold tracking-wide group">
+              View All Services & Pricing
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
         </div>
+
       </div>
     </section>
   );

@@ -1,513 +1,222 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Bell, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  X,
-  Settings,
-  Volume2,
-  VolumeX
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Bell, CheckCircle, AlertTriangle, X, Settings, Volume2, VolumeX, Navigation } from 'lucide-react';
 
-// Toast Notification Component
-const ToastNotification = ({ 
-  notification, 
-  onDismiss, 
-  onAction,
-  position = 'top-right' 
-}) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
+const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
+const GOLD_S = '#c9a84c';
+
+const TYPE_CONFIG = {
+  success:    { color: '#34d399', bg: 'rgba(52,211,153,0.08)',    border: 'rgba(52,211,153,0.2)' },
+  warning:    { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',    border: 'rgba(245,158,11,0.2)' },
+  error:      { color: '#f87171', bg: 'rgba(248,113,113,0.08)',   border: 'rgba(248,113,113,0.2)' },
+  info:       { color: '#60a5fa', bg: 'rgba(96,165,250,0.08)',    border: 'rgba(96,165,250,0.2)' },
+  assignment: { color: GOLD_S,   bg: 'rgba(201,168,76,0.08)',    border: 'rgba(201,168,76,0.25)' },
+};
+
+let _id = 0;
+const uid = () => `n_${++_id}`;
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+const Toast = ({ notification, onDismiss, onAction }) => {
+  const [visible, setVisible] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const cfg = TYPE_CONFIG[notification.type] || TYPE_CONFIG.info;
 
   useEffect(() => {
-    // Entrance animation
-    setTimeout(() => setIsVisible(true), 100);
-
-    // Auto-dismiss after duration
+    setTimeout(() => setVisible(true), 20);
     if (notification.autoDismiss !== false) {
-      const timer = setTimeout(() => {
-        handleDismiss();
-      }, notification.duration || 5000);
-
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => dismiss(), notification.duration || 5000);
+      return () => clearTimeout(t);
     }
-  }, [notification]);
+  }, []);
 
-  const handleDismiss = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onDismiss(notification.id);
-    }, 300);
-  };
-
-  const getNotificationStyles = () => {
-    const baseStyles = "fixed z-50 min-w-80 max-w-md rounded-lg shadow-lg border p-4 transition-all duration-300 transform";
-    
-    const typeStyles = {
-      success: "bg-green-50 border-green-200 text-green-800",
-      warning: "bg-yellow-50 border-yellow-200 text-yellow-800",
-      error: "bg-red-50 border-red-200 text-red-800",
-      info: "bg-blue-50 border-blue-200 text-blue-800",
-      assignment: "bg-purple-50 border-purple-200 text-purple-800"
-    };
-
-    const positionStyles = {
-      'top-right': 'top-4 right-4',
-      'top-left': 'top-4 left-4',
-      'bottom-right': 'bottom-4 right-4',
-      'bottom-left': 'bottom-4 left-4',
-      'top-center': 'top-4 left-1/2 transform -translate-x-1/2',
-      'bottom-center': 'bottom-4 left-1/2 transform -translate-x-1/2'
-    };
-
-    const animationStyles = isVisible && !isExiting 
-      ? 'translate-y-0 opacity-100 scale-100' 
-      : 'translate-y-2 opacity-0 scale-95';
-
-    return `${baseStyles} ${typeStyles[notification.type] || typeStyles.info} ${positionStyles[position]} ${animationStyles}`;
-  };
-
-  const getIcon = () => {
-    const iconStyles = "w-5 h-5 flex-shrink-0";
-    
-    switch (notification.type) {
-      case 'success':
-        return <CheckCircle className={`${iconStyles} text-green-600`} />;
-      case 'warning':
-        return <AlertTriangle className={`${iconStyles} text-yellow-600`} />;
-      case 'error':
-        return <AlertTriangle className={`${iconStyles} text-red-600`} />;
-      case 'assignment':
-        return <Bell className={`${iconStyles} text-purple-600`} />;
-      default:
-        return <Bell className={`${iconStyles} text-blue-600`} />;
-    }
+  const dismiss = () => {
+    setExiting(true);
+    setTimeout(() => onDismiss(notification.id), 280);
   };
 
   return (
-    <div className={getNotificationStyles()}>
-      <div className="flex items-start">
-        <div className="mr-3 mt-0.5">
-          {getIcon()}
+    <div className="mb-3"
+      style={{
+        transform: visible && !exiting ? 'translateX(0)' : 'translateX(110%)',
+        opacity: visible && !exiting ? 1 : 0,
+        transition: 'transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s ease',
+        maxWidth: '360px',
+        width: '100%',
+      }}>
+      <div className="rounded-2xl p-4 shadow-xl"
+        style={{ background: 'rgba(18,18,18,0.97)', border: `1px solid ${cfg.border}`, backdropFilter: 'blur(20px)' }}>
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: cfg.bg }}>
+            {notification.type === 'success'    && <CheckCircle className="w-4 h-4" style={{ color: cfg.color }} />}
+            {notification.type === 'warning'    && <AlertTriangle className="w-4 h-4" style={{ color: cfg.color }} />}
+            {notification.type === 'assignment' && <Bell className="w-4 h-4" style={{ color: cfg.color }} />}
+            {(notification.type === 'info' || notification.type === 'error') && <Bell className="w-4 h-4" style={{ color: cfg.color }} />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-white mb-0.5">{notification.title}</p>
+            <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>{notification.message}</p>
+            {notification.metadata?.address && (
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{notification.metadata.address}</p>
+            )}
+            {notification.actions?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {notification.actions.map((action, i) => (
+                  <button key={i}
+                    onClick={() => { onAction(notification.id, action); if (!notification.persistent) dismiss(); }}
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                    style={action.style === 'primary'
+                      ? { background: GOLD, color: '#0a0a0a' }
+                      : { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}>
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button onClick={dismiss} className="flex-shrink-0 p-1 rounded-lg hover:bg-white/10 transition-colors">
+            <X className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.4)' }} />
+          </button>
         </div>
-        
-        <div className="flex-1 min-w-0">
-          {notification.title && (
-            <h4 className="font-semibold text-sm mb-1">
-              {notification.title}
-            </h4>
-          )}
-          
-          <p className="text-sm opacity-90">
-            {notification.message}
-          </p>
-          
-          {notification.metadata && (
-            <div className="mt-2 text-xs opacity-75">
-              {notification.metadata.customerName && (
-                <div>Customer: {notification.metadata.customerName}</div>
-              )}
-              {notification.metadata.address && (
-                <div>Address: {notification.metadata.address}</div>
-              )}
-              {notification.metadata.time && (
-                <div>Time: {notification.metadata.time}</div>
-              )}
-            </div>
-          )}
-          
-          {notification.actions && notification.actions.length > 0 && (
-            <div className="mt-3 flex space-x-2">
-              {notification.actions.map((action, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    onAction(notification.id, action);
-                    if (action.dismissOnClick !== false) {
-                      handleDismiss();
-                    }
-                  }}
-                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                    action.style === 'primary' 
-                      ? 'bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-900'
-                      : 'bg-white bg-opacity-50 hover:bg-opacity-75 text-gray-700'
-                  }`}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        <button
-          onClick={handleDismiss}
-          className="ml-2 p-1 rounded-md hover:bg-white hover:bg-opacity-20 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
       </div>
     </div>
   );
 };
 
-// Main Smart Notifications System
-const SmartNotificationsSystem = ({ 
-  jobs = [], 
-  userRole = 'detailer', // 'detailer' or 'admin'
-  onJobAction,
-  settings = {}
-}) => {
+// ── Main system ───────────────────────────────────────────────────────────────
+const SmartNotificationsSystem = ({ jobs = [], onJobAction, userRole = 'detailer' }) => {
   const [notifications, setNotifications] = useState([]);
-  const [notificationSettings, setNotificationSettings] = useState({
-    sound: true,
-    jobAssignments: true,
-    delays: true,
-    completions: true,
-    ...settings
+  const [showSettings, setShowSettings]   = useState(false);
+  const [settings, setSettings] = useState({
+    sound: true, jobAssignments: true, completions: true, delays: true,
   });
-  const [lastCheckedJobs, setLastCheckedJobs] = useState(new Map());
+  const lastJobsRef = useRef(new Map());
+  const seenAlertsRef = useRef(new Set());
 
-  // Audio for notifications
-  const playNotificationSound = useCallback(() => {
-    if (notificationSettings.sound) {
-      // Create a simple notification sound
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-      
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
-    }
-  }, [notificationSettings.sound]);
-
-  // Add notification to the stack
-  const addNotification = useCallback((notification) => {
-    const id = Date.now() + Math.random();
-    const newNotification = {
-      id,
-      timestamp: new Date(),
-      ...notification
-    };
-
-    setNotifications(prev => [...prev, newNotification]);
-    playNotificationSound();
-
-    // Request permission for browser notifications if not granted
-    if (Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-
-    // Show browser notification
-    if (Notification.permission === 'granted') {
-      new Notification(notification.title || 'Prime Detailing', {
-        body: notification.message,
-        icon: '/favicon.ico', // Update with your app icon
-        tag: notification.type,
-        requireInteraction: notification.persistent
-      });
-    }
-  }, [playNotificationSound]);
-
-  // Remove notification
-  const removeNotification = useCallback((id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const addNotification = useCallback((n) => {
+    setNotifications(p => [...p, { ...n, id: uid(), autoDismiss: !n.persistent }]);
   }, []);
 
-  // Handle notification actions
-  const handleNotificationAction = useCallback((notificationId, action) => {
-    if (onJobAction && action.jobId) {
-      onJobAction(action.jobId, action.type, action.data);
-    }
+  const removeNotification = useCallback((id) => {
+    setNotifications(p => p.filter(n => n.id !== id));
+  }, []);
 
-    if (action.callback) {
-      action.callback();
-    }
+  const handleAction = useCallback((notifId, action) => {
+    if (onJobAction && action.jobId) onJobAction(action.jobId, action.type, action.data);
   }, [onJobAction]);
 
-  // Check for job changes and trigger notifications
+  // Watch for status changes and delays
   useEffect(() => {
     jobs.forEach(job => {
-      const jobKey = job.id;
-      const lastJob = lastCheckedJobs.get(jobKey);
-      
-      if (!lastJob) {
-        // First time seeing this job
-        setLastCheckedJobs(prev => new Map(prev).set(jobKey, job));
-        return;
+      const prev = lastJobsRef.current.get(job.id);
+      if (!prev) { lastJobsRef.current.set(job.id, job); return; }
+
+      if (prev.status !== job.status) {
+        if (userRole === 'detailer' && !prev.detailerId && job.status === 'CONFIRMED' && settings.jobAssignments) {
+          addNotification({
+            type: 'assignment', title: 'New Job Assigned!',
+            message: `${job.customer?.firstName} ${job.customer?.lastName}`,
+            metadata: { address: `${job.customer?.address}, ${job.customer?.city}`, time: job.time },
+            actions: [
+              { label: 'Get Directions', style: 'primary', type: 'navigate', jobId: job.id },
+              { label: 'View Job', type: 'view', jobId: job.id },
+            ],
+            persistent: true,
+          });
+        }
+        if (userRole === 'admin' && job.status === 'COMPLETED' && settings.completions) {
+          addNotification({
+            type: 'success', title: 'Job Completed',
+            message: `${job.detailer?.name || 'Detailer'} completed job for ${job.customer?.firstName} ${job.customer?.lastName}`,
+          });
+        }
       }
 
-      // Check for status changes
-      if (lastJob.status !== job.status) {
-        handleJobStatusChange(lastJob, job);
+      // Delay check
+      if (settings.delays && job.status === 'CONFIRMED') {
+        const alertKey = `${job.id}_delay`;
+        const apptTime = new Date(`${job.date} ${job.time}`);
+        if (!seenAlertsRef.current.has(alertKey) && Date.now() > apptTime.getTime() + 15 * 60 * 1000) {
+          seenAlertsRef.current.add(alertKey);
+          addNotification({
+            type: 'warning',
+            title: userRole === 'detailer' ? 'Running Late' : 'Job Delayed',
+            message: userRole === 'detailer'
+              ? `You're 15+ min late for ${job.customer?.firstName}'s appointment`
+              : `${job.detailer?.name || 'Detailer'} is late for ${job.customer?.firstName} ${job.customer?.lastName}`,
+            actions: userRole === 'detailer'
+              ? [{ label: 'Mark En Route', style: 'primary', type: 'status', jobId: job.id, data: { status: 'EN_ROUTE' } }]
+              : [{ label: 'Contact Detailer', style: 'primary', type: 'contact', jobId: job.id }],
+            duration: 10000,
+          });
+        }
       }
 
-      // Check for delays
-      checkForDelays(job);
-
-      // Update last checked job
-      setLastCheckedJobs(prev => new Map(prev).set(jobKey, job));
+      lastJobsRef.current.set(job.id, job);
     });
-  }, [jobs]);
+  }, [jobs, settings, userRole, addNotification]);
 
-  // Handle job status changes
-  const handleJobStatusChange = (oldJob, newJob) => {
-    if (userRole === 'detailer') {
-      // Notifications for detailers
-      if (oldJob.status === null && newJob.status === 'CONFIRMED' && notificationSettings.jobAssignments) {
-        addNotification({
-          type: 'assignment',
-          title: '🚗 New Job Assigned!',
-          message: `You've been assigned a new job for ${newJob.customer.firstName} ${newJob.customer.lastName}`,
-          metadata: {
-            customerName: `${newJob.customer.firstName} ${newJob.customer.lastName}`,
-            address: `${newJob.customer.address}, ${newJob.customer.city}`,
-            time: newJob.time
-          },
-          actions: [
-            {
-              label: 'View Job',
-              style: 'primary',
-              type: 'view',
-              jobId: newJob.id
-            },
-            {
-              label: 'Start Navigation',
-              type: 'navigate',
-              jobId: newJob.id
-            }
-          ],
-          persistent: true
-        });
-      }
-    } else if (userRole === 'admin') {
-      // Notifications for admin
-      if (newJob.status === 'COMPLETED' && notificationSettings.completions) {
-        addNotification({
-          type: 'success',
-          title: '✅ Job Completed',
-          message: `${newJob.detailer?.name || 'Detailer'} completed job for ${newJob.customer.firstName} ${newJob.customer.lastName}`,
-          metadata: {
-            customerName: `${newJob.customer.firstName} ${newJob.customer.lastName}`,
-            detailer: newJob.detailer?.name
-          }
-        });
-      }
-    }
-  };
-
-  // Check for job delays
-  const checkForDelays = (job) => {
-    if (!notificationSettings.delays) return;
-
-    const appointmentTime = new Date(`${job.date} ${job.time}`);
-    const now = new Date();
-    const delayThreshold = 15 * 60 * 1000; // 15 minutes
-
-    const isLate = now > appointmentTime + delayThreshold;
-    const hasDelayNotification = notifications.some(n => 
-      n.metadata?.jobId === job.id && n.type === 'warning'
-    );
-
-    if (isLate && job.status === 'CONFIRMED' && !hasDelayNotification) {
-      if (userRole === 'detailer') {
-        addNotification({
-          type: 'warning',
-          title: '⏰ Running Late',
-          message: `You're 15+ minutes late for your appointment with ${job.customer.firstName} ${job.customer.lastName}`,
-          metadata: {
-            jobId: job.id,
-            customerName: `${job.customer.firstName} ${job.customer.lastName}`,
-            scheduledTime: job.time
-          },
-          actions: [
-            {
-              label: 'Mark En Route',
-              style: 'primary',
-              type: 'status',
-              jobId: job.id,
-              data: { status: 'EN_ROUTE' }
-            },
-            {
-              label: 'Call Customer',
-              type: 'call',
-              jobId: job.id
-            }
-          ],
-          duration: 10000
-        });
-      } else if (userRole === 'admin') {
-        addNotification({
-          type: 'warning',
-          title: '⚠️ Job Delayed',
-          message: `${job.detailer?.name || 'Detailer'} is late for ${job.customer.firstName} ${job.customer.lastName}`,
-          metadata: {
-            jobId: job.id,
-            detailer: job.detailer?.name,
-            customerName: `${job.customer.firstName} ${job.customer.lastName}`
-          },
-          actions: [
-            {
-              label: 'Contact Detailer',
-              style: 'primary',
-              type: 'contact',
-              jobId: job.id
-            },
-            {
-              label: 'Reassign Job',
-              type: 'reassign',
-              jobId: job.id
-            }
-          ],
-          duration: 15000
-        });
-      }
-    }
-  };
-
-  // Settings panel component
-  const NotificationSettings = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Notification Settings</h3>
-          <button
-            onClick={() => setShowSettings(false)}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              {notificationSettings.sound ? (
-                <Volume2 className="w-4 h-4 text-gray-500 mr-2" />
-              ) : (
-                <VolumeX className="w-4 h-4 text-gray-500 mr-2" />
-              )}
-              <span className="text-sm font-medium text-gray-700">Sound</span>
-            </div>
-            <button
-              onClick={() => setNotificationSettings(prev => ({ ...prev, sound: !prev.sound }))}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notificationSettings.sound ? 'bg-blue-600' : 'bg-gray-200'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  notificationSettings.sound ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Bell className="w-4 h-4 text-gray-500 mr-2" />
-              <span className="text-sm font-medium text-gray-700">Job Assignments</span>
-            </div>
-            <button
-              onClick={() => setNotificationSettings(prev => ({ ...prev, jobAssignments: !prev.jobAssignments }))}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notificationSettings.jobAssignments ? 'bg-blue-600' : 'bg-gray-200'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  notificationSettings.jobAssignments ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Clock className="w-4 h-4 text-gray-500 mr-2" />
-              <span className="text-sm font-medium text-gray-700">Delays & Late Jobs</span>
-            </div>
-            <button
-              onClick={() => setNotificationSettings(prev => ({ ...prev, delays: !prev.delays }))}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notificationSettings.delays ? 'bg-blue-600' : 'bg-gray-200'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  notificationSettings.delays ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-gray-500 mr-2" />
-              <span className="text-sm font-medium text-gray-700">Job Completions</span>
-            </div>
-            <button
-              onClick={() => setNotificationSettings(prev => ({ ...prev, completions: !prev.completions }))}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notificationSettings.completions ? 'bg-blue-600' : 'bg-gray-200'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  notificationSettings.completions ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <button
-            onClick={() => setShowSettings(false)}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Save Settings
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const [showSettings, setShowSettings] = useState(false);
+  const toggleSetting = (key) => setSettings(p => ({ ...p, [key]: !p[key] }));
 
   return (
     <>
-      {/* Notification Settings Button */}
-      <button
-        onClick={() => setShowSettings(true)}
-        className="fixed bottom-4 left-4 p-3 bg-white rounded-full shadow-lg border border-gray-200 hover:shadow-xl transition-shadow z-40"
-        title="Notification Settings"
-      >
-        <Settings className="w-5 h-5 text-gray-600" />
+      {/* Toast container */}
+      <div className="fixed top-20 right-4 z-50 flex flex-col items-end" style={{ maxWidth: '360px', width: 'calc(100vw - 2rem)' }}>
+        {notifications.map(n => (
+          <Toast key={n.id} notification={n} onDismiss={removeNotification} onAction={handleAction} />
+        ))}
+      </div>
+
+      {/* Bell button */}
+      <button onClick={() => setShowSettings(s => !s)}
+        className="fixed bottom-20 right-4 z-50 w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-xl"
+        style={{ background: 'rgba(18,18,18,0.95)', border: '1px solid rgba(201,168,76,0.25)', backdropFilter: 'blur(12px)' }}
+        aria-label="Notification settings">
+        <Bell className="w-4 h-4" style={{ color: GOLD_S }} />
+        {notifications.length > 0 && (
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs font-bold flex items-center justify-center text-black"
+            style={{ background: GOLD }}>
+            {notifications.length}
+          </span>
+        )}
       </button>
 
-      {/* Toast Notifications */}
-      {notifications.map(notification => (
-        <ToastNotification
-          key={notification.id}
-          notification={notification}
-          onDismiss={removeNotification}
-          onAction={handleNotificationAction}
-        />
-      ))}
-
-      {/* Settings Modal */}
-      {showSettings && <NotificationSettings />}
+      {/* Settings panel */}
+      {showSettings && (
+        <div className="fixed bottom-36 right-4 z-50 w-64 rounded-2xl p-4 shadow-2xl"
+          style={{ background: 'rgba(18,18,18,0.97)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(20px)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-bold text-white">Notifications</p>
+            <button onClick={() => setShowSettings(false)}>
+              <X className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {[
+              { key: 'sound', label: 'Sound', icon: settings.sound ? Volume2 : VolumeX },
+              { key: 'jobAssignments', label: 'Job assignments', icon: Bell },
+              { key: 'completions', label: 'Completions', icon: CheckCircle },
+              { key: 'delays', label: 'Delay alerts', icon: AlertTriangle },
+            ].map(({ key, label, icon: Icon }) => (
+              <div key={key} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Icon className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.4)' }} />
+                  <span className="text-xs text-white">{label}</span>
+                </div>
+                <button onClick={() => toggleSetting(key)}
+                  className="w-8 h-4.5 rounded-full relative transition-all"
+                  style={{
+                    background: settings[key] ? GOLD : 'rgba(255,255,255,0.15)',
+                    width: '32px', height: '18px',
+                  }}>
+                  <span className="absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform"
+                    style={{ transform: settings[key] ? 'translateX(14px)' : 'translateX(2px)' }} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 };

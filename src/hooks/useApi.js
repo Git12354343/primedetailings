@@ -220,8 +220,7 @@ export const useBookingsApi = () => {
         firstName: bookingData.firstName,
         lastName: bookingData.lastName,
         email: bookingData.email,
-        phone: bookingData.phone,
-        address: bookingData.address,
+        phoneNumber: bookingData.phoneNumber,        address: bookingData.address,
         city: bookingData.city,
         postalCode: bookingData.postalCode,
         vehicleType: bookingData.vehicleType,
@@ -274,8 +273,11 @@ export const useBookingsApi = () => {
       console.log('✅ Frontend validation passed, making API call');
       
       const result = await api.execute('/bookings/initiate', {
-        method: HTTP_METHODS.POST,
-        body: JSON.stringify(bookingData)
+      method: HTTP_METHODS.POST,
+      body: JSON.stringify({
+      phoneNumber: bookingData.phoneNumber,
+      bookingData: bookingData
+      })
       });
       
       console.log('✅ API call successful:', result);
@@ -507,8 +509,8 @@ export const useAuthApi = () => {
 
   const logout = useCallback(() => {
     localStorage.removeItem('detailerToken');
+    localStorage.removeItem('detailerRefreshToken');
     localStorage.removeItem('detailerInfo');
-    localStorage.removeItem('adminAuthenticated');
   }, []);
 
   return {

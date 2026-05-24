@@ -1,437 +1,380 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle, ChevronRight, Loader2, Package, Star, Car, Truck, Users } from 'lucide-react';
+import useServicesCache from '../hooks/useServicesCache';
+import {
+  CheckCircle, ChevronRight, Loader2, Package, Star,
+  Car, Truck, Users, Zap, Shield, Sparkles, Wrench,
+  Phone, MessageSquare, Mail, RefreshCw
+} from 'lucide-react';
 
-const Services = () => {
-  const [services, setServices] = useState([]);
-  const [addOns, setAddOns] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedVehicleType, setSelectedVehicleType] = useState('Sedan'); // Default vehicle type
+// ── Config (display only, no prices) ──────────────────────────────────────
+const VEHICLE_ICONS = { Sedan: Car, SUV: Users, Truck: Truck, Coupe: Zap };
+const VEHICLE_DESCS = { Sedan: 'Standard', SUV: 'SUV / CUV', Truck: 'Truck', Coupe: 'Sports' };
 
-  // Vehicle type options with icons
-  const vehicleTypes = [
-    { value: 'Sedan', label: 'Sedan', icon: Car, description: 'Standard cars' },
-    { value: 'SUV', label: 'SUV', icon: Users, description: 'SUVs & Crossovers' },
-    { value: 'Truck', label: 'Truck', icon: Truck, description: 'Pickup trucks' },
-    { value: 'Coupe', label: 'Coupe', icon: Car, description: 'Sports cars & coupes' }
-  ];
+const CATEGORY_CONFIG = {
+  PROTECTION:  { icon: Shield,   color: '#c9a84c', label: 'Protection' },
+  RESTORATION: { icon: Star,     color: '#a78bfa', label: 'Restoration' },
+  DETAILING:   { icon: Sparkles, color: '#60a5fa', label: 'Detailing' },
+  SPECIALTY:   { icon: Wrench,   color: '#f97316', label: 'Specialty' },
+  MAINTENANCE: { icon: Zap,      color: '#34d399', label: 'Maintenance' },
+  DEFAULT:     { icon: Package,  color: '#94a3b8', label: 'Service' },
+};
+const CATEGORY_ORDER = ['PROTECTION', 'RESTORATION', 'DETAILING', 'MAINTENANCE', 'SPECIALTY'];
 
-  // Category display names
-  const getCategoryDisplayName = (category) => {
-    switch (category) {
-      case 'DETAILING': return 'Detailing Services';
-      case 'PROTECTION': return 'Protection Services';
-      case 'RESTORATION': return 'Restoration Services';
-      case 'MAINTENANCE': return 'Maintenance Services';
-      case 'SPECIALTY': return 'Specialty Services';
-      default: return 'Other Services';
-    }
-  };
+const ADDON_LABELS = {
+  ENHANCEMENT: 'Enhancement', PROTECTION: 'Protection',
+  CLEANING: 'Cleaning',       RESTORATION: 'Restoration',
+};
 
-  // Add-on category display names
-  const getAddOnCategoryDisplayName = (category) => {
-    switch (category) {
-      case 'ENHANCEMENT': return 'Enhancement Add-ons';
-      case 'PROTECTION': return 'Protection Add-ons';
-      case 'CLEANING': return 'Cleaning Add-ons';
-      case 'RESTORATION': return 'Restoration Add-ons';
-      default: return 'Additional Services';
-    }
-  };
+const CONTACT_QUICK = [
+  { icon: Phone,         label: 'Call',     href: 'tel:+15144374816',              color: '#34d399' },
+  { icon: MessageSquare, label: 'WhatsApp', href: 'https://wa.me/15144374816',     color: '#25D366' },
+  { icon: MessageSquare, label: 'SMS',      href: 'sms:+15144374816',              color: '#60a5fa' },
+  { icon: Mail,          label: 'Email',    href: 'mailto:info@primedetailing.ca', color: '#f97316' },
+];
 
-  // Enhanced pricing display with vehicle-specific pricing
-  const formatPricingForVehicle = (pricing, vehicleType) => {
-    if (!pricing || Object.keys(pricing).length === 0) {
-      return { price: 'Price on request', showRange: false };
-    }
+// ── Helpers ────────────────────────────────────────────────────────────────
+const getMinPrice = (pricing) => {
+  const vals = Object.values(pricing || {}).filter(v => v > 0);
+  return vals.length ? Math.min(...vals) : null;
+};
 
-    const price = pricing[vehicleType];
-    if (price && price > 0) {
-      return { 
-        price: `$${price}`, 
-        showRange: false,
-        numericPrice: price
-      };
-    }
+const getPriceForVehicle = (pricing, vehicle) => {
+  const p = pricing?.[vehicle];
+  return (p && p > 0) ? p : getMinPrice(pricing);
+};
 
-    // Fallback to range if specific vehicle type not available
-    const vehicleTypesOrder = ['Sedan', 'SUV', 'Truck', 'Coupe'];
-    const availablePrices = vehicleTypesOrder
-      .filter(type => pricing[type] && pricing[type] > 0)
-      .map(type => ({ type, price: pricing[type] }));
+const getPriceLabel = (pricing, vehicle) => {
+  const p = getPriceForVehicle(pricing, vehicle);
+  if (!p) return { text: 'Call for price', isExact: false };
+  const exact = pricing?.[vehicle] > 0;
+  return { text: `$${p}`, isExact: exact };
+};
 
-    if (availablePrices.length === 0) {
-      return { price: 'Price on request', showRange: false };
-    }
-
-    const minPrice = Math.min(...availablePrices.map(p => p.price));
-    const maxPrice = Math.max(...availablePrices.map(p => p.price));
-
-    if (minPrice === maxPrice) {
-      return { price: `$${minPrice}`, showRange: false, numericPrice: minPrice };
-    } else {
-      return { 
-        price: `$${minPrice} - $${maxPrice}`, 
-        showRange: true,
-        numericPrice: minPrice 
-      };
-    }
-  };
-
-  // Get pricing features for the selected vehicle type
-  const getPricingFeaturesForVehicle = (pricing, vehicleType) => {
-    if (!pricing || Object.keys(pricing).length === 0) {
-      return ['Contact for pricing'];
-    }
-
-    const price = pricing[vehicleType];
-    if (price && price > 0) {
-      return [`${vehicleType} vehicles: $${price}`];
-    }
-
-    // Show all available vehicle types if selected one isn't available
-    const vehicleTypesOrder = ['Sedan', 'SUV', 'Truck', 'Coupe'];
-    const features = vehicleTypesOrder
-      .filter(type => pricing[type] && pricing[type] > 0)
-      .map(type => `${type}: $${pricing[type]}`);
-
-    return features.length > 0 ? features : ['Contact for pricing'];
-  };
-
-  // Calculate savings indicator
-  const getSavingsIndicator = (pricing) => {
-    if (!pricing || Object.keys(pricing).length === 0) return null;
-    
-    const vehicleTypesOrder = ['Sedan', 'SUV', 'Truck', 'Coupe'];
-    const prices = vehicleTypesOrder
-      .map(type => pricing[type])
-      .filter(price => price && price > 0);
-    
-    if (prices.length === 0) return null;
-    
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const savings = maxPrice - minPrice;
-    
-    if (savings > 20) {
-      return `Save up to $${savings} with smaller vehicles`;
-    }
-    
-    return null;
-  };
-
-  useEffect(() => {
-    const fetchServicesAndAddOns = async () => {
-      setLoading(true);
-      try {
-        const [servicesResponse, addOnsResponse] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_URL}/services/active`),
-          fetch(`${import.meta.env.VITE_API_URL}/services/addons/active`)
-        ]);
-
-        const servicesData = await servicesResponse.json();
-        const addOnsData = await addOnsResponse.json();
-
-        if (servicesData.success) {
-          setServices(servicesData.services);
-        }
-
-        if (addOnsData.success) {
-          setAddOns(addOnsData.addOns);
-        }
-
-        if (!servicesData.success && !addOnsData.success) {
-          setError('Failed to load services and add-ons');
-        }
-      } catch (error) {
-        console.error('Error fetching services:', error);
-        setError('Unable to load services. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchServicesAndAddOns();
-  }, []);
-
-  // Group services by category
-  const groupedServices = services.reduce((groups, service) => {
-    const category = service.category || 'OTHER';
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(service);
-    return groups;
-  }, {});
-
-  // Group add-ons by category
-  const groupedAddOns = addOns.reduce((groups, addOn) => {
-    const category = addOn.category || 'OTHER';
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(addOn);
-    return groups;
-  }, {});
-
-  if (loading) {
-    return (
-      <div className="py-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Services</h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Loading our professional car detailing services...
-            </p>
-          </div>
-          <div className="text-center py-12">
-            <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-gray-600">Loading services...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Services</h1>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
-              <p className="text-red-700 mb-4">{error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
-                className="text-red-600 hover:text-red-700 font-medium"
-              >
-                Reload Page
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+// ── Service Card ──────────────────────────────────────────────────────────
+const ServiceCard = ({ service, vehicleType, index, visible }) => {
+  const cfg = CATEGORY_CONFIG[service.category] || CATEGORY_CONFIG.DEFAULT;
+  const Icon = cfg.icon;
+  const { text: priceText, isExact } = getPriceLabel(service.pricing, vehicleType);
+  const minPrice = getMinPrice(service.pricing);
 
   return (
-    <div className="py-8">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Services</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Professional car detailing services designed to keep your vehicle looking and feeling its best. 
-            All services are performed by trained professionals using premium products.
-          </p>
+    <div
+      className={`service-card relative rounded-2xl p-6 flex flex-col transition-all duration-700 group ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        transitionDelay: `${index * 80}ms`,
+      }}
+    >
+      {/* Popular badge (first 2 by sortOrder) */}
+      {service.sortOrder <= 2 && (
+        <div className="absolute -top-3 left-5 px-3 py-1 rounded-full text-xs font-bold"
+          style={{ background: 'linear-gradient(135deg, #c9a84c, #f5d376)', color: '#0a0a0a' }}>
+          Popular
+        </div>
+      )}
 
-          {/* Vehicle Type Selector */}
-          <div className="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Select your vehicle type to see personalized pricing
-            </h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {vehicleTypes.map((vehicle) => {
-                const Icon = vehicle.icon;
-                const isSelected = selectedVehicleType === vehicle.value;
+      {/* Icon + category */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center service-icon"
+          style={{ background: `${cfg.color}18` }}>
+          <Icon className="w-5 h-5" style={{ color: cfg.color }} />
+        </div>
+        <span className="text-xs font-semibold px-2 py-1 rounded-full"
+          style={{ background: `${cfg.color}12`, color: cfg.color }}>
+          {cfg.label}
+        </span>
+      </div>
+
+      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-yellow-300 transition-colors">
+        {service.name}
+      </h3>
+
+      <p className="text-gray-400 text-sm leading-relaxed mb-5 flex-1">
+        {service.description || 'Professional detailing service tailored to your needs.'}
+      </p>
+
+      {/* Price block */}
+      <div className="rounded-xl px-4 py-3 mb-4 flex items-center justify-between"
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div>
+          <div className="text-xs text-gray-500 mb-0.5">
+            {isExact ? `${vehicleType} price` : 'Starting from'}
+          </div>
+          <div className="text-xl font-black" style={{
+            background: minPrice ? 'linear-gradient(135deg, #c9a84c, #f5d376)' : 'none',
+            WebkitBackgroundClip: minPrice ? 'text' : 'unset',
+            WebkitTextFillColor: minPrice ? 'transparent' : 'unset',
+            backgroundClip: minPrice ? 'text' : 'unset',
+            color: minPrice ? 'unset' : '#6b7280',
+          }}>
+            {priceText}
+          </div>
+        </div>
+        {!isExact && minPrice && (
+          <span className="text-xs text-gray-600 text-right max-w-[90px]">varies by vehicle</span>
+        )}
+      </div>
+
+      <Link
+        to={`/booking?service=${service.id}&vehicle=${vehicleType}`}
+        className="btn-luxury w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide group"
+      >
+        Book This Service
+        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+      </Link>
+    </div>
+  );
+};
+
+// ── Add-on Card ───────────────────────────────────────────────────────────
+const AddOnCard = ({ addOn, index, visible }) => (
+  <div
+    className={`flex items-center justify-between p-4 rounded-xl transition-all duration-500 hover:-translate-y-0.5 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+    style={{
+      background: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(255,255,255,0.07)',
+      transitionDelay: `${index * 50}ms`,
+    }}
+  >
+    <div className="flex items-center gap-3">
+      <CheckCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+      <div>
+        <div className="text-white font-semibold text-sm">{addOn.name}</div>
+        {addOn.description && <div className="text-gray-500 text-xs mt-0.5">{addOn.description}</div>}
+      </div>
+    </div>
+    <span className="text-sm font-black flex-shrink-0 ml-3" style={{
+      background: 'linear-gradient(135deg, #34d399, #6ee7b7)',
+      WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+    }}>
+      +${addOn.price}
+    </span>
+  </div>
+);
+
+// ── Main Page ─────────────────────────────────────────────────────────────
+const Services = () => {
+  const { services, addOns, loading, error, refresh: load } = useServicesCache();
+  const [vehicleType, setVehicleType] = useState(null);
+  const [visible, setVisible]         = useState(false);
+  const ref = useRef(null);
+
+  // Auto-select first vehicle type when data loads
+  useEffect(() => {
+    if (services.length && !vehicleType) {
+      const first = Object.keys(services[0]?.pricing || {})[0] ?? 'Sedan';
+      setVehicleType(first);
+    }
+  }, [services]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.05 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Derive vehicle types from all services' pricing keys
+  const vehicleTypes = [...new Set(services.flatMap(s => Object.keys(s.pricing || {})))];
+  const activeVehicle = vehicleType ?? vehicleTypes[0] ?? 'Sedan';
+
+  // Group + sort services by category
+  const grouped = services.reduce((acc, s) => {
+    const cat = s.category || 'DEFAULT';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(s);
+    return acc;
+  }, {});
+  const sortedCategories = Object.keys(grouped).sort((a, b) => {
+    const ai = CATEGORY_ORDER.indexOf(a), bi = CATEGORY_ORDER.indexOf(b);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  // Group add-ons by category
+  const groupedAddOns = addOns.reduce((acc, a) => {
+    const cat = a.category || 'OTHER';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(a);
+    return acc;
+  }, {});
+
+  return (
+    <div ref={ref} style={{ background: '#0a0a0a', minHeight: '100vh' }}>
+
+      {/* Hero banner */}
+      <div className="relative pt-32 pb-20 px-4 text-center overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%)' }}>
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 60%)' }} />
+        <div className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent)' }} />
+        <div className="relative z-10 max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
+            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
+            <Sparkles className="w-3 h-3 text-yellow-400" />
+            <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Our Services</span>
+          </div>
+          <h1 className="text-5xl sm:text-6xl font-black text-white mb-4 leading-tight">
+            Premium{' '}
+            <span style={{
+              background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            }}>Packages</span>
+          </h1>
+          <p className="text-gray-400 text-lg">
+            Professional-grade detailing with premium products. We come to you anywhere in Montreal.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">
+
+        {/* Vehicle selector — fully dynamic */}
+        {vehicleTypes.length > 0 && (
+          <div
+            className={`rounded-2xl p-5 mb-12 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <p className="text-white font-semibold text-xs mb-4 uppercase tracking-widest">
+              Select your vehicle for exact pricing
+            </p>
+            <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(vehicleTypes.length, 4)}, 1fr)` }}>
+              {vehicleTypes.map(v => {
+                const Icon = VEHICLE_ICONS[v] || Car;
+                const isSelected = activeVehicle === v;
                 return (
-                  <button
-                    key={vehicle.value}
-                    onClick={() => setSelectedVehicleType(vehicle.value)}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 text-center hover:shadow-md ${
-                      isSelected
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-blue-300 text-gray-700'
-                    }`}
+                  <button key={v} onClick={() => setVehicleType(v)}
+                    className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 active:scale-95"
+                    style={{
+                      background: isSelected ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.02)',
+                      border: isSelected ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                      transform: isSelected ? 'translateY(-2px)' : 'none',
+                    }}
                   >
-                    <Icon className={`w-8 h-8 mx-auto mb-2 ${
-                      isSelected ? 'text-blue-600' : 'text-gray-500'
-                    }`} />
-                    <div className="font-semibold">{vehicle.label}</div>
-                    <div className="text-xs text-gray-500">{vehicle.description}</div>
+                    <Icon className="w-6 h-6" style={{ color: isSelected ? '#f5d376' : '#6b7280' }} />
+                    <span className="text-sm font-bold" style={{ color: isSelected ? '#f5d376' : '#9ca3af' }}>{v}</span>
+                    <span className="text-xs text-gray-600">{VEHICLE_DESCS[v] || v}</span>
                   </button>
                 );
               })}
             </div>
-            <p className="text-sm text-gray-600 mt-4">
-              💡 Prices shown are for <span className="font-semibold text-blue-600">{selectedVehicleType}</span> vehicles. 
-              Different vehicle sizes may have different pricing.
-            </p>
-          </div>
-        </div>
-
-        {/* Main Services */}
-        {Object.keys(groupedServices).length > 0 ? (
-          Object.entries(groupedServices)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([category, categoryServices]) => (
-              <div key={category} className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">
-                  {getCategoryDisplayName(category)}
-                </h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  {categoryServices
-                    .sort((a, b) => a.sortOrder - b.sortOrder)
-                    .map((service) => {
-                      const pricingInfo = formatPricingForVehicle(service.pricing, selectedVehicleType);
-                      const savings = getSavingsIndicator(service.pricing);
-                      
-                      return (
-                        <div key={service.id} className="card p-6 relative hover:shadow-lg transition-shadow">
-                          {/* Highlight popular services */}
-                          {service.sortOrder <= 2 && (
-                            <div className="absolute top-0 right-4 -mt-3 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                              Popular
-                            </div>
-                          )}
-                          
-                          {/* Savings badge */}
-                          {savings && (
-                            <div className="absolute top-0 left-4 -mt-3 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                              Best Value
-                            </div>
-                          )}
-                          
-                          <div className="flex justify-between items-start mb-4">
-                            <h3 className="text-xl font-semibold text-gray-900 flex-1 pr-4">
-                              {service.name}
-                            </h3>
-                            <div className="text-right">
-                              <span className={`font-bold text-lg transition-all duration-300 ${
-                                pricingInfo.showRange ? 'text-gray-600' : 'text-blue-600'
-                              }`}>
-                                {pricingInfo.price}
-                              </span>
-                              {!pricingInfo.showRange && selectedVehicleType && (
-                                <div className="text-xs text-gray-500">for {selectedVehicleType}</div>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <p className="text-gray-600 mb-4">
-                            {service.description || 'Professional detailing service tailored to your needs.'}
-                          </p>
-                          
-                          <ul className="space-y-2 mb-4">
-                            {getPricingFeaturesForVehicle(service.pricing, selectedVehicleType).map((feature, index) => (
-                              <li key={index} className="flex items-center text-sm text-gray-700">
-                                <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                                {feature}
-                              </li>
-                            ))}
-                            
-                            {/* Add category as a feature */}
-                            <li className="flex items-center text-sm text-gray-700">
-                              <Star className="w-4 h-4 text-blue-500 mr-2 flex-shrink-0" />
-                              {getCategoryDisplayName(service.category)} service
-                            </li>
-                          </ul>
-
-                          {/* Savings note */}
-                          {savings && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                              <p className="text-green-800 text-sm font-medium">💰 {savings}</p>
-                            </div>
-                          )}
-
-                          {/* Quick action button */}
-                          <div className="pt-3 border-t border-gray-100">
-                            <Link
-                              to={`/booking?service=${service.id}&vehicle=${selectedVehicleType}`}
-                              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium text-center block"
-                            >
-                              Book This Service - {pricingInfo.price}
-                            </Link>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            ))
-        ) : (
-          <div className="text-center py-12">
-            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Services Available</h3>
-            <p className="text-gray-600">Our services are currently being updated. Please check back soon!</p>
           </div>
         )}
 
-        {/* Add-ons Section */}
-        {Object.keys(groupedAddOns).length > 0 && (
-          <>
-            <div className="mb-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">
-                Add-on Services
-              </h2>
-              <p className="text-gray-600 mb-8">
-                Enhance your detailing experience with these additional services that can be added to any package.
-                <span className="font-semibold text-blue-600 ml-2">Fixed pricing for all vehicle types.</span>
-              </p>
-              
+        {/* Loading */}
+        {loading && (
+          <div className="flex flex-col items-center gap-3 py-20">
+            <Loader2 className="w-7 h-7 animate-spin text-yellow-500" />
+            <span className="text-gray-500 text-sm">Loading services...</span>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && !loading && (
+          <div className="rounded-2xl p-6 text-center mb-8"
+            style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <p className="text-red-400 mb-3">{error}</p>
+            <button onClick={load} className="inline-flex items-center gap-2 text-yellow-400 text-sm hover:text-yellow-300">
+              <RefreshCw className="w-4 h-4" /> Try again
+            </button>
+          </div>
+        )}
+
+        {/* Service groups */}
+        {!loading && !error && sortedCategories.map(cat => {
+          const cfg = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.DEFAULT;
+          const items = grouped[cat].sort((a, b) => a.sortOrder - b.sortOrder);
+          return (
+            <div key={cat} className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: `${cfg.color}18` }}>
+                  <cfg.icon className="w-4 h-4" style={{ color: cfg.color }} />
+                </div>
+                <h2 className="text-xl font-bold text-white">{cfg.label} Services</h2>
+                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {items.map((service, i) => (
+                  <ServiceCard key={service.id} service={service} vehicleType={activeVehicle} index={i} visible={visible} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Empty state */}
+        {!loading && !error && sortedCategories.length === 0 && (
+          <div className="text-center py-20">
+            <Package className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2">Services Coming Soon</h3>
+            <p className="text-gray-500">Contact us directly for pricing and availability.</p>
+          </div>
+        )}
+
+        {/* Add-ons */}
+        {!loading && Object.keys(groupedAddOns).length > 0 && (
+          <div className="mb-16">
+            <div className="rounded-2xl p-6 sm:p-8"
+              style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: 'rgba(52,211,153,0.15)' }}>
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                </div>
+                <h2 className="text-xl font-bold text-white">Add-On Services</h2>
+                <span className="text-gray-500 text-sm">— add to any package</span>
+              </div>
               {Object.entries(groupedAddOns)
                 .sort(([a], [b]) => a.localeCompare(b))
-                .map(([category, categoryAddOns]) => (
-                  <div key={category} className="mb-8">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                      {getAddOnCategoryDisplayName(category)}
+                .map(([cat, items]) => (
+                  <div key={cat} className="mb-6 last:mb-0">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                      {ADDON_LABELS[cat] || cat}
                     </h3>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {categoryAddOns
-                        .sort((a, b) => a.sortOrder - b.sortOrder)
-                        .map((addOn) => (
-                          <div key={addOn.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-semibold text-gray-900 flex-1 pr-2">
-                                {addOn.name}
-                              </h4>
-                              <span className="text-green-600 font-bold text-lg">
-                                +${addOn.price}
-                              </span>
-                            </div>
-                            {addOn.description && (
-                              <p className="text-sm text-gray-600 mb-3">
-                                {addOn.description}
-                              </p>
-                            )}
-                            <div className="bg-gray-50 rounded-md p-2">
-                              <p className="text-xs text-gray-600">
-                                ✓ Same price for all vehicle types
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {items.sort((a, b) => a.sortOrder - b.sortOrder).map((addon, i) => (
+                        <AddOnCard key={addon.id} addOn={addon} index={i} visible={visible} />
+                      ))}
                     </div>
                   </div>
                 ))}
             </div>
-          </>
+          </div>
         )}
 
-        {/* Enhanced Call to Action */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to Book Your {selectedVehicleType}?</h2>
-          <p className="text-gray-600 mb-6">
-            Choose your services and schedule an appointment that works for you. We'll come to your location in Montreal.
-            <span className="block mt-2 font-semibold text-blue-600">
-              Pricing shown above is for {selectedVehicleType} vehicles.
-            </span>
+        {/* Bottom CTA */}
+        <div
+          className={`rounded-2xl p-8 text-center transition-all duration-700 delay-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+          style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)' }}
+        >
+          <h3 className="text-2xl font-black text-white mb-2">Not sure which package?</h3>
+          <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
+            Contact us — we'll recommend the best service for your vehicle and budget.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to={`/booking?vehicle=${selectedVehicleType}`}
-              className="btn-primary inline-flex items-center justify-center"
-            >
-              Book Your {selectedVehicleType} Service
-              <ChevronRight className="ml-2 w-5 h-5" />
-            </Link>
-            <Link
-              to="/lookup"
-              className="bg-white text-blue-600 border border-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors inline-flex items-center justify-center"
-            >
-              Track Existing Booking
-            </Link>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto mb-6">
+            {CONTACT_QUICK.map(({ icon: Icon, label, href, color }) => (
+              <a key={label} href={href}
+                target={label === 'WhatsApp' ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-2 py-3 px-2 rounded-xl transition-all duration-200 hover:-translate-y-1 active:scale-95"
+                style={{ background: `${color}10`, border: `1px solid ${color}25` }}
+              >
+                <Icon className="w-5 h-5" style={{ color }} />
+                <span className="text-white text-xs font-bold">{label}</span>
+              </a>
+            ))}
           </div>
+          <Link
+            to={`/booking${activeVehicle ? `?vehicle=${activeVehicle}` : ''}`}
+            className="btn-luxury inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-bold tracking-wide group"
+          >
+            Book Your {activeVehicle} Now
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
       </div>
     </div>

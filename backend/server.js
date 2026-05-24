@@ -42,16 +42,23 @@ app.use(cors({
 app.use(express.json());
 
 // Rate limiting
+// Rate limiting
+const publicReadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  message: { success: false, message: 'Too many requests, please try again later.' }
+});
+
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200,
   message: { success: false, message: 'Too many requests from this IP, please try again later.' }
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { success: false, message: 'Too many login attempts from this IP, please try again later.' }
+  max: 50,
+  message: { success: false, message: 'Too many login attempts, please try again later.' }
 });
 
 const smsLimiter = rateLimit({
@@ -66,10 +73,15 @@ const contactLimiter = rateLimit({
   message: 'Too many contact submissions, please try again later'
 });
 
-app.use('/api/', generalLimiter);
-app.use('/api/auth/login', authLimiter);
-app.use('/api/bookings/initiate', smsLimiter);
-app.use('/api/contact', contactLimiter);
+app.use('/api/services/active',        publicReadLimiter);
+app.use('/api/services/addons/active', publicReadLimiter);
+app.use('/api/packages/active',        publicReadLimiter);
+app.use('/api/availability',           publicReadLimiter);
+app.use('/api/schedule/config',        publicReadLimiter);
+app.use('/api/',                       generalLimiter);
+app.use('/api/auth/login',             authLimiter);
+app.use('/api/bookings/initiate',      smsLimiter);
+app.use('/api/contact',                contactLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -78,11 +90,42 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/availability', availabilityRoutes);
 
-// ─── In-memory SMS verification codes (use Redis in production) ───────────────
-const verificationCodes = new Map();
+const packageRoutes = require('./routes/packages');
+app.use('/api/packages', packageRoutes);
+
+// ADD after existing app.use('/api/availability', availabilityRoutes);
+const scheduleRoutes = require('./routes/scheduleRoutes');
+const { createManualBooking } = require('./controllers/manualBookingController');
+
+app.use('/api/schedule', scheduleRoutes);
+app.post('/api/admin/manual-booking', createManualBooking);
+
+// ─── DB-backed SMS verification codes (uses VerificationCode prisma model) ─────
+// Survives server restarts — requires: npx prisma migrate dev
 
 const generateVerificationCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
+
+const storeVerificationCode = async (phone, code, bookingData) => {
+  const expiry = new Date(Date.now() + 10 * 60 * 1000);
+  await prisma.verificationCode.upsert({
+    where: { phoneNumber: phone },
+    update: { code, expiresAt: expiry, attempts: 0, bookingData: JSON.stringify(bookingData) },
+    create: { phoneNumber: phone, code, expiresAt: expiry, attempts: 0, bookingData: JSON.stringify(bookingData) },
+  });
+};
+
+const getVerificationCode = async (phone) => {
+  try {
+    return await prisma.verificationCode.findUnique({ where: { phoneNumber: phone } });
+  } catch { return null; }
+};
+
+const deleteVerificationCode = async (phone) => {
+  try {
+    await prisma.verificationCode.delete({ where: { phoneNumber: phone } });
+  } catch {}
+};
 
 const formatPhoneNumber = (phone) => {
   const digits = phone.replace(/\D/g, '');
@@ -104,7 +147,7 @@ app.post('/api/bookings/initiate', async (req, res) => {
     const code = generateVerificationCode();
     const expiry = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-    verificationCodes.set(formattedPhone, { code, expiry, attempts: 0, bookingData });
+    await storeVerificationCode(formattedPhone, code, bookingData);
 
     const isDev = process.env.NODE_ENV === 'development';
     let smsSent = false;
@@ -146,22 +189,30 @@ app.post('/api/bookings/verify', async (req, res) => {
     if (!phoneNumber || !code) {
       return res.status(400).json({ success: false, error: 'Phone number and code are required' });
     }
+    
 
     const formattedPhone = formatPhoneNumber(phoneNumber);
-    const stored = verificationCodes.get(formattedPhone);
+    const stored = await getVerificationCode(formattedPhone);
 
     if (!stored) {
       return res.status(400).json({ success: false, error: 'No verification code found. Please request a new one.' });
     }
 
-    if (Date.now() > stored.expiry) {
-      verificationCodes.delete(formattedPhone);
+    if (new Date() > new Date(stored.expiresAt)) {
+      await deleteVerificationCode(formattedPhone);
       return res.status(400).json({ success: false, error: 'Verification code has expired. Please request a new one.' });
     }
 
-    stored.attempts += 1;
-    if (stored.attempts > 3) {
-      verificationCodes.delete(formattedPhone);
+    // Increment attempts in DB
+    try {
+      await prisma.verificationCode.update({
+        where: { phoneNumber: formattedPhone },
+        data: { attempts: { increment: 1 } },
+      });
+    } catch {}
+    const updatedAttempts = (stored.attempts || 0) + 1;
+    if (updatedAttempts > 3) {
+      await deleteVerificationCode(formattedPhone);
       return res.status(400).json({ success: false, error: 'Too many failed attempts. Please request a new code.' });
     }
 
@@ -169,15 +220,24 @@ app.post('/api/bookings/verify', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid verification code',
-        attemptsRemaining: 3 - stored.attempts
+        attemptsRemaining: 3 - updatedAttempts
       });
     }
 
-    // Code is valid — create booking
-    verificationCodes.delete(formattedPhone);
-    const finalBookingData = bookingData || stored.bookingData;
+    // Code is valid — delete from DB and create booking
+    await deleteVerificationCode(formattedPhone);
+    const finalBookingData = bookingData || (stored.bookingData ? JSON.parse(stored.bookingData) : {});
 
-    const confirmationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    // Generate unique confirmation code with retry
+    let confirmationCode;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const candidate = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const exists = await prisma.booking.findUnique({ where: { confirmationCode: candidate } });
+      if (!exists) { confirmationCode = candidate; break; }
+    }
+    if (!confirmationCode) {
+      return res.status(500).json({ success: false, error: 'Could not generate unique booking code, please retry.' });
+    }
 
     const booking = await prisma.booking.create({
       data: {
@@ -202,6 +262,14 @@ app.post('/api/bookings/verify', async (req, res) => {
         specialInstructions: finalBookingData.specialInstructions || null
       }
     });
+
+    // Add to Google Calendar (non-blocking)
+      try {
+        const { addBookingToCalendar } = require('./services/googleCalendar');
+        addBookingToCalendar(booking).catch(err => console.error('Calendar error:', err));
+         } catch {}
+
+
 
     // Send confirmation email if email provided
     if (booking.email) {
@@ -334,13 +402,16 @@ app.post('/api/contact', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid email format' });
     }
 
+    // Strip HTML tags to prevent XSS stored in DB / sent in emails
+    const stripHtml = (str) => String(str || '').replace(/<[^>]*>/g, '').trim();
+
     const contact = await prisma.contact.create({
       data: {
-        name: name.trim(),
-        email: email.toLowerCase().trim(),
-        phone: phone?.trim() || null,
-        subject: (subject || 'General Inquiry').trim(),
-        message: message.trim()
+        name:    stripHtml(name).substring(0, 200),
+        email:   email.toLowerCase().trim(),
+        phone:   phone ? stripHtml(phone).substring(0, 30) : null,
+        subject: stripHtml(subject || 'General Inquiry').substring(0, 200),
+        message: stripHtml(message).substring(0, 5000)
       }
     });
 

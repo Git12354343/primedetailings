@@ -74,6 +74,7 @@ const loginDetailer = async (req, res) => {
       success: true,
       message: 'Login successful',
       token: authData.session.access_token,
+      refreshToken: authData.session.refresh_token,
       detailer: {
         id: detailer.id,
         name: detailer.name,
@@ -142,8 +143,31 @@ const logoutDetailer = async (req, res) => {
   }
 };
 
+// ─── Refresh token ────────────────────────────────────────────────────────────
+const refreshDetailerToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({ success: false, message: 'Refresh token required' });
+    }
+    const { data, error } = await supabaseAdmin.auth.refreshSession({ refresh_token: refreshToken });
+    if (error || !data?.session) {
+      return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+    }
+    res.json({
+      success: true,
+      token: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(500).json({ success: false, message: 'Server error during token refresh' });
+  }
+};
+
 module.exports = {
   loginDetailer,
   verifyDetailer,
-  logoutDetailer
+  logoutDetailer,
+  refreshDetailerToken,
 };

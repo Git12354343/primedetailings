@@ -1,6 +1,7 @@
 // backend/middleware/verifyToken.js
 const { createClient } = require('@supabase/supabase-js');
-const ws = require('ws');  // ← ADD THIS
+const { PrismaClient } = require('@prisma/client');
+const ws = require('ws');
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
@@ -11,6 +12,8 @@ const supabaseAdmin = createClient(
     }
   }
 );
+
+const prisma = new PrismaClient();
 
 const verifyToken = async (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -32,10 +35,24 @@ const verifyToken = async (req, res, next) => {
       });
     }
 
+    // Look up the integer Prisma ID — critical for booking ownership checks
+    const detailer = await prisma.detailer.findFirst({
+      where: { supabaseUserId: data.user.id }
+    });
+
+    if (!detailer) {
+      return res.status(401).json({ success: false, message: 'Detailer account not found.' });
+    }
+
+    if (!detailer.isActive) {
+      return res.status(403).json({ success: false, message: 'Account disabled. Contact admin.' });
+    }
+
     req.detailer = {
-      sub: data.user.id,
-      email: data.user.email,
-      detailerId: data.user.id
+      sub:        data.user.id,
+      email:      data.user.email,
+      detailerId: detailer.id,   // integer — matches booking.detailerId
+      name:       detailer.name,
     };
 
     next();

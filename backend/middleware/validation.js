@@ -56,8 +56,8 @@ const validateBooking = [
     }),
   
   body('time')
-    .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
-    .withMessage('Valid time format required (HH:MM)'),
+    .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]( [AP]M)?$|^(1[0-2]|0?[1-9]):[0-5][0-9] [AP]M$/i)
+    .withMessage('Valid time required (e.g. 8:00 AM or 14:00)'),
   
   handleValidationErrors
 ];
@@ -137,7 +137,7 @@ const validateBookingId = [
 // Status update validation
 const validateStatus = [
   body('status')
-    .isIn(['CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED'])
+    .isIn(['PENDING', 'CONFIRMED', 'EN_ROUTE', 'STARTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED', 'NO_SHOW'])
     .withMessage('Invalid status'),
   
   handleValidationErrors

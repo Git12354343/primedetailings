@@ -1,36 +1,141 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Star, Shield, Zap } from 'lucide-react';
 
 const Hero = () => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 100);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
-    <section className="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6">
-            Professional Car Detailing in{' '}
-            <span className="text-blue-300">Montreal</span>
-          </h1>
-          <p className="text-xl sm:text-2xl mb-8 text-blue-100">
-            Premium interior and exterior detailing services that make your vehicle look and feel brand new
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/booking"
-              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-blue-50 transition-colors inline-flex items-center justify-center"
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black">
+
+      {/* Background image with dark overlay */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1920&q=80"
+          alt="Luxury car"
+          className="w-full h-full object-cover opacity-40"
+          loading="eager"
+        />
+        {/* Multi-layer dark gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/60" />
+      </div>
+
+      {/* Animated gold shimmer lines */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent animate-pulse-slow" />
+        <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/10 to-transparent animate-pulse-slow delay-500" />
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 text-center pt-20 pb-32 sm:pb-32">
+
+        {/* Eyebrow tag */}
+        <div
+          className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)' }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse-slow" />
+          <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">
+            Québec's Premier Mobile Detailing
+          </span>
+        </div>
+
+        {/* Headline */}
+        <h1
+          className={`text-5xl sm:text-6xl md:text-7xl font-black leading-none mb-6 tracking-tight transition-all duration-700 delay-100 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+          style={{ textShadow: '0 4px 30px rgba(0,0,0,0.8)' }}
+        >
+          <span className="text-white">Your Car.</span>
+          <br />
+          <span style={{
+            background: 'linear-gradient(135deg, #c9a84c 0%, #f5d376 50%, #c9a84c 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            Perfected.
+          </span>
+        </h1>
+
+        {/* Subheadline */}
+        <p
+          className={`text-lg sm:text-xl text-gray-300 max-w-xl mx-auto mb-10 leading-relaxed transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+        >
+          Ceramic coatings, paint correction & premium detailing.
+          We come to <strong className="text-white">you</strong> — anywhere in Québec.
+        </p>
+
+        {/* CTA Buttons */}
+        <div
+          className={`flex flex-col sm:flex-row gap-4 justify-center mb-12 transition-all duration-700 delay-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+        >
+          <Link
+            to="/booking"
+            className="btn-luxury px-8 py-4 rounded-xl text-base font-bold tracking-wide inline-flex items-center justify-center gap-2 group"
+          >
+            Book Appointment
+            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <Link
+            to="/services"
+            className="btn-ghost-luxury px-8 py-4 rounded-xl text-base font-semibold inline-flex items-center justify-center gap-2"
+          >
+            View Packages
+          </Link>
+        </div>
+
+        {/* Trust badges */}
+        <div
+          className={`flex flex-wrap justify-center gap-3 sm:gap-6 mb-12 transition-all duration-700 delay-400 ${visible ? 'opacity-100' : 'opacity-0'}`}
+        >
+          {[
+            { icon: Star, label: '4.9 Stars', sub: '200+ Reviews' },
+            { icon: Shield, label: '5-Year Warranty', sub: 'Ceramic Coating' },
+            { icon: Zap, label: 'Same Day', sub: 'Available' },
+          ].map(({ icon: Icon, label, sub }, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2 px-4 py-2 rounded-full"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
             >
-              Book Now
-              <ChevronRight className="ml-2 w-5 h-5" />
-            </Link>
-            <Link
-              to="/services"
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-white hover:text-blue-600 transition-colors inline-flex items-center justify-center"
-            >
-              View Services
-            </Link>
-          </div>
+              <Icon className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+              <div className="text-left">
+                <div className="text-white text-xs font-bold leading-tight">{label}</div>
+                <div className="text-gray-400 text-xs leading-tight">{sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Stats row */}
+        <div
+          className={`grid grid-cols-3 gap-2 sm:gap-4 max-w-md mx-auto transition-all duration-700 delay-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
+          {[
+            { num: '500+', label: 'Cars Detailed' },
+            { num: '4.9★', label: 'Avg Rating' },
+            { num: '100%', label: 'Mobile' },
+          ].map(({ num, label }, i) => (
+            <div key={i} className="text-center">
+              <div className="text-2xl font-black" style={{
+                background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
+              }}>{num}</div>
+              <div className="text-gray-400 text-xs mt-0.5">{label}</div>
+            </div>
+          ))}
         </div>
       </div>
+
+      {/* Bottom fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
+
     </section>
   );
 };
