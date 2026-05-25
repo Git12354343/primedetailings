@@ -25,6 +25,7 @@
     "googleapis": "^172.0.0",
     "helmet": "^7.2.0",
     "jsonwebtoken": "^9.0.2",
+    "node-cron": "^4.2.1",
     "nodemailer": "^7.0.5",
     "prisma": "^5.7.1",
     "twilio": "^4.19.0",

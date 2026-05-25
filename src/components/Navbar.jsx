@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import LanguageToggle from './LanguageToggle';
 import { Menu, X, Phone, ChevronRight } from 'lucide-react';
 
 const NAV_LINKS = [
@@ -8,6 +9,7 @@ const NAV_LINKS = [
   { label: 'Services', to: '/services' },
   { label: 'Book Now', to: '/booking' },
   { label: 'Gallery',  to: '/gallery' },
+  { label: 'Fleet/B2B',to: '/fleet' },
   { label: 'Contact',  to: '/contact' },
 ];
 
@@ -119,6 +121,7 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
+              <LanguageToggle />
               <a
                 href="tel:+15144374816"
                 className="flex items-center gap-1.5 text-sm transition-colors"
