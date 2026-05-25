@@ -10,6 +10,8 @@ const StickyBookBar = () => {
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 300);
+    // Check immediately on mount
+    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -18,55 +20,70 @@ const StickyBookBar = () => {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden transition-transform duration-300 ease-out"
-      style={{ transform: visible ? 'translateY(0)' : 'translateY(110%)' }}
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        transform: visible ? 'translateY(0)' : 'translateY(110%)',
+        transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+        // Only on mobile
+        display: 'block',
+      }}
+      className="md:hidden"
     >
       {/* Fade top edge */}
-      <div className="h-4 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
+      <div style={{
+        height: '16px',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
+        pointerEvents: 'none',
+      }} />
 
-      <div
-        style={{
-          background: 'rgba(8,8,8,0.98)',
-          borderTop: '1px solid rgba(201,168,76,0.3)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      >
-        {/* Urgency + price row */}
-        <div className="flex items-center justify-between px-4 pt-2.5 pb-1">
-          <div className="flex items-center gap-1.5">
-            <Zap className="w-3 h-3" style={{ color: '#f59e0b' }} />
-            <span className="text-xs font-semibold" style={{ color: '#f59e0b' }}>
-              Available today
-            </span>
+      <div style={{
+        background: 'rgba(8,8,8,0.98)',
+        borderTop: '1px solid rgba(201,168,76,0.3)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}>
+        {/* Urgency row */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 16px 4px' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+            <Zap style={{ width:'12px', height:'12px', color:'#f59e0b' }} />
+            <span style={{ fontSize:'12px', fontWeight:600, color:'#f59e0b' }}>Available today</span>
           </div>
-          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Starting at <span className="text-white font-bold">$89</span>
+          <span style={{ fontSize:'12px', color:'rgba(255,255,255,0.5)' }}>
+            Starting at <span style={{ color:'#fff', fontWeight:700 }}>$89</span>
           </span>
         </div>
 
         {/* Buttons */}
-        <div className="flex items-center gap-2 px-3 pb-3">
+        <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'0 12px 12px' }}>
           <a
             href="tel:+15144374816"
-            className="flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-sm font-semibold flex-shrink-0 transition-all active:scale-95"
             style={{
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              color: 'rgba(255,255,255,0.8)',
+              display:'flex', alignItems:'center', justifyContent:'center', gap:'6px',
+              padding:'12px 16px', borderRadius:'12px', fontSize:'14px', fontWeight:600,
+              background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)',
+              color:'rgba(255,255,255,0.8)', textDecoration:'none', flexShrink:0,
             }}
           >
-            <Phone className="w-4 h-4" />
-            <span>Call</span>
+            <Phone style={{ width:'16px', height:'16px' }} />
+            Call
           </a>
 
           <Link
             to="/booking"
-            className="btn-luxury flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide active:scale-95 transition-all"
+            style={{
+              flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
+              padding:'12px', borderRadius:'12px', fontSize:'14px', fontWeight:700,
+              background:'linear-gradient(135deg,#c9a84c,#f5d376)', color:'#0a0a0a',
+              textDecoration:'none',
+            }}
           >
             Book Appointment
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight style={{ width:'16px', height:'16px' }} />
           </Link>
         </div>
       </div>

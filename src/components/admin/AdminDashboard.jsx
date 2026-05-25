@@ -21,6 +21,10 @@ import ScheduleManager    from './ScheduleManager';
 import ActiveDetailersSidebar from './ActiveDetailersSidebar';
 import ReviewManagement   from './ReviewManagement';
 import PackageManagement  from './PackageManagement';
+import ContactManagement  from './ContactManagement';
+import GalleryManagement    from './GalleryManagement';
+import RevenueAnalytics    from './RevenueAnalytics';
+import DetailerManagement  from './DetailerManagement';
 
 const TITLES = {
   'live-feed':      { t: 'Live Feed',    s: 'Real-time job activity' },
@@ -30,13 +34,17 @@ const TITLES = {
   'reviews':        { t: 'Reviews',      s: 'Curate the reviews shown on your site' },
   'manual-booking': { t: 'Add Booking',  s: 'Create a booking on behalf of a customer' },
   'schedule':       { t: 'Schedule',     s: 'Availability and working hours' },
+  'contacts':       { t: 'Messages',      s: 'Contact form submissions' },
+  'gallery':        { t: 'Gallery',       s: 'Before & after job photos' },
+  'revenue':        { t: 'Revenue',       s: 'Earnings and booking analytics' },
+  'detailers':      { t: 'Detailers',     s: 'Manage detailer accounts' },
 };
 
-const AdminDashboard = ({ onLogout }) => {
+const AdminDashboard = ({ adminToken, onLogout }) => {
   const [activeTab, setActiveTab] = useState('live-feed');
   const [refreshing, setRefreshing] = useState(false);
 
-  const { unassignedBookings, allBookings, activeDetailers, services, addOns, isLoading, error, refreshData } = useAdminData();
+  const { unassignedBookings, allBookings, activeDetailers, services, addOns, isLoading, error, refreshData, authFetch } = useAdminData(adminToken);
   const { success, error: notifyErr } = useNotifications();
 
   const handleRefresh = async () => {
@@ -81,7 +89,7 @@ const AdminDashboard = ({ onLogout }) => {
 
           <AdminSidebar
             activeTab={activeTab} setActiveTab={setActiveTab}
-            counts={{ allBookings: allBookings.length, unassigned: unassignedBookings.length, services: services.length, packages: undefined }}
+            counts={{ allBookings: allBookings.length, unassigned: unassignedBookings.length, services: services.length, packages: undefined, contacts: undefined }}
             onLogout={onLogout} onRefresh={handleRefresh} refreshing={refreshing}
           />
 
@@ -106,13 +114,17 @@ const AdminDashboard = ({ onLogout }) => {
 
             <div className="flex gap-6 items-start">
               <div className="flex-1 min-w-0">
-                {activeTab === 'live-feed'      && <LiveJobFeed bookings={allBookings} statusCounts={statusCounts} onRefresh={handleRefresh} onJobClick={() => {}} />}
-                {activeTab === 'unassigned'     && <UnassignedBookings bookings={unassignedBookings} detailers={activeDetailers} onRefresh={handleRefresh} />}
+                {activeTab === 'live-feed'      && <LiveJobFeed bookings={allBookings} statusCounts={statusCounts} onRefresh={handleRefresh} onJobClick={() => {}} availableServices={services} availableAddOns={addOns} />}
+                {activeTab === 'unassigned'     && <UnassignedBookings bookings={unassignedBookings} detailers={activeDetailers} onRefresh={handleRefresh} availableServices={services} availableAddOns={addOns} />}
                 {activeTab === 'packages'       && <PackageManagement services={services} addOns={addOns} onRefresh={handleRefresh} />}
                 {activeTab === 'services'       && <ServiceManagement services={services} addOns={addOns} onRefresh={handleRefresh} />}
                 {activeTab === 'reviews'        && <ReviewManagement />}
                 {activeTab === 'manual-booking' && <ManualBookingForm detailers={activeDetailers} services={services} onSuccess={handleRefresh} />}
                 {activeTab === 'schedule'       && <ScheduleManager />}
+                {activeTab === 'contacts'       && <ContactManagement />}
+                {activeTab === 'gallery'        && <GalleryManagement adminToken={adminToken} />}
+                {activeTab === 'revenue'        && <RevenueAnalytics />}
+                {activeTab === 'detailers'      && <DetailerManagement adminToken={adminToken} authFetch={authFetch} onRefreshGlobal={handleRefresh} />}
               </div>
 
               {showDetailerRail && (

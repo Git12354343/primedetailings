@@ -3,7 +3,7 @@
 // Same activeTab/setActiveTab contract, so it's a drop-in.
 // Collapses to a horizontal scroll strip on mobile automatically.
 import React from 'react';
-import { Activity, AlertCircle, Settings, PlusCircle, Calendar, Package, Star, LogOut, RefreshCw } from 'lucide-react';
+import { Activity, AlertCircle, Settings, PlusCircle, Calendar, Package, Star, MessageSquare, Camera, TrendingUp, Users, LogOut, RefreshCw } from 'lucide-react';
 
 const NAV = [
   { id: 'live-feed',      label: 'Live Feed',   icon: Activity,    countKey: 'allBookings' },
@@ -13,6 +13,10 @@ const NAV = [
   { id: 'reviews',        label: 'Reviews',     icon: Star,        countKey: null },
   { id: 'manual-booking', label: 'Add Booking', icon: PlusCircle,  countKey: null },
   { id: 'schedule',       label: 'Schedule',    icon: Calendar,    countKey: null },
+  { id: 'revenue',        label: 'Revenue',     icon: TrendingUp,  countKey: null },
+  { id: 'detailers',      label: 'Detailers',   icon: Users,       countKey: null },
+  { id: 'contacts',       label: 'Messages',    icon: MessageSquare, countKey: 'contacts' },
+  { id: 'gallery',        label: 'Gallery',     icon: Camera,        countKey: null },
 ];
 
 const AdminSidebar = ({ activeTab, setActiveTab, counts, onLogout, onRefresh, refreshing }) => {

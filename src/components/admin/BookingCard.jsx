@@ -36,7 +36,9 @@ const BookingCard = ({
   };
 
   const formatTime = (timeString) => {
-    const [hours, minutes] = timeString.split(':');
+    if (!timeString) return '';
+    const [h, minutes] = timeString.split(':');
+    const hours = parseInt(h, 10);
     const hour12 = hours % 12 || 12;
     const ampm = hours < 12 ? 'AM' : 'PM';
     return `${hour12}:${minutes} ${ampm}`;

@@ -1,141 +1,166 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, ChevronRight } from 'lucide-react';
+// src/components/ServiceAreaMap.jsx
+// Interactive Québec map replacing the circle-based service area section.
+// Clicking a zone row OR the map shape highlights both.
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MapPin, ChevronRight } from 'lucide-react';
+import useInView from '../hooks/useInView';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
+const GOLD  = 'linear-gradient(135deg,#c9a84c,#f5d376)';
 const GOLD_S = '#c9a84c';
 
 const ZONES = [
-  { label: 'Montréal Island',    color: '#c9a84c', desc: 'Full coverage' },
-  { label: 'Laval',              color: '#e8c46a', desc: 'Full coverage' },
-  { label: 'South Shore',        color: '#a07830', desc: 'Longueuil · Brossard · St-Bruno' },
-  { label: 'North Shore',        color: '#7a5c24', desc: 'Terrebonne · Repentigny · Mascouche' },
-  { label: 'Greater Québec',     color: 'rgba(255,255,255,0.3)', desc: 'Available on request' },
+  { id: 'montreal', label: 'Montréal Island', desc: 'Full coverage',                         color: '#c9a84c', badge: 'Included',   badgeStyle: { background:'rgba(52,211,153,0.12)', color:'#34d399', border:'1px solid rgba(52,211,153,0.25)' } },
+  { id: 'laval',    label: 'Laval',           desc: 'Full coverage',                         color: '#e8c46a', badge: 'Included',   badgeStyle: { background:'rgba(52,211,153,0.12)', color:'#34d399', border:'1px solid rgba(52,211,153,0.25)' } },
+  { id: 'south',    label: 'South Shore',     desc: 'Longueuil · Brossard · St-Bruno',       color: '#a07830', badge: 'Available',  badgeStyle: { background:'rgba(201,168,76,0.12)', color:'#c9a84c', border:'1px solid rgba(201,168,76,0.25)' } },
+  { id: 'north',    label: 'North Shore',     desc: 'Terrebonne · Repentigny · Mascouche',   color: '#7a5c24', badge: 'Available',  badgeStyle: { background:'rgba(201,168,76,0.12)', color:'#c9a84c', border:'1px solid rgba(201,168,76,0.25)' } },
+  { id: 'quebec',   label: 'Greater Québec',  desc: 'Available on request',                  color: 'rgba(255,255,255,0.3)', badge: 'On request', badgeStyle: { background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.4)', border:'1px solid rgba(255,255,255,0.1)' } },
 ];
 
-const ServiceAreaMap = () => {
-  const [active, setActive] = useState(false);
-  const [pulse, setPulse]   = useState(0);
-  const ref = useRef(null);
+/* ── SVG map shapes ─────────────────────────────────────────────────── */
+const MAP_FILLS = {
+  montreal: '#c9a84c',
+  laval:    '#e8c46a',
+  south:    '#a07830',
+  north:    '#7a5c24',
+  quebec:   'rgba(255,255,255,0.08)',
+};
 
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setActive(true); },
-      { threshold: 0.2 }
-    );
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
-
-  // Pulse rings
-  useEffect(() => {
-    if (!active) return;
-    const id = setInterval(() => setPulse(p => p + 1), 1800);
-    return () => clearInterval(id);
-  }, [active]);
+const QMap = ({ active, onZone }) => {
+  const opacity = (id) => active === id ? 1 : id === 'quebec' ? 0.5 : 0.65;
+  const bright  = (id) => active === id ? 'brightness(1.35)' : 'brightness(1)';
 
   return (
-    <section ref={ref} className="py-20 relative overflow-hidden"
+    <svg viewBox="0 0 320 420" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', maxWidth: '360px', display: 'block' }}>
+
+      {/* Province outline */}
+      <path fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" strokeWidth="0.8"
+        d="M80 20 L200 10 L260 30 L280 60 L290 100 L300 140 L295 180 L285 200 L270 210 L275 230 L260 250 L240 260 L230 280 L220 300 L200 310 L190 330 L180 350 L170 370 L160 390 L150 400 L130 390 L110 370 L90 350 L80 320 L70 290 L60 260 L50 230 L40 200 L35 170 L30 140 L40 110 L50 80 L60 50 Z"/>
+
+      {/* Greater Québec */}
+      <path id="qmap-quebec" onClick={() => onZone('quebec')} style={{ cursor:'pointer', transition:'all 0.25s', filter: bright('quebec') }}
+        fill={MAP_FILLS.quebec} stroke="rgba(255,255,255,0.15)" strokeWidth="1" opacity={opacity('quebec')}
+        d="M120 120 L240 100 L270 130 L265 170 L250 190 L230 210 L210 220 L190 230 L170 240 L150 235 L130 225 L115 205 L110 180 L112 155 Z"/>
+
+      {/* North Shore */}
+      <path id="qmap-north" onClick={() => onZone('north')} style={{ cursor:'pointer', transition:'all 0.25s', filter: bright('north') }}
+        fill={MAP_FILLS.north} opacity={opacity('north')}
+        d="M130 225 L150 235 L170 240 L190 230 L210 220 L195 255 L175 265 L155 265 L135 255 Z"/>
+
+      {/* South Shore */}
+      <path id="qmap-south" onClick={() => onZone('south')} style={{ cursor:'pointer', transition:'all 0.25s', filter: bright('south') }}
+        fill={MAP_FILLS.south} opacity={opacity('south')}
+        d="M115 265 L135 255 L155 265 L175 265 L195 255 L185 285 L165 295 L145 295 L125 285 Z"/>
+
+      {/* Laval */}
+      <ellipse id="qmap-laval" onClick={() => onZone('laval')} style={{ cursor:'pointer', transition:'all 0.25s', filter: bright('laval') }}
+        cx="155" cy="278" rx="28" ry="14" fill={MAP_FILLS.laval} opacity={opacity('laval')}/>
+
+      {/* Montréal */}
+      <ellipse id="qmap-montreal" onClick={() => onZone('montreal')} style={{ cursor:'pointer', transition:'all 0.25s', filter: bright('montreal') }}
+        cx="155" cy="300" rx="22" ry="12" fill={MAP_FILLS.montreal} opacity={opacity('montreal')}/>
+
+      {/* St Lawrence hint */}
+      <path d="M90 310 Q155 322 220 308" fill="none" stroke="rgba(96,165,250,0.18)" strokeWidth="6"/>
+
+      {/* Labels */}
+      {[
+        { x:200, y:165,  t:'Greater Québec', dark:false },
+        { x:165, y:249,  t:'North Shore',    dark:false },
+        { x:155, y:278,  t:'Laval',          dark:true  },
+        { x:155, y:302,  t:'Montréal',       dark:true  },
+        { x:155, y:330,  t:'South Shore',    dark:false },
+      ].map(({ x, y, t, dark }) => (
+        <text key={t} x={x} y={y} textAnchor="middle" pointerEvents="none"
+          style={{ fontSize:'9px', fontFamily:'Arial,sans-serif', fill: dark ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.55)' }}>
+          {t}
+        </text>
+      ))}
+
+      {/* Pulse dot on Montréal */}
+      <circle cx="155" cy="300" r="4" fill="#f5d376"/>
+      <circle cx="155" cy="300" r="4" fill="none" stroke="#f5d376" strokeWidth="1.5">
+        <animate attributeName="r" from="4" to="16" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" from="0.8" to="0" dur="2s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+  );
+};
+
+/* ── Main component ─────────────────────────────────────────────────── */
+const ServiceAreaMap = () => {
+  const [active, setActive] = useState('montreal');
+  const [ref, visible] = useInView({ threshold: 0.1 });
+
+  return (
+    <section ref={ref} className="relative py-24 overflow-hidden"
       style={{ background: '#0d0d0d' }}>
 
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 60%, rgba(201,168,76,0.04) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 50% 40%,rgba(201,168,76,0.04) 0%,transparent 65%)' }} />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-xs font-semibold uppercase tracking-widest"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
+        <div className="text-center mb-12"
+          style={{ transition:'opacity .7s, transform .7s', opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(20px)' }}>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5 text-xs font-semibold uppercase tracking-widest"
+            style={{ background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
             <MapPin className="w-3.5 h-3.5" /> Service Area
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
-            We Come to <span style={{ background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>You</span>
+          <h2 className="text-4xl sm:text-5xl font-black text-white mb-4" style={{ letterSpacing:'-0.02em' }}>
+            We Come to{' '}
+            <span style={{ background: GOLD, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
+              You
+            </span>
           </h2>
-          <p className="text-base max-w-md mx-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-base max-w-md mx-auto" style={{ color:'rgba(255,255,255,0.4)' }}>
             Mobile detailing across Québec. No shop, no commute — just results at your door.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-10 items-center">
+        {/* Map + zone list */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-10 justify-center"
+          style={{ transition:'opacity .7s .15s', opacity: visible ? 1 : 0 }}>
 
-          {/* SVG Map */}
-          <div className="flex justify-center">
-            <div className="relative w-72 h-72 sm:w-80 sm:h-80">
-              <svg viewBox="0 0 300 300" className="w-full h-full">
-                {/* Outer Quebec region */}
-                <ellipse cx="150" cy="150" rx="138" ry="130" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="4 3" />
-                {/* North Shore */}
-                <ellipse cx="150" cy="120" rx="100" ry="70" fill="rgba(122,92,36,0.15)" stroke="rgba(122,92,36,0.4)" strokeWidth="1" />
-                {/* South Shore */}
-                <ellipse cx="150" cy="185" rx="90" ry="55" fill="rgba(160,120,48,0.15)" stroke="rgba(160,120,48,0.4)" strokeWidth="1" />
-                {/* Laval */}
-                <ellipse cx="150" cy="130" rx="65" ry="42" fill="rgba(232,196,106,0.15)" stroke="rgba(232,196,106,0.4)" strokeWidth="1.5" />
-                {/* Montreal Island */}
-                <ellipse cx="150" cy="155" rx="52" ry="35" fill="rgba(201,168,76,0.18)" stroke={GOLD_S} strokeWidth="2" />
-
-                {/* Pulse rings */}
-                {[0,1,2].map(i => (
-                  <circle key={`${pulse}-${i}`} cx="150" cy="155" r={20 + i * 22}
-                    fill="none" stroke="rgba(201,168,76,0.35)" strokeWidth="1"
-                    style={{
-                      opacity: active ? 0 : 0,
-                      animation: active ? `mapPulse 2.4s ${i * 0.6}s ease-out infinite` : 'none',
-                    }} />
-                ))}
-
-                {/* Center dot */}
-                <circle cx="150" cy="155" r="7" fill={GOLD_S} />
-                <circle cx="150" cy="155" r="3.5" fill="#0a0a0a" />
-
-                {/* Labels */}
-                <text x="150" y="240" textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="sans-serif">Greater Québec</text>
-                <text x="150" y="102" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="8.5" fontFamily="sans-serif">North Shore</text>
-                <text x="150" y="215" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="8.5" fontFamily="sans-serif">South Shore</text>
-                <text x="150" y="122" textAnchor="middle" fill="#e8c46a" fontSize="8" fontFamily="sans-serif">Laval</text>
-                <text x="150" y="162" textAnchor="middle" fill={GOLD_S} fontSize="9.5" fontFamily="sans-serif" fontWeight="700">Montréal</text>
-              </svg>
-
-              <style>{`
-                @keyframes mapPulse {
-                  0%   { r: 12; opacity: 0.6; }
-                  100% { r: 70; opacity: 0; }
-                }
-              `}</style>
-            </div>
+          {/* Map */}
+          <div style={{ width:'100%', maxWidth:'340px', flexShrink: 0 }}>
+            <QMap active={active} onZone={setActive} />
           </div>
 
           {/* Zone list */}
-          <div className="space-y-3">
-            {ZONES.map((z, i) => (
-              <div key={z.label}
-                className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-500 ${active ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}
+          <div style={{ flex: 1, minWidth: '260px', display:'flex', flexDirection:'column', gap:'10px' }}>
+            {ZONES.map(({ id, label, desc, color, badge, badgeStyle }) => (
+              <div key={id} onClick={() => setActive(id)}
+                className="flex items-center justify-between rounded-2xl px-4 py-3.5 cursor-pointer transition-all"
                 style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                  transitionDelay: `${i * 80}ms`,
+                  background: active === id ? 'rgba(201,168,76,0.07)' : 'rgba(255,255,255,0.03)',
+                  border: active === id ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.07)',
                 }}>
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: z.color }} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-bold">{z.label}</p>
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{z.desc}</p>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full flex-shrink-0"
+                    style={{ width:'10px', height:'10px', background: color }} />
+                  <div>
+                    <p className="text-white font-bold text-sm">{label}</p>
+                    <p className="text-xs mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>{desc}</p>
+                  </div>
                 </div>
-                <span className="text-xs px-2 py-1 rounded-lg flex-shrink-0"
-                  style={{ background: i < 2 ? 'rgba(52,211,153,0.1)' : i < 4 ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.05)',
-                           color: i < 2 ? '#34d399' : i < 4 ? GOLD_S : 'rgba(255,255,255,0.4)' }}>
-                  {i < 2 ? 'Included' : i < 4 ? 'Available' : 'On request'}
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ml-3" style={badgeStyle}>
+                  {badge}
                 </span>
               </div>
             ))}
 
+            {/* CTA */}
             <Link to="/booking"
-              className="flex items-center justify-between p-4 rounded-xl mt-4 group transition-all"
-              style={{ background: GOLD, color: '#0a0a0a' }}>
+              className="flex items-center justify-between px-5 py-4 rounded-2xl mt-1 transition-all hover:scale-[1.01]"
+              style={{ background: GOLD, color:'#0a0a0a' }}>
               <div>
                 <p className="font-black text-sm">Book in your area</p>
-                <p className="text-xs opacity-70 mt-0.5">We'll confirm availability by SMS</p>
+                <p className="text-xs font-medium opacity-60 mt-0.5">We'll confirm availability by SMS</p>
               </div>
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ChevronRight className="w-5 h-5 flex-shrink-0" />
             </Link>
           </div>
         </div>

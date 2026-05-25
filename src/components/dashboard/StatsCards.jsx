@@ -2,63 +2,39 @@
 import React from 'react';
 import { Briefcase, AlertCircle, Clock, CheckCircle, DollarSign } from 'lucide-react';
 
+const ACCENT = {
+  blue:   { bg: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.2)',  color: '#60a5fa' },
+  yellow: { bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.2)',  color: '#f59e0b' },
+  orange: { bg: 'rgba(251,146,60,0.1)',  border: 'rgba(251,146,60,0.2)',  color: '#fb923c' },
+  green:  { bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.2)',  color: '#34d399' },
+  gold:   { bg: 'rgba(201,168,76,0.1)',  border: 'rgba(201,168,76,0.25)', color: '#f5d376' },
+};
+
 const StatsCards = ({ statusCounts, todaysEarnings }) => {
   const stats = [
-    {
-      label: 'Total Jobs',
-      value: statusCounts.TOTAL,
-      icon: Briefcase,
-      color: 'blue'
-    },
-    {
-      label: 'Pending',
-      value: statusCounts.CONFIRMED,
-      icon: AlertCircle,
-      color: 'yellow'
-    },
-    {
-      label: 'Active',
-      value: statusCounts.IN_PROGRESS,
-      icon: Clock,
-      color: 'orange'
-    },
-    {
-      label: 'Done',
-      value: statusCounts.COMPLETED,
-      icon: CheckCircle,
-      color: 'green'
-    },
-    {
-      label: 'Today',
-      value: `$${todaysEarnings.toFixed(0)}`,
-      icon: DollarSign,
-      color: 'green'
-    }
+    { label: 'Total Jobs',  value: statusCounts.TOTAL,       icon: Briefcase,   accent: 'blue'   },
+    { label: 'Confirmed',   value: statusCounts.CONFIRMED,   icon: AlertCircle, accent: 'yellow' },
+    { label: 'Active',      value: statusCounts.IN_PROGRESS, icon: Clock,       accent: 'orange' },
+    { label: 'Completed',   value: statusCounts.COMPLETED,   icon: CheckCircle, accent: 'green'  },
+    { label: "Today's Rev", value: `$${(todaysEarnings || 0).toFixed(0)}`, icon: DollarSign, accent: 'gold' },
   ];
 
-  const getColorClasses = (color) => {
-    const colors = {
-      blue: 'bg-blue-100 text-blue-600',
-      yellow: 'bg-yellow-100 text-yellow-600',
-      orange: 'bg-orange-100 text-orange-600',
-      green: 'bg-green-100 text-green-600'
-    };
-    return colors[color] || colors.blue;
-  };
-
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-      {stats.map((stat) => {
-        const Icon = stat.icon;
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+      {stats.map(({ label, value, icon: Icon, accent }) => {
+        const a = ACCENT[accent];
         return (
-          <div key={stat.label} className="bg-white rounded-lg shadow p-4">
-            <div className="flex items-center">
-              <div className={`p-2 rounded-full ${getColorClasses(stat.color)}`}>
-                <Icon className="w-5 h-5" />
+          <div key={label} className="rounded-xl p-4"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: a.bg, border: `1px solid ${a.border}` }}>
+                <Icon className="w-4 h-4" style={{ color: a.color }} />
               </div>
-              <div className="ml-3">
-                <p className="text-xs font-medium text-gray-600">{stat.label}</p>
-                <p className="text-xl font-semibold text-gray-900">{stat.value}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider truncate"
+                  style={{ color: 'rgba(255,255,255,0.4)' }}>{label}</p>
+                <p className="text-xl font-black text-white leading-tight">{value}</p>
               </div>
             </div>
           </div>

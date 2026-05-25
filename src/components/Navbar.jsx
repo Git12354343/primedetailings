@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { label: 'Ceramic',  to: '/ceramic-coating', featured: true },
   { label: 'Services', to: '/services' },
   { label: 'Book Now', to: '/booking' },
+  { label: 'Gallery',  to: '/gallery' },
   { label: 'Contact',  to: '/contact' },
 ];
 
@@ -46,27 +47,38 @@ const Navbar = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
 
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 group">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-                style={{ background: 'linear-gradient(135deg, #c9a84c, #f5d376)' }}
-              >
-                <span className="text-black font-black text-xs tracking-tight">PD</span>
-              </div>
-              <div>
-                <span className="text-white font-bold text-base leading-none">Prime</span>
-                <span
-                  className="font-bold text-base leading-none ml-1"
-                  style={{
-                    background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
-                >
-                  Detailing
-                </span>
+            {/* Mobile: hamburger (left) — hidden on desktop */}
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
+              style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+              aria-label="Toggle menu"
+            >
+              {isOpen
+                ? <X className="w-5 h-5 text-white" />
+                : <Menu className="w-5 h-5 text-white" />
+              }
+            </button>
+
+            {/* Logo — centered on mobile, left on desktop */}
+            <Link to="/"
+              className="md:flex-none absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 group">
+              <img
+                src="/logo.png"
+                alt="Prime Detailing"
+                style={{ height: '40px', width: 'auto', objectFit: 'contain', transition: 'opacity 0.2s' }}
+                className="group-hover:opacity-80"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling.style.display = 'flex';
+                }}
+              />
+              <div className="items-center gap-2.5" style={{ display: 'none' }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)' }}>
+                  <span className="text-black font-black text-xs">PD</span>
+                </div>
+                <span className="text-white font-bold text-base">Prime Detailing</span>
               </div>
             </Link>
 
@@ -108,14 +120,14 @@ const Navbar = () => {
             {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
               <a
-                href="tel:+15141234567"
+                href="tel:+15144374816"
                 className="flex items-center gap-1.5 text-sm transition-colors"
                 style={{ color: 'rgba(255,255,255,0.6)' }}
                 onMouseEnter={e => e.currentTarget.style.color = '#f5d376'}
                 onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
               >
                 <Phone className="w-3.5 h-3.5" />
-                <span>(514) 123-4567</span>
+                <span>(514) 437-4816</span>
               </a>
               <Link
                 to="/booking"
@@ -126,18 +138,13 @@ const Navbar = () => {
               </Link>
             </div>
 
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setIsOpen(!isOpen)}
+            {/* Mobile: phone icon (right) — hidden on desktop */}
+            <a href="tel:+15144374816"
               className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
               style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
-              aria-label="Toggle menu"
-            >
-              {isOpen
-                ? <X className="w-5 h-5 text-white" />
-                : <Menu className="w-5 h-5 text-white" />
-              }
-            </button>
+              aria-label="Call us">
+              <Phone className="w-4 h-4 text-white" />
+            </a>
           </div>
         </div>
       </nav>
@@ -165,14 +172,21 @@ const Navbar = () => {
           className="flex items-center justify-between px-5 h-16"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
         >
-          <div className="flex items-center gap-2">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #c9a84c, #f5d376)' }}
-            >
-              <span className="text-black font-black text-xs">PD</span>
+          <div className="flex items-center">
+            <img src="/logo.png" alt="Prime Detailing"
+              style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling.style.display = 'flex';
+              }}
+            />
+            <div className="items-center gap-2" style={{ display:'none' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)' }}>
+                <span className="text-black font-black text-xs">PD</span>
+              </div>
+              <span className="text-white font-bold text-sm">Prime Detailing</span>
             </div>
-            <span className="text-white font-bold text-sm">Prestige Plus Detailing</span>
           </div>
           <button
             onClick={() => setIsOpen(false)}
@@ -213,7 +227,7 @@ const Navbar = () => {
         {/* Drawer bottom */}
         <div className="px-4 pb-8 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1.5rem' }}>
           <a
-            href="tel:+15141234567"
+            href="tel:+15144374816"
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium"
             style={{
               background: 'rgba(255,255,255,0.05)',
@@ -222,7 +236,7 @@ const Navbar = () => {
             }}
           >
             <Phone className="w-4 h-4" />
-            (514) 123-4567
+            (514) 437-4816
           </a>
           <Link
             to="/booking"

@@ -1,29 +1,21 @@
-// src/components/PricingCalculator.jsx
+// src/components/PricingCalculator.jsx — dark/gold luxury redesign
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Calculator, Package, Wrench, AlertCircle, CheckCircle, Loader2, Info } from 'lucide-react';
+import { Calculator, Package, Wrench, AlertCircle, CheckCircle, Loader2, Clock, MapPin } from 'lucide-react';
 
-const PricingCalculator = ({ 
-  vehicleType, 
-  selectedServices, 
-  selectedAddOns, 
-  services, 
-  addOns,
-  onPricingUpdate,
-  showBreakdown = true,
-  showEstimate = true,
-  className = '' 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const GOLD = 'linear-gradient(135deg,#c9a84c,#f5d376)';
+const GOLD_S = '#c9a84c';
+
+const PricingCalculator = ({
+  vehicleType, selectedServices, selectedAddOns,
+  services, addOns, onPricingUpdate,
+  showBreakdown = true, showEstimate = true, className = ''
 }) => {
-  const [pricing, setPricing] = useState({
-    services: [],
-    addOns: [],
-    subtotal: 0,
-    total: 0
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [pricing, setPricing]               = useState({ services: [], addOns: [], subtotal: 0, total: 0 });
+  const [loading, setLoading]               = useState(false);
+  const [error, setError]                   = useState('');
   const [estimatedDuration, setEstimatedDuration] = useState('');
 
-  // Calculate pricing whenever selections change
   useEffect(() => {
     if (vehicleType && (selectedServices.length > 0 || selectedAddOns.length > 0)) {
       calculatePricing();
@@ -33,229 +25,133 @@ const PricingCalculator = ({
   }, [vehicleType, selectedServices, selectedAddOns]);
 
   const resetPricing = () => {
-    const emptyPricing = {
-      services: [],
-      addOns: [],
-      subtotal: 0,
-      total: 0
-    };
-    setPricing(emptyPricing);
+    const empty = { services: [], addOns: [], subtotal: 0, total: 0 };
+    setPricing(empty);
     setEstimatedDuration('');
-    if (onPricingUpdate) {
-      onPricingUpdate(emptyPricing);
-    }
+    onPricingUpdate?.(empty);
   };
 
   const calculatePricing = async () => {
     setLoading(true);
     setError('');
-
     try {
-      // Use API for accurate pricing
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/services/calculate-pricing`, {
+      const res  = await fetch(`${API_URL}/services/calculate-pricing`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          services: selectedServices,
-          addOns: selectedAddOns,
-          vehicleType: vehicleType
-        })
+        body: JSON.stringify({ services: selectedServices, addOns: selectedAddOns, vehicleType }),
       });
-
-      const data = await response.json();
-      
+      const data = await res.json();
       if (data.success) {
         setPricing(data.pricing);
-        
-        // Calculate estimated duration
-        const baseDuration = 4; // Base 4 hours
-        const addOnDuration = selectedAddOns.length * 0.5; // 30 minutes per add-on
-        const totalDuration = baseDuration + addOnDuration;
-        setEstimatedDuration(`${totalDuration} hours`);
-        
-        if (onPricingUpdate) {
-          onPricingUpdate(data.pricing);
-        }
+        setEstimatedDuration(`${4 + selectedAddOns.length * 0.5} hours`);
+        onPricingUpdate?.(data.pricing);
       } else {
-        setError('Failed to calculate pricing');
-        // Fallback to local calculation
+        setError('Could not fetch live pricing — showing estimate.');
         calculateLocalPricing();
       }
-    } catch (error) {
-      console.error('Error calculating pricing:', error);
-      setError('Unable to fetch pricing');
-      // Fallback to local calculation
+    } catch {
+      setError('Offline — showing local estimate.');
       calculateLocalPricing();
     } finally {
       setLoading(false);
     }
   };
 
-  // Fallback local pricing calculation
   const calculateLocalPricing = () => {
-    const servicesPricing = [];
-    const addOnsPricing = [];
+    const svcList = [], addList = [];
     let total = 0;
-
-    // Calculate services pricing
-    selectedServices.forEach(serviceId => {
-      const service = services.find(s => s.id === serviceId);
-      if (service && service.pricing && vehicleType) {
-        const price = service.pricing[vehicleType] || 0;
-        servicesPricing.push({
-          id: service.id,
-          name: service.name,
-          price: price
-        });
-        total += price;
+    selectedServices.forEach(id => {
+      const s = services.find(s => s.id === id);
+      if (s?.pricing?.[vehicleType]) {
+        svcList.push({ id: s.id, name: s.name, price: s.pricing[vehicleType] });
+        total += s.pricing[vehicleType];
       }
     });
-
-    // Calculate add-ons pricing
-    selectedAddOns.forEach(addOnId => {
-      const addOn = addOns.find(a => a.id === addOnId);
-      if (addOn) {
-        const price = parseFloat(addOn.price);
-        addOnsPricing.push({
-          id: addOn.id,
-          name: addOn.name,
-          price: price
-        });
-        total += price;
+    selectedAddOns.forEach(id => {
+      const a = addOns.find(a => a.id === id);
+      if (a) {
+        const p = parseFloat(a.price);
+        addList.push({ id: a.id, name: a.name, price: p });
+        total += p;
       }
     });
-
-    const localPricing = {
-      services: servicesPricing,
-      addOns: addOnsPricing,
-      subtotal: total,
-      total: total
-    };
-
-    setPricing(localPricing);
-    
-    if (onPricingUpdate) {
-      onPricingUpdate(localPricing);
-    }
+    const local = { services: svcList, addOns: addList, subtotal: total, total };
+    setPricing(local);
+    onPricingUpdate?.(local);
   };
 
-  // Get vehicle type pricing multiplier info
-  const getVehicleTypeInfo = () => {
-    switch (vehicleType) {
-      case 'Sedan':
-        return { 
-          icon: '🚗', 
-          description: 'Compact and efficient pricing',
-          note: 'Standard pricing for sedans'
-        };
-      case 'SUV':
-        return { 
-          icon: '🚙', 
-          description: 'Larger surface area requires more time',
-          note: 'Higher pricing due to size'
-        };
-      case 'Truck':
-        return { 
-          icon: '🚚', 
-          description: 'Maximum size and complexity',
-          note: 'Premium pricing for trucks'
-        };
-      case 'Coupe':
-        return { 
-          icon: '🏎️', 
-          description: 'Sporty and compact',
-          note: 'Efficient pricing for coupes'
-        };
-      default:
-        return { icon: '🚗', description: '', note: '' };
-    }
+  // ── Empty states ──────────────────────────────────────────────────────────
+  const emptyBase = {
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '16px',
+    padding: '24px',
+    textAlign: 'center',
   };
 
-  const vehicleInfo = getVehicleTypeInfo();
+  if (!vehicleType) return (
+    <div className={className} style={emptyBase}>
+      <Calculator className="w-8 h-8 mx-auto mb-2" style={{ color: GOLD_S }} />
+      <p className="text-white font-semibold text-sm">Select your vehicle</p>
+      <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Pricing varies by size & complexity</p>
+    </div>
+  );
 
-  if (!vehicleType) {
-    return (
-      <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
-        <div className="text-center">
-          <Calculator className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-600">Select vehicle type to see pricing</p>
-          <p className="text-sm text-gray-500 mt-1">Pricing varies by vehicle size and complexity</p>
-        </div>
-      </div>
-    );
-  }
+  if (!selectedServices.length && !selectedAddOns.length) return (
+    <div className={className} style={emptyBase}>
+      <Calculator className="w-8 h-8 mx-auto mb-2" style={{ color: GOLD_S }} />
+      <p className="text-white font-semibold text-sm">Select services to see pricing</p>
+      <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Choose from our available services and add-ons</p>
+    </div>
+  );
 
-  if (selectedServices.length === 0 && selectedAddOns.length === 0) {
-    return (
-      <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
-        <div className="text-center">
-          <DollarSign className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-600">Select services to see pricing</p>
-          <p className="text-sm text-gray-500 mt-1">Choose from our available services and add-ons</p>
-        </div>
-      </div>
-    );
-  }
-
+  // ── Main UI ───────────────────────────────────────────────────────────────
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
+    <div className={className} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px' }}>
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-          <Calculator className="w-5 h-5 mr-2 text-blue-600" />
-          Pricing Calculator
-        </h3>
-        
-        {loading && <Loader2 className="w-4 h-4 animate-spin text-blue-600" />}
-      </div>
-
-      {/* Vehicle Type Info */}
-      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-center space-x-2">
-          <span className="text-lg">{vehicleInfo.icon}</span>
-          <div>
-            <span className="font-medium text-blue-900">{vehicleType}</span>
-            <p className="text-sm text-blue-700">{vehicleInfo.description}</p>
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)' }}>
+            <Calculator className="w-4 h-4" style={{ color: GOLD_S }} />
           </div>
+          <span className="text-white font-bold text-sm">Pricing Summary</span>
         </div>
+        {loading && <Loader2 className="w-4 h-4 animate-spin" style={{ color: GOLD_S }} />}
       </div>
 
-      {/* Error Message */}
+      {/* Error */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 text-red-600" />
-            <span className="text-sm text-red-700">{error}</span>
-          </div>
+        <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl text-xs"
+          style={{ background: 'rgba(251,146,60,0.08)', border: '1px solid rgba(251,146,60,0.2)', color: '#fb923c' }}>
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+          {error}
         </div>
       )}
 
-      {/* Pricing Breakdown */}
+      {/* Breakdown */}
       {showBreakdown && (pricing.services.length > 0 || pricing.addOns.length > 0) && (
-        <div className="space-y-4 mb-6">
+        <div className="space-y-3 mb-5">
+
           {/* Services */}
           {pricing.services.length > 0 && (
             <div>
-              <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                <Wrench className="w-4 h-4 mr-2 text-blue-600" />
-                Selected Services
-              </h4>
-              <div className="space-y-2">
-                {pricing.services.map(service => (
-                  <div key={service.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Wrench className="w-3.5 h-3.5" style={{ color: GOLD_S }} />
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>Services</span>
+              </div>
+              <div className="space-y-1.5">
+                {pricing.services.map(s => (
+                  <div key={s.id} className="flex items-center justify-between px-3 py-2 rounded-xl"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div>
-                      <span className="font-medium text-gray-800">{service.name}</span>
-                      <p className="text-sm text-gray-600">{vehicleType} pricing</p>
+                      <span className="text-white text-sm font-medium">{s.name}</span>
+                      <span className="text-xs ml-2" style={{ color: 'rgba(255,255,255,0.35)' }}>{vehicleType}</span>
                     </div>
-                    <span className="font-semibold text-blue-600">${service.price}</span>
+                    <span className="text-sm font-bold" style={{ color: GOLD_S }}>${s.price}</span>
                   </div>
                 ))}
-              </div>
-              <div className="mt-2 text-right">
-                <span className="text-sm text-gray-600">Services subtotal: </span>
-                <span className="font-medium text-gray-900">
-                  ${pricing.services.reduce((sum, s) => sum + s.price, 0)}
-                </span>
               </div>
             </div>
           )}
@@ -263,23 +159,18 @@ const PricingCalculator = ({
           {/* Add-ons */}
           {pricing.addOns.length > 0 && (
             <div>
-              <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                <Package className="w-4 h-4 mr-2 text-green-600" />
-                Selected Add-ons
-              </h4>
-              <div className="space-y-2">
-                {pricing.addOns.map(addOn => (
-                  <div key={addOn.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <span className="font-medium text-gray-800">{addOn.name}</span>
-                    <span className="font-semibold text-green-600">+${addOn.price}</span>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Package className="w-3.5 h-3.5" style={{ color: '#a78bfa' }} />
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>Add-ons</span>
+              </div>
+              <div className="space-y-1.5">
+                {pricing.addOns.map(a => (
+                  <div key={a.id} className="flex items-center justify-between px-3 py-2 rounded-xl"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span className="text-white text-sm font-medium">{a.name}</span>
+                    <span className="text-sm font-bold" style={{ color: '#a78bfa' }}>+${a.price}</span>
                   </div>
                 ))}
-              </div>
-              <div className="mt-2 text-right">
-                <span className="text-sm text-gray-600">Add-ons subtotal: </span>
-                <span className="font-medium text-gray-900">
-                  ${pricing.addOns.reduce((sum, a) => sum + a.price, 0)}
-                </span>
               </div>
             </div>
           )}
@@ -287,56 +178,49 @@ const PricingCalculator = ({
       )}
 
       {/* Total */}
-      <div className="border-t border-gray-200 pt-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-lg font-semibold text-gray-900">Total Price:</span>
-          <span className="text-2xl font-bold text-blue-600">${pricing.total}</span>
+      <div className="rounded-2xl p-4 mb-4"
+        style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>Estimated Total</span>
+          <div className="flex items-center gap-1.5">
+            {!loading && <CheckCircle className="w-3.5 h-3.5" style={{ color: '#34d399' }} />}
+            <span className="text-2xl font-black" style={{ background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              ${pricing.total}
+            </span>
+          </div>
         </div>
-        
-        {/* Pricing confirmation */}
-        <div className="flex items-center space-x-2 text-sm text-green-700 bg-green-50 p-2 rounded-lg">
-          <CheckCircle className="w-4 h-4" />
-          <span>Real-time pricing confirmed</span>
-        </div>
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          Final price may vary based on vehicle condition.
+        </p>
       </div>
 
-      {/* Estimate Information */}
+      {/* Duration + service info */}
       {showEstimate && estimatedDuration && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-            <Info className="w-4 h-4 mr-2 text-blue-600" />
-            Service Estimate
-          </h4>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-blue-700">Estimated Duration:</span>
-                <span className="font-medium text-blue-900">{estimatedDuration}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">Service Type:</span>
-                <span className="font-medium text-blue-900">Mobile Detailing</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">Location:</span>
-                <span className="font-medium text-blue-900">Your Address</span>
-              </div>
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.4)' }} />
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Estimated duration</span>
             </div>
+            <span className="text-xs font-semibold text-white">{estimatedDuration}</span>
+          </div>
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.4)' }} />
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>Service type</span>
+            </div>
+            <span className="text-xs font-semibold text-white">Mobile — we come to you</span>
           </div>
         </div>
       )}
 
-      {/* Pricing Notes */}
-      <div className="mt-4 pt-4 border-t border-gray-100">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-          <h5 className="font-medium text-yellow-900 mb-1">Pricing Notes</h5>
-          <div className="space-y-1 text-xs text-yellow-800">
-            <p>• Prices include all materials and equipment</p>
-            <p>• Mobile service - we come to you</p>
-            <p>• Final price confirmed after booking</p>
-            <p>• Weather-dependent services may be rescheduled</p>
-          </div>
-        </div>
+      {/* Notes */}
+      <div className="px-3 py-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          Prices include all materials & equipment. Weather-dependent services may be rescheduled. Final price confirmed after booking.
+        </p>
       </div>
     </div>
   );

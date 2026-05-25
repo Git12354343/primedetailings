@@ -64,7 +64,7 @@ const RevenueAnalytics = () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('adminToken') || localStorage.getItem('detailerToken');
+      const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || localStorage.getItem('detailerToken');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/revenue`, {
         headers: { Authorization: `Bearer ${token}` },
       });

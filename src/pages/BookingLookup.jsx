@@ -443,8 +443,13 @@ const BookingLookup = () => {
                 </InfoSection>
               </div>
               {(() => {
-                const svcNames = resolveNames(booking.services, services);
-                const addNames = resolveNames(booking.extras, addOns);
+                // Use pre-resolved names from API when available; fall back to frontend lookup
+                const svcNames = (booking.resolvedServices?.length > 0)
+                  ? booking.resolvedServices
+                  : resolveNames(booking.services, services);
+                const addNames = (booking.resolvedAddOns?.length > 0)
+                  ? booking.resolvedAddOns
+                  : resolveNames(booking.extras, addOns);
                 if (!svcNames.length && !addNames.length) return null;
                 return (
                   <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>

@@ -2,7 +2,7 @@
 // Polished replacement for AdminStats. Same props, nicer cards with icons,
 // semantic color accents, and a highlighted "unassigned" alert state.
 import React from 'react';
-import { Briefcase, Bolt, AlertCircle, Users, Settings } from 'lucide-react';
+import { Briefcase, Zap, AlertCircle, Users, Settings } from 'lucide-react';
 
 const Card = ({ label, value, Icon, color, alert }) => (
   <div className="rounded-xl p-4"
@@ -21,7 +21,7 @@ const Card = ({ label, value, Icon, color, alert }) => (
 const AdminStatsPro = ({ unassignedCount = 0, detailersCount = 0, totalJobs = 0, activeJobs = 0, servicesCount = 0 }) => (
   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
     <Card label="Total Jobs"  value={totalJobs}       Icon={Briefcase} color="#60a5fa" />
-    <Card label="Active Now"  value={activeJobs}      Icon={Bolt}      color="#34d399" />
+    <Card label="Active Now"  value={activeJobs}      Icon={Zap}       color="#34d399" />
     <Card label="Unassigned"  value={unassignedCount} Icon={AlertCircle} color="#f59e0b" alert={unassignedCount > 0} />
     <Card label="Detailers"   value={detailersCount}  Icon={Users}     color="#f5d376" />
     <Card label="Services"    value={servicesCount}   Icon={Settings}  color="#a78bfa" />

@@ -78,6 +78,7 @@ app.use('/api/services/addons/active', publicReadLimiter);
 app.use('/api/packages/active',        publicReadLimiter);
 app.use('/api/availability',           publicReadLimiter);
 app.use('/api/schedule/config',        publicReadLimiter);
+app.use('/api/photos',                 publicReadLimiter);
 app.use('/api/',                       generalLimiter);
 app.use('/api/auth/login',             authLimiter);
 app.use('/api/bookings/initiate',      smsLimiter);
@@ -85,6 +86,9 @@ app.use('/api/contact',                contactLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
+
+const contactRoutes = require('./routes/contact');
+app.use('/api/contact', contactRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/services', serviceRoutes);
@@ -92,6 +96,12 @@ app.use('/api/availability', availabilityRoutes);
 
 const packageRoutes = require('./routes/packages');
 app.use('/api/packages', packageRoutes);
+
+const photoRoutes = require('./routes/photos');
+app.use('/api/photos', photoRoutes);
+app.use('/api/reviews/active', publicReadLimiter);
+const reviewRoutes = require('./routes/reviews');
+app.use('/api/reviews', reviewRoutes);
 
 // ADD after existing app.use('/api/availability', availabilityRoutes);
 const scheduleRoutes = require('./routes/scheduleRoutes');
@@ -253,7 +263,7 @@ app.post('/api/bookings/verify', async (req, res) => {
         model: finalBookingData.model,
         year: parseInt(finalBookingData.year),
         services: JSON.stringify(finalBookingData.services || []),
-        extras: JSON.stringify(finalBookingData.extras || []),
+        extras: JSON.stringify(finalBookingData.addOns ?? finalBookingData.extras ?? []),
         date: new Date(finalBookingData.date),
         time: finalBookingData.time,
         status: 'CONFIRMED',
@@ -284,7 +294,7 @@ app.post('/api/bookings/verify', async (req, res) => {
         city: booking.city,
         postalCode: booking.postalCode,
         services: finalBookingData.services || [],
-        addOns: finalBookingData.extras || [],
+        addOns: finalBookingData.addOns ?? finalBookingData.extras ?? [],
         vehicleInfo: `${booking.year} ${booking.make} ${booking.model}`,
         totalPrice: booking.totalPrice,
         specialInstructions: booking.specialInstructions

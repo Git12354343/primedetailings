@@ -52,96 +52,147 @@ class EmailService {
 
     const emailSubject = `Booking Confirmation - Prestige Plus Detailing #${confirmationCode}`;
     
-    const emailHTML = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Booking Confirmation</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #3B82F6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-            .confirmation-box { background: #10B981; color: white; padding: 15px; border-radius: 6px; margin: 20px 0; text-align: center; }
-            .details-section { background: white; padding: 20px; margin: 15px 0; border-radius: 6px; border-left: 4px solid #3B82F6; }
-            .footer { text-align: center; margin-top: 30px; padding: 20px; color: #666; font-size: 14px; }
-            .contact-info { background: #EBF8FF; padding: 15px; border-radius: 6px; margin: 20px 0; }
-            h1 { margin: 0; }
-            h2 { color: #3B82F6; margin-top: 0; }
-            .price { font-size: 18px; font-weight: bold; color: #059669; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Prestige Plus Detailing Montreal</h1>
-              <p>Professional Mobile Car Detailing</p>
-            </div>
-            
-            <div class="content">
-              <h2>Hello ${firstName}!</h2>
-              <p>Thank you for choosing Prestige Plus Detailing! Your booking has been confirmed and we're excited to make your vehicle look amazing.</p>
-              
-              <div class="confirmation-box">
-                <h3 style="margin: 0;">Confirmation Code: #${confirmationCode}</h3>
-                <p style="margin: 5px 0 0 0;">Save this code for your records</p>
-              </div>
+    const formattedDate = new Date(date).toLocaleDateString('en-CA', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
 
-              <div class="details-section">
-                <h2>Appointment Details</h2>
-                <p><strong>Date:</strong> ${new Date(date).toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}</p>
-                <p><strong>Time:</strong> ${time}</p>
-                <p><strong>Service Address:</strong><br>
-                   ${address}<br>
-                   ${city}, ${postalCode}</p>
-              </div>
+    const emailHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Booking Confirmed — Prestige Plus Detailing</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 16px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-              <div class="details-section">
-                <h2>Vehicle & Services</h2>
-                <p><strong>Vehicle:</strong> ${vehicleInfo}</p>
-                <p><strong>Services:</strong></p>
-                <pre style="font-family: Arial, sans-serif; margin: 5px 0;">${servicesList}</pre>
-                <p><strong>Add-ons:</strong></p>
-                <pre style="font-family: Arial, sans-serif; margin: 5px 0;">${addOnsList}</pre>
-                ${specialInstructions ? `<p><strong>Special Instructions:</strong><br>${specialInstructions}</p>` : ''}
-                <p class="price">Total: $${totalPrice}</p>
-              </div>
+  <!-- Header -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#c9a84c,#f5d376);border-radius:16px 16px 0 0;padding:32px 40px;text-align:center;">
+      <div style="display:inline-block;background:rgba(0,0,0,0.18);border-radius:10px;padding:8px 16px;margin-bottom:14px;">
+        <span style="color:#000;font-weight:900;font-size:14px;letter-spacing:0.1em;">PD</span>
+        <span style="color:#000;font-weight:700;font-size:14px;margin-left:6px;">PRESTIGE PLUS DETAILING</span>
+      </div>
+      <h1 style="margin:0;color:#000;font-size:26px;font-weight:900;letter-spacing:-0.02em;">Booking Confirmed ✓</h1>
+      <p style="margin:8px 0 0;color:rgba(0,0,0,0.6);font-size:14px;">We can't wait to transform your vehicle</p>
+    </td>
+  </tr>
 
-              <div class="contact-info">
-                <h3>What to Expect</h3>
-                <p>• Our team will contact you 24 hours before your appointment</p>
-                <p>• We'll arrive at your location with all necessary equipment</p>
-                <p>• Service typically takes 2-4 hours depending on selected services</p>
-                <p>• Payment can be made by cash, credit card, or e-transfer</p>
-              </div>
+  <!-- Body -->
+  <tr>
+    <td style="background:#111;padding:36px 40px;">
 
-              <div class="contact-info">
-                <h3>Need to Make Changes?</h3>
-                <p>Contact us at least 24 hours in advance:</p>
-                <p><strong>Phone:</strong> (514) 437-4816</p>
-                <p><strong>Email:</strong> info@Prestigeplusdetailing.ca</p>
-                <p><strong>Reference:</strong> #${confirmationCode}</p>
-              </div>
-            </div>
+      <p style="margin:0 0 24px;color:rgba(255,255,255,0.8);font-size:16px;">Hi <strong style="color:#fff;">${firstName}</strong>, your booking is confirmed!</p>
 
-            <div class="footer">
-              <p>Thank you for choosing Prestige Plus Detailing Montreal!</p>
-              <p>Follow us for tips and updates on social media</p>
-              <p style="font-size: 12px; color: #999;">
-                This is an automated message. Please do not reply directly to this email.
-              </p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+      <!-- Confirmation code pill -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+        <tr>
+          <td style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:10px;padding:16px 20px;text-align:center;">
+            <p style="margin:0;color:rgba(201,168,76,0.7);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Confirmation Code</p>
+            <p style="margin:6px 0 0;color:#f5d376;font-size:28px;font-weight:900;letter-spacing:0.08em;">#${confirmationCode}</p>
+            <p style="margin:4px 0 0;color:rgba(255,255,255,0.35);font-size:12px;">Save this code — you'll need it to manage your booking</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Appointment Details -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+        <tr>
+          <td style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px 24px;">
+            <p style="margin:0 0 14px;color:#c9a84c;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">📅 Appointment Details</p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="padding:5px 0;color:rgba(255,255,255,0.45);font-size:13px;width:110px;">Date</td><td style="padding:5px 0;color:#fff;font-size:14px;font-weight:600;">${formattedDate}</td></tr>
+              <tr><td style="padding:5px 0;color:rgba(255,255,255,0.45);font-size:13px;">Time</td><td style="padding:5px 0;color:#fff;font-size:14px;font-weight:600;">${time}</td></tr>
+              <tr><td style="padding:5px 0;color:rgba(255,255,255,0.45);font-size:13px;">Location</td><td style="padding:5px 0;color:#fff;font-size:14px;">${address}<br><span style="color:rgba(255,255,255,0.6);">${city}, ${postalCode}</span></td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Vehicle & Services -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+        <tr>
+          <td style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:20px 24px;">
+            <p style="margin:0 0 14px;color:#c9a84c;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">🚗 Vehicle &amp; Services</p>
+            <p style="margin:0 0 8px;color:rgba(255,255,255,0.45);font-size:12px;">Vehicle</p>
+            <p style="margin:0 0 16px;color:#fff;font-size:14px;font-weight:600;">${vehicleInfo}</p>
+            <p style="margin:0 0 8px;color:rgba(255,255,255,0.45);font-size:12px;">Services</p>
+            ${services.map(s => `<p style="margin:0 0 4px;color:#fff;font-size:14px;">• ${s}</p>`).join('')}
+            ${addOns && addOns.length > 0 ? `
+            <p style="margin:14px 0 8px;color:rgba(255,255,255,0.45);font-size:12px;">Add-ons</p>
+            ${addOns.map(a => `<p style="margin:0 0 4px;color:#f5d376;font-size:14px;">+ ${a}</p>`).join('')}` : ''}
+            ${specialInstructions ? `<p style="margin:14px 0 4px;color:rgba(255,255,255,0.45);font-size:12px;">Special Instructions</p><p style="margin:0;color:rgba(255,255,255,0.7);font-size:14px;font-style:italic;">${specialInstructions}</p>` : ''}
+          </td>
+        </tr>
+      </table>
+
+      <!-- Price -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+        <tr>
+          <td style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:10px;padding:16px 24px;text-align:center;">
+            <p style="margin:0;color:rgba(255,255,255,0.5);font-size:12px;">Estimated Total</p>
+            <p style="margin:4px 0 0;color:#34d399;font-size:32px;font-weight:900;">$${totalPrice}</p>
+            <p style="margin:4px 0 0;color:rgba(255,255,255,0.35);font-size:12px;">Final price confirmed at time of service</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- What to expect -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+        <tr>
+          <td style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:20px 24px;">
+            <p style="margin:0 0 12px;color:#c9a84c;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">What to Expect</p>
+            <p style="margin:0 0 8px;color:rgba(255,255,255,0.7);font-size:13px;">✓ &nbsp;We'll confirm 24 hours before your appointment</p>
+            <p style="margin:0 0 8px;color:rgba(255,255,255,0.7);font-size:13px;">✓ &nbsp;Our team arrives fully equipped — no prep needed from you</p>
+            <p style="margin:0 0 8px;color:rgba(255,255,255,0.7);font-size:13px;">✓ &nbsp;Service takes 2–4 hours depending on selected services</p>
+            <p style="margin:0;color:rgba(255,255,255,0.7);font-size:13px;">✓ &nbsp;Cash, credit card, or e-transfer accepted on-site</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- CTA -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+        <tr>
+          <td align="center">
+            <a href="${process.env.FRONTEND_URL || 'https://prestigeplusdetailing.ca'}/booking-lookup?code=${confirmationCode}"
+               style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#f5d376);color:#000;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:900;font-size:15px;letter-spacing:0.02em;">
+              Track My Booking
+            </a>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Contact -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;text-align:center;">
+            <p style="margin:0 0 6px;color:rgba(255,255,255,0.4);font-size:13px;">Need to reschedule? Contact us 24+ hours in advance.</p>
+            <p style="margin:0;color:#c9a84c;font-size:13px;font-weight:600;">
+              <a href="tel:+15144374816" style="color:#c9a84c;text-decoration:none;">(514) 437-4816</a>
+              &nbsp;·&nbsp;
+              <a href="mailto:info@prestigeplusdetailing.ca" style="color:#c9a84c;text-decoration:none;">info@prestigeplusdetailing.ca</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Footer -->
+  <tr>
+    <td style="background:#0d0d0d;border-radius:0 0 16px 16px;padding:20px 40px;text-align:center;border-top:1px solid rgba(201,168,76,0.15);">
+      <p style="margin:0 0 4px;color:rgba(255,255,255,0.25);font-size:12px;">© ${new Date().getFullYear()} Prestige Plus Detailing — Montréal, QC</p>
+      <p style="margin:0;color:rgba(255,255,255,0.15);font-size:11px;">This is an automated confirmation. Do not reply to this email.</p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
 
     const mailOptions = {
       from: `"Prestige Plus Detailing Montreal" <${process.env.EMAIL_USER}>`,

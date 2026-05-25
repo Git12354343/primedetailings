@@ -52,7 +52,6 @@ const PublicLayout = ({ children }) => (
         </Suspense>
       </main>
       <Footer />
-      <StickyBookBar />
     </div>
   </ErrorBoundary>
 );
@@ -73,6 +72,7 @@ const AnimatedRoutes = () => {
   return (
     <>
       <ScrollProgressBar />
+      <StickyBookBar />
 
       <PageTransition>
         <Routes location={location} key={location.key}>
