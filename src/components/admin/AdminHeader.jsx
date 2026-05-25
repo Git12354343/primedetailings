@@ -20,7 +20,7 @@ const AdminHeader = ({ onLogout, onRefresh, refreshing }) => (
             <span className="text-black font-black text-xs">PD</span>
           </div>
           <div>
-            <div className="text-white font-bold text-sm leading-none">Prime Detailing</div>
+            <div className="text-white font-bold text-sm leading-none">Prestige Plus Detailing</div>
             <div className="text-gray-500 text-xs mt-0.5">Admin Dashboard</div>
           </div>
         </div>

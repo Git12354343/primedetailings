@@ -155,7 +155,7 @@ app.post('/api/bookings/initiate', async (req, res) => {
     if (!isDev) {
       try {
         await twilioClient.messages.create({
-          body: `Your Prime Detailing verification code is: ${code}. Valid for 10 minutes.`,
+          body: `Your Prestige Plus Detailing verification code is: ${code}. Valid for 10 minutes.`,
           from: process.env.TWILIO_PHONE_NUMBER,
           to: formattedPhone
         });

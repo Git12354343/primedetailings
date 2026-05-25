@@ -135,7 +135,7 @@ const Footer = () => (
           <ul className="space-y-3">
             {[
               { icon: Phone, content: <a href="tel:+15144374816" className="hover:text-yellow-400 transition-colors">(514) 437-4816</a> },
-              { icon: Mail,  content: <a href="mailto:info@primedetailing.ca" className="hover:text-yellow-400 transition-colors">info@primedetailing.ca</a> },
+              { icon: Mail,  content: <a href="mailto:info@Prestigeplusdetailing.ca" className="hover:text-yellow-400 transition-colors">info@Prestigeplusdetailing.ca</a> },
               { icon: MapPin, content: <span>Greater Montreal, QC</span> },
               { icon: Clock,  content: (
                   <span>Mon–Sat: 8AM–7PM<br /><span className="text-gray-600">Sun: 9AM–5PM</span></span>
@@ -218,7 +218,7 @@ const Footer = () => (
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
         <span className="text-gray-600 text-xs">
-          © {new Date().getFullYear()} Prime Detailing Montreal. All rights reserved.
+          © {new Date().getFullYear()} Prestige Plus Detailing Montreal. All rights reserved.
         </span>
         <div className="flex gap-5 text-xs text-gray-600">
           <a href="#" className="hover:text-gray-400 transition-colors">Privacy Policy</a>

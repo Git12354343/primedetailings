@@ -35,7 +35,7 @@ const addBookingToCalendar = async (booking) => {
     endDate.setHours(endDate.getHours() + 4); // 4-hour service
 
     const event = {
-      summary: `🚗 Prime Detailing — ${booking.firstName} ${booking.lastName}`,
+      summary: `🚗 Prestige Plus Detailing — ${booking.firstName} ${booking.lastName}`,
       description: [
         `Confirmation: #${booking.confirmationCode}`,
         `Phone: ${booking.phoneNumber}`,

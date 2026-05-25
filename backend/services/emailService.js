@@ -50,7 +50,7 @@ class EmailService {
     const servicesList = services.map(service => `• ${service}`).join('\n');
     const addOnsList = addOns.length > 0 ? addOns.map(addon => `• ${addon}`).join('\n') : 'None';
 
-    const emailSubject = `Booking Confirmation - Prime Detailing #${confirmationCode}`;
+    const emailSubject = `Booking Confirmation - Prestige Plus Detailing #${confirmationCode}`;
     
     const emailHTML = `
       <!DOCTYPE html>
@@ -76,13 +76,13 @@ class EmailService {
         <body>
           <div class="container">
             <div class="header">
-              <h1>Prime Detailing Montreal</h1>
+              <h1>Prestige Plus Detailing Montreal</h1>
               <p>Professional Mobile Car Detailing</p>
             </div>
             
             <div class="content">
               <h2>Hello ${firstName}!</h2>
-              <p>Thank you for choosing Prime Detailing! Your booking has been confirmed and we're excited to make your vehicle look amazing.</p>
+              <p>Thank you for choosing Prestige Plus Detailing! Your booking has been confirmed and we're excited to make your vehicle look amazing.</p>
               
               <div class="confirmation-box">
                 <h3 style="margin: 0;">Confirmation Code: #${confirmationCode}</h3>
@@ -126,13 +126,13 @@ class EmailService {
                 <h3>Need to Make Changes?</h3>
                 <p>Contact us at least 24 hours in advance:</p>
                 <p><strong>Phone:</strong> (514) 437-4816</p>
-                <p><strong>Email:</strong> info@primedetailing.ca</p>
+                <p><strong>Email:</strong> info@Prestigeplusdetailing.ca</p>
                 <p><strong>Reference:</strong> #${confirmationCode}</p>
               </div>
             </div>
 
             <div class="footer">
-              <p>Thank you for choosing Prime Detailing Montreal!</p>
+              <p>Thank you for choosing Prestige Plus Detailing Montreal!</p>
               <p>Follow us for tips and updates on social media</p>
               <p style="font-size: 12px; color: #999;">
                 This is an automated message. Please do not reply directly to this email.
@@ -144,13 +144,13 @@ class EmailService {
     `;
 
     const mailOptions = {
-      from: `"Prime Detailing Montreal" <${process.env.EMAIL_USER}>`,
+      from: `"Prestige Plus Detailing Montreal" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: emailSubject,
       html: emailHTML,
       // Text version for email clients that don't support HTML
       text: `
-        Prime Detailing Montreal - Booking Confirmation
+        Prestige Plus Detailing Montreal - Booking Confirmation
         
         Hello ${firstName}!
         
@@ -169,9 +169,9 @@ class EmailService {
         
         We'll contact you 24 hours before your appointment.
         
-        Questions? Call us at (514) 437-4816 or email info@primedetailing.ca
+        Questions? Call us at (514) 437-4816 or email info@Prestigeplusdetailing.ca
         
-        Thank you for choosing Prime Detailing Montreal!
+        Thank you for choosing Prestige Plus Detailing Montreal!
       `
     };
 
@@ -246,7 +246,7 @@ class EmailService {
     `;
 
     const mailOptions = {
-      from: `"Prime Detailing System" <${process.env.EMAIL_USER}>`,
+      from: `"Prestige Plus Detailing System" <${process.env.EMAIL_USER}>`,
       to: process.env.BUSINESS_EMAIL || process.env.EMAIL_USER,
       subject: emailSubject,
       html: emailHTML
@@ -293,7 +293,7 @@ class EmailService {
     `;
 
     const mailOptions = {
-      from: `"Prime Detailing Website" <${process.env.EMAIL_USER}>`,
+      from: `"Prestige Plus Detailing Website" <${process.env.EMAIL_USER}>`,
       to: process.env.BUSINESS_EMAIL || process.env.EMAIL_USER,
       subject: emailSubject,
       html: emailHTML,
@@ -339,7 +339,7 @@ class EmailService {
 
             <div class="content">
               <p>Hello ${firstName}!</p>
-              <p>This is a friendly reminder about your upcoming appointment with Prime Detailing.</p>
+              <p>This is a friendly reminder about your upcoming appointment with Prestige Plus Detailing.</p>
               
               <p><strong>Tomorrow's Appointment:</strong></p>
               <p>📅 <strong>Date:</strong> ${new Date(date).toLocaleDateString()}</p>
@@ -364,7 +364,7 @@ class EmailService {
     `;
 
     const mailOptions = {
-      from: `"Prime Detailing Montreal" <${process.env.EMAIL_USER}>`,
+      from: `"Prestige Plus Detailing Montreal" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: emailSubject,
       html: emailHTML
@@ -398,12 +398,12 @@ class EmailService {
     }
 
     const mailOptions = {
-      from: `"Prime Detailing Montreal" <${process.env.EMAIL_USER}>`,
+      from: `"Prestige Plus Detailing Montreal" <${process.env.EMAIL_USER}>`,
       to: toEmail,
-      subject: 'Test Email - Prime Detailing System',
+      subject: 'Test Email - Prestige Plus Detailing System',
       html: `
         <h2>Email Service Test</h2>
-        <p>This is a test email from Prime Detailing's booking system.</p>
+        <p>This is a test email from Prestige Plus Detailing's booking system.</p>
         <p>If you receive this, the email service is working correctly!</p>
         <p>Time sent: ${new Date().toLocaleString()}</p>
       `

@@ -61,7 +61,7 @@ const DetailerFormModal = ({ initial, onClose, onSubmit, saving }) => {
           </div>
           <div>
             <label style={lStyle}>Email *</label>
-            <input style={iStyle} type="email" value={form.email} placeholder="marcus@primedetailing.ca"
+            <input style={iStyle} type="email" value={form.email} placeholder="marcus@Prestigeplusdetailing.ca"
               disabled={isEdit} onChange={e => set('email', e.target.value)} onFocus={focus} onBlur={blur}
               title={isEdit ? 'Email cannot be changed after creation' : ''}
               className={isEdit ? 'opacity-50 cursor-not-allowed' : ''} />

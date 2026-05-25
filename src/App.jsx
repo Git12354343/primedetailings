@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import { NotificationProvider } from './components/NotificationSystem';
 import { ContentSkeleton } from './components/LoadingSkeleton';
@@ -12,7 +12,6 @@ import Footer from './components/Footer';
 import LoadingScreen    from './components/LoadingScreen';
 import ScrollProgressBar from './components/ScrollProgressBar';
 import StickyBookBar    from './components/StickyBookBar';
-import FloatingQuote   from './components/FloatingQuote';
 import PageTransition   from './components/PageTransition';
 
 // Pages (lazy)
@@ -21,6 +20,7 @@ const Services         = lazy(() => import('./pages/Services'));
 const Booking          = lazy(() => import('./pages/Booking'));
 const Contact          = lazy(() => import('./pages/Contact'));
 const Gallery          = lazy(() => import('./pages/Gallery'));
+const CeramicCoating   = lazy(() => import('./pages/CeramicCoating'));
 const BookingLookup    = lazy(() => import('./pages/BookingLookup'));
 const DetailerLogin    = lazy(() => import('./pages/DetailerLogin'));
 const DetailerDashboard = lazy(() => import('./pages/DetailerDashboard'));
@@ -53,7 +53,6 @@ const PublicLayout = ({ children }) => (
       </main>
       <Footer />
       <StickyBookBar />
-      <FloatingQuote />
     </div>
   </ErrorBoundary>
 );
@@ -85,6 +84,8 @@ const AnimatedRoutes = () => {
           {/* Public pages */}
           <Route path="/"        element={<PublicLayout><Home /></PublicLayout>} />
           <Route path="/services" element={<PublicLayout><Services /></PublicLayout>} />
+          <Route path="/ceramic-coating" element={<PublicLayout><CeramicCoating /></PublicLayout>} />
+          <Route path="/ceramic"         element={<Navigate to="/ceramic-coating" replace />} />
           <Route path="/booking"  element={<PublicLayout><Booking /></PublicLayout>} />
           <Route path="/contact"  element={<PublicLayout><Contact /></PublicLayout>} />
           <Route path="/gallery"  element={<PublicLayout><Gallery /></PublicLayout>} />
@@ -165,9 +166,9 @@ const NotFoundPage = () => (
       >
         {[
           { label: 'Services',      href: '/services' },
+          { label: 'Ceramic',       href: '/ceramic-coating' },
           { label: 'Book Now',      href: '/booking' },
           { label: 'Track Booking', href: '/lookup' },
-          { label: 'Contact',       href: '/contact' },
         ].map(({ label, href }) => (
           <a
             key={href}

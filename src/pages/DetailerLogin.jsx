@@ -292,7 +292,7 @@ const DetailerLogin = () => {
                 <path d="M10 13h8" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
-            <h1 className="dl-title">Prime Detailing</h1>
+            <h1 className="dl-title">Prestige Plus Detailing</h1>
             <p className="dl-subtitle">Detailer Portal</p>
           </div>
 
@@ -310,7 +310,7 @@ const DetailerLogin = () => {
                 value={formData.email}
                 onChange={handleChange}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                placeholder="you@primedetailing.ca"
+                placeholder="you@Prestigeplusdetailing.ca"
                 autoComplete="email"
               />
             </div>

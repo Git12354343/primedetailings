@@ -118,7 +118,7 @@ const BeforeAfterSlider = () => {
         </div>
 
         <p className="text-center text-gray-600 text-xs mt-4">
-          Actual results from Prime Detailing clients across Québec
+          Actual results from Prestige Plus Detailing clients across Québec
         </p>
       </div>
     </section>
@@ -298,7 +298,7 @@ const Footer = () => (
               style={{ background: 'linear-gradient(135deg, #c9a84c, #f5d376)' }}>
               <span className="text-black font-black text-xs">PD</span>
             </div>
-            <span className="text-white font-bold text-lg">Prime Detailing</span>
+            <span className="text-white font-bold text-lg">Prestige Plus Detailing</span>
           </div>
           <p className="text-gray-500 text-sm leading-relaxed mb-4">
             Québec's premier mobile car detailing studio. Ceramic coatings, paint correction & premium detailing.
@@ -339,7 +339,7 @@ const Footer = () => (
             </li>
             <li className="flex items-center gap-2 text-gray-500 text-sm">
               <Mail className="w-4 h-4 text-yellow-500 flex-shrink-0" />
-              <a href="mailto:info@primedetailing.ca" className="hover:text-yellow-400 transition-colors">info@primedetailing.ca</a>
+              <a href="mailto:info@Prestigeplusdetailing.ca" className="hover:text-yellow-400 transition-colors">info@Prestigeplusdetailing.ca</a>
             </li>
             <li className="flex items-start gap-2 text-gray-500 text-sm">
               <MapPin className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
@@ -358,7 +358,7 @@ const Footer = () => (
         className="flex flex-col sm:flex-row items-center justify-between pt-6 gap-4 text-xs text-gray-600"
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <span>© {new Date().getFullYear()} Prime Detailing. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Prestige Plus Detailing. All rights reserved.</span>
         <div className="flex gap-4">
           <a href="#" className="hover:text-gray-400 transition-colors">Privacy</a>
           <a href="#" className="hover:text-gray-400 transition-colors">Terms</a>

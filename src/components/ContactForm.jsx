@@ -64,7 +64,7 @@ const ContactForm = () => {
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-green-900 mb-2">Message Sent!</h2>
           <p className="text-green-700 mb-4">
-            Thank you for contacting Prime Detailing. We'll get back to you within 24 hours.
+            Thank you for contacting Prestige Plus Detailing. We'll get back to you within 24 hours.
           </p>
           {contactId && (
             <p className="text-sm text-green-600 mb-4">

@@ -97,10 +97,10 @@ class ErrorBoundary extends React.Component {
               <p className="text-sm text-gray-500">
                 If this problem persists, please contact support at{' '}
                 <a 
-                  href="mailto:support@primedetailing.ca" 
+                  href="mailto:support@Prestigeplusdetailing.ca" 
                   className="text-blue-600 hover:text-blue-700"
                 >
-                  support@primedetailing.ca
+                  support@Prestigeplusdetailing.ca
                 </a>
               </p>
             </div>

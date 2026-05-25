@@ -3,12 +3,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Phone, ChevronRight } from 'lucide-react';
 
 const NAV_LINKS = [
-  { label: 'Home',          to: '/' },
-  { label: 'Services',      to: '/services' },
-  { label: 'Gallery',       to: '/gallery' },
-  { label: 'Track Booking', to: '/lookup' },
-  { label: 'Book Now',      to: '/booking' },
-  { label: 'Contact',       to: '/contact' },
+  { label: 'Home',     to: '/' },
+  { label: 'Ceramic',  to: '/ceramic-coating', featured: true },
+  { label: 'Services', to: '/services' },
+  { label: 'Book Now', to: '/booking' },
+  { label: 'Contact',  to: '/contact' },
 ];
 
 const Navbar = () => {
@@ -73,14 +72,23 @@ const Navbar = () => {
 
             {/* Desktop links */}
             <div className="hidden md:flex items-center gap-6">
-              {NAV_LINKS.map(({ label, to }) => (
+              {NAV_LINKS.map(({ label, to, featured }) => (
                 <Link
                   key={to}
                   to={to}
                   className="relative text-sm font-medium transition-all duration-200 py-1 group"
                   style={{ color: isActive(to) ? '#f5d376' : 'rgba(255,255,255,0.75)' }}
                 >
-                  {label}
+                  <span className="flex items-center gap-1.5">
+                    {label}
+                    {/* Featured (Ceramic) gold dot */}
+                    {featured && !isActive(to) && (
+                      <span
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ background: 'linear-gradient(135deg, #c9a84c, #f5d376)', boxShadow: '0 0 6px rgba(201,168,76,0.7)' }}
+                      />
+                    )}
+                  </span>
                   {/* Underline */}
                   <span
                     className="absolute bottom-0 left-0 h-px transition-all duration-300"
@@ -100,14 +108,14 @@ const Navbar = () => {
             {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
               <a
-                href="tel:+15144374816"
+                href="tel:+15141234567"
                 className="flex items-center gap-1.5 text-sm transition-colors"
                 style={{ color: 'rgba(255,255,255,0.6)' }}
                 onMouseEnter={e => e.currentTarget.style.color = '#f5d376'}
                 onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
               >
                 <Phone className="w-3.5 h-3.5" />
-                <span>(514) 437-4816</span>
+                <span>(514) 123-4567</span>
               </a>
               <Link
                 to="/booking"
@@ -164,7 +172,7 @@ const Navbar = () => {
             >
               <span className="text-black font-black text-xs">PD</span>
             </div>
-            <span className="text-white font-bold text-sm">Prime Detailing</span>
+            <span className="text-white font-bold text-sm">Prestige Plus Detailing</span>
           </div>
           <button
             onClick={() => setIsOpen(false)}
@@ -177,7 +185,7 @@ const Navbar = () => {
 
         {/* Drawer links */}
         <nav className="flex-1 px-4 py-6 space-y-1">
-          {NAV_LINKS.map(({ label, to }) => (
+          {NAV_LINKS.map(({ label, to, featured }) => (
             <Link
               key={to}
               to={to}
@@ -188,7 +196,15 @@ const Navbar = () => {
                 border: isActive(to) ? '1px solid rgba(201,168,76,0.2)' : '1px solid transparent',
               }}
             >
-              {label}
+              <span className="flex items-center gap-2">
+                {label}
+                {featured && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ background: 'linear-gradient(135deg, #c9a84c, #f5d376)', boxShadow: '0 0 6px rgba(201,168,76,0.7)' }}
+                  />
+                )}
+              </span>
               {isActive(to) && <ChevronRight className="w-4 h-4" />}
             </Link>
           ))}
@@ -197,7 +213,7 @@ const Navbar = () => {
         {/* Drawer bottom */}
         <div className="px-4 pb-8 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1.5rem' }}>
           <a
-            href="tel:+15144374816"
+            href="tel:+15141234567"
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium"
             style={{
               background: 'rgba(255,255,255,0.05)',
@@ -206,7 +222,7 @@ const Navbar = () => {
             }}
           >
             <Phone className="w-4 h-4" />
-            (514) 437-4816
+            (514) 123-4567
           </a>
           <Link
             to="/booking"

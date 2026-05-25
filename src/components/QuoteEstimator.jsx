@@ -10,7 +10,7 @@ const CONTACT_METHODS = [
   { label: 'Call',     icon: Phone,         color: '#34d399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.25)', baseHref: 'tel:+15141234567' },
   { label: 'WhatsApp', icon: MessageSquare, color: '#25D366', bg: 'rgba(37,211,102,0.1)',  border: 'rgba(37,211,102,0.25)', baseHref: 'https://wa.me/15141234567' },
   { label: 'SMS',      icon: MessageSquare, color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.25)', baseHref: 'sms:+15141234567' },
-  { label: 'Email',    icon: Mail,          color: '#f97316', bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)', baseHref: 'mailto:info@primedetailing.ca' },
+  { label: 'Email',    icon: Mail,          color: '#f97316', bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)', baseHref: 'mailto:info@Prestigeplusdetailing.ca' },
 ];
 
 const getMinPrice = (pricing) => {

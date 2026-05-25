@@ -36,7 +36,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Email</p>
-                    <p className="text-gray-600">info@primedetailing.ca</p>
+                    <p className="text-gray-600">info@Prestigeplusdetailing.ca</p>
                   </div>
                 </div>
 
@@ -64,7 +64,7 @@ const Contact = () => {
             </div>
 
             <div className="bg-blue-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">Why Choose Prime Detailing?</h3>
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">Why Choose Prestige Plus Detailing?</h3>
               <ul className="space-y-2 text-blue-800">
                 <li className="flex items-center">
                   <Star className="w-4 h-4 text-blue-600 mr-2" />

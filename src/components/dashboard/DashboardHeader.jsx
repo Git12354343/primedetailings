@@ -22,7 +22,7 @@ const DashboardHeader = ({ detailer, todaysEarnings, onLogout, onNavigateHome })
               <Zap className="w-4 h-4 text-black" />
             </div>
             <div>
-              <p className="font-black text-white text-sm leading-none">Prime Detailing</p>
+              <p className="font-black text-white text-sm leading-none">Prestige Plus Detailing</p>
               <p className="text-xs leading-none mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Staff Dashboard</p>
             </div>
           </div>

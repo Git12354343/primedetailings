@@ -80,7 +80,7 @@ class TwilioSMSService {
 
   // Send booking confirmation SMS
   async sendBookingConfirmation(booking) {
-    const businessName = process.env.BUSINESS_NAME || 'Prime Detailing';
+    const businessName = process.env.BUSINESS_NAME || 'Prestige Plus Detailing';
     const businessPhone = process.env.BUSINESS_PHONE || '(514) 437-4816';
     
     const message = `✅ ${businessName}: Booking confirmed! 
@@ -93,7 +93,7 @@ Questions? ${businessPhone}`;
 
   // Send booking status update SMS
   async sendBookingUpdate(booking, status) {
-    const businessName = process.env.BUSINESS_NAME || 'Prime Detailing';
+    const businessName = process.env.BUSINESS_NAME || 'Prestige Plus Detailing';
     const businessPhone = process.env.BUSINESS_PHONE || '(514) 437-4816';
     
     const statusMessages = {
@@ -114,7 +114,7 @@ Questions? ${businessPhone}`;
 
   // Send booking reminder SMS
   async sendBookingReminder(booking) {
-    const businessName = process.env.BUSINESS_NAME || 'Prime Detailing';
+    const businessName = process.env.BUSINESS_NAME || 'Prestige Plus Detailing';
     const businessPhone = process.env.BUSINESS_PHONE || '(514) 437-4816';
     
     const message = `⏰ ${businessName} Reminder: 
@@ -127,7 +127,7 @@ Remove personal items! Questions? ${businessPhone}`;
 
   // Send detailer assignment notification
   async sendDetailerAssignment(booking, detailerName) {
-    const businessName = process.env.BUSINESS_NAME || 'Prime Detailing';
+    const businessName = process.env.BUSINESS_NAME || 'Prestige Plus Detailing';
     const businessPhone = process.env.BUSINESS_PHONE || '(514) 437-4816';
     
     const message = `👨‍🔧 ${businessName}: Great news ${booking.firstName}! 
@@ -172,7 +172,7 @@ Questions? ${businessPhone}`;
       return false;
     }
 
-    const testMessage = `🧪 Test SMS from ${process.env.BUSINESS_NAME || 'Prime Detailing Service'}
+    const testMessage = `🧪 Test SMS from ${process.env.BUSINESS_NAME || 'Prestige Plus Detailing Service'}
 Time: ${new Date().toLocaleTimeString()}
 This is a test message to verify SMS functionality.`;
     

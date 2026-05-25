@@ -1,7 +1,7 @@
 {
   "name": "prime-detailing-backend",
   "version": "1.0.0",
-  "description": "Prime Detailing API Server",
+  "description": "Prestige Plus Detailing API Server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -40,6 +40,6 @@
     "express",
     "prisma"
   ],
-  "author": "Prime Detailing Montreal",
+  "author": "Prestige Plus Detailing Montreal",
   "license": "MIT"
 }

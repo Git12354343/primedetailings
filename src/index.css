@@ -306,3 +306,25 @@
   .mobile-full   { width: 100%; }
   .mobile-hidden { display: none; }
 }
+
+/* ============================================================
+   CERAMIC PAGE ANIMATIONS (added)
+   All GPU-friendly (transform/opacity only). The
+   prefers-reduced-motion block above already neutralizes
+   these for motion-sensitive users.
+   ============================================================ */
+
+/* Slow diagonal gold light-sweep across the ceramic hero */
+@keyframes cerSweep {
+  0%   { transform: translateX(-60%); }
+  100% { transform: translateX(260%); }
+}
+.cer-sweep { animation: cerSweep 7s ease-in-out infinite; }
+
+/* Drifting reflection sheen on the "coated" half of the gloss compare */
+@keyframes cerSheen {
+  0%   { transform: translateX(-30%); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: translateX(60%); opacity: 0; }
+}
+.cer-sheen { animation: cerSheen 6s ease-in-out infinite; }
