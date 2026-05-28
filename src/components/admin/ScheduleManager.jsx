@@ -73,7 +73,7 @@ const ScheduleManager = ({ adminToken }) => {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/config`);
       const data = await res.json();
       if (data.success && data.config) setConfig(sanitizeConfig(data.config));
-    } catch (e) { console.error('fetchConfig error:', e); }
+    } catch (e) { devError.error('fetchConfig error:', e); }
     finally { setLoading(false); }
   };
 
@@ -82,7 +82,7 @@ const ScheduleManager = ({ adminToken }) => {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/blocked-dates`);
       const data = await res.json();
       if (data.success) setBlockedDates(data.blockedDates || []);
-    } catch (e) { console.error('fetchBlockedDates error:', e); }
+    } catch (e) { devError.error('fetchBlockedDates error:', e); }
   };
 
   const saveConfig = async () => {
@@ -126,7 +126,7 @@ const ScheduleManager = ({ adminToken }) => {
       });
       const data = await res.json();
       if (data.success) { setBlockedDates(data.blockedDates || []); setNewBlockDate(''); setNewBlockReason(''); }
-    } catch (e) { console.error('blockDate error:', e); }
+    } catch (e) { devError.error('blockDate error:', e); }
   };
 
   const unblockDate = async (date) => {
@@ -134,7 +134,7 @@ const ScheduleManager = ({ adminToken }) => {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/blocked-dates/${date}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) setBlockedDates(data.blockedDates || []);
-    } catch (e) { console.error('unblockDate error:', e); }
+    } catch (e) { devError.error('unblockDate error:', e); }
   };
 
   const sections = [

@@ -29,7 +29,7 @@ const getAllAddOns = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get all add-ons error:', error);
+    devError.error('Get all add-ons error:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching add-ons'
@@ -60,7 +60,7 @@ const getActiveAddOns = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get active add-ons error:', error);
+    devError.error('Get active add-ons error:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching active add-ons'
@@ -116,7 +116,7 @@ const createAddOn = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create add-on error:', error);
+    devError.error('Create add-on error:', error);
     
     if (error.code === 'P2002') {
       return res.status(400).json({
@@ -197,7 +197,7 @@ const updateAddOn = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update add-on error:', error);
+    devError.error('Update add-on error:', error);
     
     if (error.code === 'P2002') {
       return res.status(400).json({
@@ -241,7 +241,7 @@ const deleteAddOn = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete add-on error:', error);
+    devError.error('Delete add-on error:', error);
     res.status(500).json({
       success: false,
       message: 'Error deleting add-on'
@@ -276,7 +276,7 @@ const permanentDeleteAddOn = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Permanent delete add-on error:', error);
+    devError.error('Permanent delete add-on error:', error);
     res.status(500).json({
       success: false,
       message: 'Error permanently deleting add-on'
@@ -298,7 +298,7 @@ const getAddOnCategories = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get add-on categories error:', error);
+    devError.error('Get add-on categories error:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching add-on categories'

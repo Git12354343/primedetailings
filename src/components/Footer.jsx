@@ -56,7 +56,7 @@ const Footer = () => (
           className="btn-ghost-luxury inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl text-sm font-semibold"
         >
           <Phone className="w-4 h-4" />
-          (514) 437-4816
+          (438) 796-8001
         </a>
       </div>
     </div>
@@ -134,7 +134,7 @@ const Footer = () => (
           <h4 className="text-white text-xs font-bold uppercase tracking-widest mb-4">Contact</h4>
           <ul className="space-y-3">
             {[
-              { icon: Phone, content: <a href="tel:+14387968001" className="hover:text-yellow-400 transition-colors">(514) 437-4816</a> },
+              { icon: Phone, content: <a href="tel:+14387968001" className="hover:text-yellow-400 transition-colors">(438) 796-8001</a> },
               { icon: Mail,  content: <a href="mailto:info@Prestigeplusdetailing.ca" className="hover:text-yellow-400 transition-colors">info@Prestigeplusdetailing.ca</a> },
               { icon: MapPin, content: <span>Greater Montreal, QC</span> },
               { icon: Clock,  content: (

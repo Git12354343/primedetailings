@@ -9,7 +9,7 @@ const { body, validationResult, param, query } = require('express-validator');
 
 // Enhanced error handler middleware
 const errorHandler = (err, req, res, next) => {
-  console.error('Error stack:', err.stack);
+  devError.error('Error stack:', err.stack);
 
   // Default error
   let error = {
@@ -337,7 +337,7 @@ const sanitizeInput = (req, res, next) => {
 // Request logging middleware for debugging
 const requestLogger = (req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log(`${req.method} ${req.path}`, {
+    devError.log(`${req.method} ${req.path}`, {
       body: req.body,
       query: req.query,
       params: req.params,
@@ -354,7 +354,7 @@ const responseTime = (req, res, next) => {
   
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`${req.method} ${req.path} - ${res.statusCode} - ${duration}ms`);
+    devError.log(`${req.method} ${req.path} - ${res.statusCode} - ${duration}ms`);
   });
   
   next();

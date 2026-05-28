@@ -31,7 +31,7 @@ const getAllServices = async (req, res) => {
     });
     res.json({ success: true, services: services.map(serializeService) });
   } catch (error) {
-    console.error('getAllServices error:', error);
+    devError.error('getAllServices error:', error);
     res.status(500).json({ success: false, message: 'Error fetching services' });
   }
 };
@@ -46,7 +46,7 @@ const getActiveServices = async (req, res) => {
     });
     res.json({ success: true, services: services.map(serializeService) });
   } catch (error) {
-    console.error('getActiveServices error:', error);
+    devError.error('getActiveServices error:', error);
     res.status(500).json({ success: false, message: 'Error fetching active services' });
   }
 };
@@ -86,7 +86,7 @@ const createService = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Service created', service: serializeService(service) });
   } catch (error) {
-    console.error('createService error:', error);
+    devError.error('createService error:', error);
     if (error.code === 'P2002') return res.status(400).json({ success: false, message: 'Service name already exists' });
     res.status(500).json({ success: false, message: 'Error creating service' });
   }
@@ -136,7 +136,7 @@ const updateService = async (req, res) => {
 
     res.json({ success: true, message: 'Service updated', service: serializeService(updatedService) });
   } catch (error) {
-    console.error('updateService error:', error);
+    devError.error('updateService error:', error);
     res.status(500).json({ success: false, message: 'Error updating service' });
   }
 };
@@ -151,7 +151,7 @@ const deleteService = async (req, res) => {
     await prisma.service.update({ where: { id: parseInt(id) }, data: { isActive: false } });
     res.json({ success: true, message: 'Service deactivated' });
   } catch (error) {
-    console.error('deleteService error:', error);
+    devError.error('deleteService error:', error);
     res.status(500).json({ success: false, message: 'Error deactivating service' });
   }
 };
@@ -167,7 +167,7 @@ const permanentDeleteService = async (req, res) => {
     await prisma.service.delete({ where: { id: parseInt(id) } });
     res.json({ success: true, message: 'Service permanently deleted' });
   } catch (error) {
-    console.error('permanentDeleteService error:', error);
+    devError.error('permanentDeleteService error:', error);
     res.status(500).json({ success: false, message: 'Error deleting service' });
   }
 };
@@ -185,7 +185,7 @@ const getAllAddOns = async (req, res) => {
     const addOns = await prisma.addOn.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
     res.json({ success: true, addOns: addOns.map(serializeAddOn) });
   } catch (error) {
-    console.error('getAllAddOns error:', error);
+    devError.error('getAllAddOns error:', error);
     res.status(500).json({ success: false, message: 'Error fetching add-ons' });
   }
 };
@@ -195,7 +195,7 @@ const getActiveAddOns = async (req, res) => {
     const addOns = await prisma.addOn.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
     res.json({ success: true, addOns: addOns.map(serializeAddOn) });
   } catch (error) {
-    console.error('getActiveAddOns error:', error);
+    devError.error('getActiveAddOns error:', error);
     res.status(500).json({ success: false, message: 'Error fetching active add-ons' });
   }
 };
@@ -209,7 +209,7 @@ const createAddOn = async (req, res) => {
     });
     res.status(201).json({ success: true, message: 'Add-on created', addOn: serializeAddOn(addOn) });
   } catch (error) {
-    console.error('createAddOn error:', error);
+    devError.error('createAddOn error:', error);
     res.status(500).json({ success: false, message: 'Error creating add-on' });
   }
 };
@@ -235,7 +235,7 @@ const updateAddOn = async (req, res) => {
     const updated = await prisma.addOn.update({ where: { id: parseInt(id) }, data });
     res.json({ success: true, message: 'Add-on updated', addOn: serializeAddOn(updated) });
   } catch (error) {
-    console.error('updateAddOn error:', error);
+    devError.error('updateAddOn error:', error);
     res.status(500).json({ success: false, message: 'Error updating add-on' });
   }
 };
@@ -248,7 +248,7 @@ const deleteAddOn = async (req, res) => {
     await prisma.addOn.update({ where: { id: parseInt(id) }, data: { isActive: false } });
     res.json({ success: true, message: 'Add-on deactivated' });
   } catch (error) {
-    console.error('deleteAddOn error:', error);
+    devError.error('deleteAddOn error:', error);
     res.status(500).json({ success: false, message: 'Error deactivating add-on' });
   }
 };
@@ -295,7 +295,7 @@ const calculateDynamicPricing = async (req, res) => {
     breakdown.total    = total;
     res.json({ success: true, pricing: breakdown });
   } catch (error) {
-    console.error('calculateDynamicPricing error:', error);
+    devError.error('calculateDynamicPricing error:', error);
     res.status(500).json({ success: false, message: 'Error calculating pricing' });
   }
 };

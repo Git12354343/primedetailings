@@ -25,7 +25,7 @@ const StartNavigationComponent = ({ booking, onStartNavigation }) => {
         // lng: longitude
       };
     } catch (error) {
-      console.error('Geocoding error:', error);
+      devError.error('Geocoding error:', error);
       return null;
     }
   };
@@ -59,7 +59,7 @@ const StartNavigationComponent = ({ booking, onStartNavigation }) => {
       }
       
     } catch (error) {
-      console.error('Navigation error:', error);
+      devError.error('Navigation error:', error);
       alert('Error starting navigation. Please try again.');
     } finally {
       setIsNavigating(false);

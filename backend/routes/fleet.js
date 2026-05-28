@@ -47,7 +47,7 @@ const sendFleetNotification = async (quote) => {
         </div>`,
     });
   } catch (err) {
-    console.error('Fleet notification email failed:', err.message);
+    devError.error('Fleet notification email failed:', err.message);
   }
 };
 

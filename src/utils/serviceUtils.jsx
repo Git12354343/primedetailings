@@ -29,7 +29,7 @@ export const parseServices = (services, availableServices = []) => {
     return parsedServices;
     
   } catch (error) {
-    console.warn('Error parsing services:', error);
+    devError.warn('Error parsing services:', error);
     return Array.isArray(services) ? services : [];
   }
 };
@@ -63,7 +63,7 @@ export const parseExtras = (extras, availableAddOns = []) => {
     return parsedExtras;
     
   } catch (error) {
-    console.warn('Error parsing extras:', error);
+    devError.warn('Error parsing extras:', error);
     return Array.isArray(extras) ? extras : [];
   }
 };

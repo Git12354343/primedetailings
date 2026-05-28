@@ -170,7 +170,7 @@ class EmailService {
           <td style="border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;text-align:center;">
             <p style="margin:0 0 6px;color:rgba(255,255,255,0.4);font-size:13px;">Need to reschedule? Contact us 24+ hours in advance.</p>
             <p style="margin:0;color:#c9a84c;font-size:13px;font-weight:600;">
-              <a href="tel:+14387968001" style="color:#c9a84c;text-decoration:none;">(514) 437-4816</a>
+              <a href="tel:+14387968001" style="color:#c9a84c;text-decoration:none;">(438) 796-8001</a>
               &nbsp;·&nbsp;
               <a href="mailto:info@prestigeplusdetailing.ca" style="color:#c9a84c;text-decoration:none;">info@prestigeplusdetailing.ca</a>
             </p>
@@ -220,7 +220,7 @@ class EmailService {
         
         We'll contact you 24 hours before your appointment.
         
-        Questions? Call us at (514) 437-4816 or email info@Prestigeplusdetailing.ca
+        Questions? Call us at (438) 796-8001 or email info@Prestigeplusdetailing.ca
         
         Thank you for choosing Prestige Plus Detailing Montreal!
       `
@@ -405,7 +405,7 @@ class EmailService {
               <p>• Have a water source available nearby</p>
               <p>• Our team will arrive with all equipment</p>
 
-              <p>Questions or need to reschedule? Call us at (514) 437-4816</p>
+              <p>Questions or need to reschedule? Call us at (438) 796-8001</p>
               
               <p>We're excited to make your vehicle look amazing!</p>
             </div>
@@ -429,15 +429,15 @@ class EmailService {
     try {
       // Only test if email credentials are provided
       if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-        console.log('⚠️  Email credentials not configured - emails will be disabled');
+        devError.log('⚠️  Email credentials not configured - emails will be disabled');
         return false;
       }
 
       await this.transporter.verify();
-      console.log('✅ Email service is ready');
+      devError.log('✅ Email service is ready');
       return true;
     } catch (error) {
-      console.error('❌ Email service error:', error.message);
+      devError.error('❌ Email service error:', error.message);
       return false;
     }
   }

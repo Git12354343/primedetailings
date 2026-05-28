@@ -127,7 +127,7 @@ const CeramicCoating = () => {
             <Link to="/booking?service=ceramic" className="btn-luxury inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-sm font-bold tracking-wide group">
               Get my ceramic quote <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
-            <a href="tel:+15141234567" className="btn-ghost-luxury inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-sm font-semibold">
+            <a href="tel:+14387968001" className="btn-ghost-luxury inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-sm font-semibold">
               <Phone className="w-4 h-4" /> (514) 123-4567
             </a>
           </div>

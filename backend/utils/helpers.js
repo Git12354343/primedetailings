@@ -124,7 +124,7 @@ const parseServices = (servicesString) => {
   try {
     return JSON.parse(servicesString || '[]');
   } catch (error) {
-    console.error('Error parsing services:', error);
+    devError.error('Error parsing services:', error);
     return [];
   }
 };

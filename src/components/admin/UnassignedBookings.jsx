@@ -41,7 +41,7 @@ const UnassignedBookings = ({
         error(data.message || 'Failed to assign booking');
       }
     } catch (err) {
-      console.error('Error assigning booking:', err);
+      devError.error('Error assigning booking:', err);
       error('Network error. Please try again.');
     } finally {
       setAssigningBooking(null);
@@ -69,7 +69,7 @@ const UnassignedBookings = ({
         error(data.message || 'Auto-assignment failed');
       }
     } catch (err) {
-      console.error('Error auto-assigning booking:', err);
+      devError.error('Error auto-assigning booking:', err);
       error('Network error. Please try again.');
     } finally {
       setAssigningBooking(null);

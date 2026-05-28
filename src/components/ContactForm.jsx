@@ -41,7 +41,7 @@ const ContactForm = () => {
         setError(data.error || 'Failed to submit contact form');
       }
     } catch (err) {
-      console.error('Error submitting contact form:', err);
+      devError.error('Error submitting contact form:', err);
       setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
@@ -148,7 +148,7 @@ const ContactForm = () => {
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
               className="input-field"
-              placeholder="(514) 555-0123"
+              placeholder="(438) 796-8001"
               disabled={isLoading}
             />
           </div>

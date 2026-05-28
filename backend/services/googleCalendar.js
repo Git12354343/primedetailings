@@ -19,7 +19,7 @@ const getCalendarClient = () => {
 const addBookingToCalendar = async (booking) => {
   const calendar = getCalendarClient();
   if (!calendar) {
-    console.log('⚠️ Google Calendar not configured — skipping');
+    devError.log('⚠️ Google Calendar not configured — skipping');
     return null;
   }
 
@@ -55,11 +55,11 @@ const addBookingToCalendar = async (booking) => {
       resource: event,
     });
 
-    console.log(`✅ Google Calendar event created: ${response.data.id}`);
+    devError.log(`✅ Google Calendar event created: ${response.data.id}`);
     return response.data.id;
 
   } catch (error) {
-    console.error('❌ Google Calendar error:', error.message);
+    devError.error('❌ Google Calendar error:', error.message);
     return null; // Don't fail the booking if calendar fails
   }
 };
@@ -73,9 +73,9 @@ const removeBookingFromCalendar = async (eventId) => {
       calendarId: process.env.GOOGLE_CALENDAR_ID,
       eventId
     });
-    console.log(`✅ Google Calendar event removed: ${eventId}`);
+    devError.log(`✅ Google Calendar event removed: ${eventId}`);
   } catch (error) {
-    console.error('❌ Google Calendar delete error:', error.message);
+    devError.error('❌ Google Calendar delete error:', error.message);
   }
 };
 

@@ -130,7 +130,7 @@ const Navbar = () => {
                 onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
               >
                 <Phone className="w-3.5 h-3.5" />
-                <span>(514) 437-4816</span>
+                <span>(438) 796-8001</span>
               </a>
               <Link
                 to="/booking"
@@ -239,7 +239,7 @@ const Navbar = () => {
             }}
           >
             <Phone className="w-4 h-4" />
-            (514) 437-4816
+            (438) 796-8001
           </a>
           <Link
             to="/booking"

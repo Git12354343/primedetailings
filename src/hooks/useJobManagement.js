@@ -26,7 +26,7 @@ export const useJobManagement = () => {
         setError(data.message || 'Failed to fetch bookings');
       }
     } catch (error) {
-      console.error('Error fetching bookings:', error);
+      devError.error('Error fetching bookings:', error);
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
@@ -60,7 +60,7 @@ export const useJobManagement = () => {
         throw new Error(data.message || 'Failed to update status');
       }
     } catch (error) {
-      console.error('Error updating status:', error);
+      devError.error('Error updating status:', error);
       return { success: false, error: error.message };
     }
   };
@@ -92,7 +92,7 @@ export const useJobManagement = () => {
         throw new Error(data.message || 'Failed to update notes');
       }
     } catch (error) {
-      console.error('Error updating notes:', error);
+      devError.error('Error updating notes:', error);
       return { success: false, error: error.message };
     }
   };

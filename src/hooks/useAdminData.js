@@ -33,7 +33,7 @@ export const useAdminData = (adminToken) => {
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error');
-        console.error(`HTTP ${response.status} for ${url}:`, errorText);
+        devError.error(`HTTP ${response.status} for ${url}:`, errorText);
         throw new Error(`Server error (${response.status}): ${url.split('/').pop()}`);
       }
 
@@ -90,7 +90,7 @@ export const useAdminData = (adminToken) => {
       const data = await authFetch(`${import.meta.env.VITE_API_URL}/admin/unassigned-bookings`);
       if (data.success) setUnassignedBookings(data.bookings.map(validateBooking));
     } catch (e) {
-      console.error('fetchUnassignedBookings:', e.message);
+      devError.error('fetchUnassignedBookings:', e.message);
       setUnassignedBookings([]);
     }
   }, [authFetch, validateBooking]);
@@ -100,7 +100,7 @@ export const useAdminData = (adminToken) => {
       const data = await authFetch(`${import.meta.env.VITE_API_URL}/admin/all-bookings`);
       if (data.success) setAllBookings(data.bookings.map(validateBooking));
     } catch (e) {
-      console.error('fetchAllBookings:', e.message);
+      devError.error('fetchAllBookings:', e.message);
       setAllBookings([]);
     }
   }, [authFetch, validateBooking]);
@@ -110,7 +110,7 @@ export const useAdminData = (adminToken) => {
       const data = await authFetch(`${import.meta.env.VITE_API_URL}/admin/active-detailers`);
       if (data.success) setActiveDetailers(data.detailers);
     } catch (e) {
-      console.error('fetchActiveDetailers:', e.message);
+      devError.error('fetchActiveDetailers:', e.message);
       setActiveDetailers([]);
     }
   }, [authFetch]);
@@ -120,7 +120,7 @@ export const useAdminData = (adminToken) => {
       const data = await authFetch(`${import.meta.env.VITE_API_URL}/services`);
       if (data.success) setServices(data.services);
     } catch (e) {
-      console.error('fetchServices:', e.message);
+      devError.error('fetchServices:', e.message);
       setServices([]);
     }
   }, [authFetch]);
@@ -130,7 +130,7 @@ export const useAdminData = (adminToken) => {
       const data = await authFetch(`${import.meta.env.VITE_API_URL}/services/addons`);
       if (data.success) setAddOns(data.addOns);
     } catch (e) {
-      console.error('fetchAddOns:', e.message);
+      devError.error('fetchAddOns:', e.message);
       setAddOns([]);
     }
   }, [authFetch]);

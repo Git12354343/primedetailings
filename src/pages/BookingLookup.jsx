@@ -338,7 +338,7 @@ const BookingLookup = () => {
               <label style={labelStyle}>Phone Number</label>
               <input style={inputStyle} type="tel"
                 value={phone} onChange={e => { setPhone(formatPhone(e.target.value)); setError(''); }}
-                placeholder="(514) 555-0123"
+                placeholder="(438) 796-8001"
                 onFocus={e => e.target.style.borderColor = GOLD_S}
                 onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
             </div>
@@ -523,7 +523,7 @@ const BookingLookup = () => {
             <div className="flex flex-wrap gap-3 justify-center">
               <a href="tel:+14387968001" className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
-                <Phone className="w-4 h-4" /> (514) 437-4816
+                <Phone className="w-4 h-4" /> (438) 796-8001
               </a>
               <Link to="/contact" className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>

@@ -68,7 +68,7 @@ const DetailerFormModal = ({ initial, onClose, onSubmit, saving }) => {
           </div>
           <div>
             <label style={lStyle}>Phone *</label>
-            <input style={iStyle} type="tel" value={form.phone} placeholder="(514) 555-0123"
+            <input style={iStyle} type="tel" value={form.phone} placeholder="(438) 796-8001"
               onChange={e => set('phone', e.target.value)} onFocus={focus} onBlur={blur} />
           </div>
           <div>

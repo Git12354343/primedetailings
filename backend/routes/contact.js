@@ -45,7 +45,7 @@ const sendContactNotification = async (contact) => {
         </div>`,
     });
   } catch (err) {
-    console.error('Contact notification email failed:', err.message);
+    devError.error('Contact notification email failed:', err.message);
     // Don't throw — email failure shouldn't break the API response
   }
 };
@@ -85,7 +85,7 @@ router.post('/', async (req, res) => {
 
     res.json({ success: true, referenceId });
   } catch (err) {
-    console.error('POST /contact error:', err);
+    devError.error('POST /contact error:', err);
     res.status(500).json({ success: false, error: 'Failed to send message. Please try again.' });
   }
 });

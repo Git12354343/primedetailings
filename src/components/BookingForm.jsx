@@ -655,7 +655,7 @@ const BookingForm = () => {
             </div>
         </div>
         <div className="grid grid-cols-2 gap-4 mt-4">
-          {[['phone','Phone','tel','(514) 555-0123'],['email','Email','email','you@email.com']].map(([f,l,t,p]) => (
+          {[['phone','Phone','tel','(438) 796-8001'],['email','Email','email','you@email.com']].map(([f,l,t,p]) => (
             <div key={f}>
               <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{l}{f==='phone'?' *':''}</label>
               <input style={iStyle(errors[f])} type={t} placeholder={p} {...safeProps(getFieldProps(f))} />

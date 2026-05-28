@@ -5,7 +5,7 @@ export const requestNotificationPermission = async () => {
     const permission = await Notification.requestPermission();
     return permission === 'granted';
   } catch (error) {
-    console.error('Error requesting notification permission:', error);
+    devError.error('Error requesting notification permission:', error);
     return false;
   }
 };
@@ -21,7 +21,7 @@ export const initializePushNotifications = async () => {
     // Send token to your backend
     return token;
   } catch (error) {
-    console.error('Error getting FCM token:', error);
+    devError.error('Error getting FCM token:', error);
     return null;
   }
 };

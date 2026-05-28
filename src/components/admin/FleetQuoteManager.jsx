@@ -31,7 +31,7 @@ const FleetQuoteManager = ({ adminToken }) => {
       const data = await res.json();
       if (data.success) setQuotes(data.quotes);
     } catch (err) {
-      console.error(err);
+      devError.error(err);
     } finally {
       setLoading(false);
     }
@@ -49,7 +49,7 @@ const FleetQuoteManager = ({ adminToken }) => {
       const data = await res.json();
       if (data.success) setQuotes(prev => prev.map(q => q.id === id ? data.quote : q));
     } catch (err) {
-      console.error(err);
+      devError.error(err);
     } finally {
       setUpdating(null);
     }

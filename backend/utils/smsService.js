@@ -24,25 +24,25 @@ class TwilioSMSService {
       this.fromNumber = process.env.TWILIO_PHONE_NUMBER;
       this.isConfigured = true;
       
-      console.log('✅ Twilio SMS service configured successfully');
-      console.log(`📱 Sending from: ${this.fromNumber}`);
+      devError.log('✅ Twilio SMS service configured successfully');
+      devError.log(`📱 Sending from: ${this.fromNumber}`);
       
     } catch (error) {
-      console.error('❌ Twilio service initialization failed:', error.message);
-      console.log('💡 Make sure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER are set in your .env file');
+      devError.error('❌ Twilio service initialization failed:', error.message);
+      devError.log('💡 Make sure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER are set in your .env file');
     }
   }
 
   // Send SMS
   async sendSMS(phoneNumber, message) {
     if (!this.isConfigured) {
-      console.error('❌ Twilio not configured - cannot send SMS');
+      devError.error('❌ Twilio not configured - cannot send SMS');
       return false;
     }
 
     // Validate phone number
     if (!this.isValidPhoneNumber(phoneNumber)) {
-      console.error('❌ Invalid phone number format:', phoneNumber);
+      devError.error('❌ Invalid phone number format:', phoneNumber);
       return false;
     }
 
@@ -59,19 +59,19 @@ class TwilioSMSService {
         to: this.formatPhoneNumber(phoneNumber)
       });
 
-      console.log(`✅ SMS sent to ${phoneNumber}. SID: ${result.sid}`);
+      devError.log(`✅ SMS sent to ${phoneNumber}. SID: ${result.sid}`);
       return true;
       
     } catch (error) {
-      console.error('❌ Twilio SMS error:', error.message);
+      devError.error('❌ Twilio SMS error:', error.message);
       
       // Handle common Twilio errors
       if (error.code === 21211) {
-        console.error('❌ Invalid phone number format');
+        devError.error('❌ Invalid phone number format');
       } else if (error.code === 21408) {
-        console.error('❌ Permission denied for this phone number');
+        devError.error('❌ Permission denied for this phone number');
       } else if (error.code === 21610) {
-        console.error('❌ Message blocked - likely unsubscribed number');
+        devError.error('❌ Message blocked - likely unsubscribed number');
       }
       
       return false;
@@ -81,7 +81,7 @@ class TwilioSMSService {
   // Send booking confirmation SMS
   async sendBookingConfirmation(booking) {
     const businessName = process.env.BUSINESS_NAME || 'Prestige Plus Detailing';
-    const businessPhone = process.env.BUSINESS_PHONE || '(514) 437-4816';
+    const businessPhone = process.env.BUSINESS_PHONE || '(438) 796-8001';
     
     const message = `✅ ${businessName}: Booking confirmed! 
 Code: ${booking.confirmationCode}
@@ -94,7 +94,7 @@ Questions? ${businessPhone}`;
   // Send booking status update SMS
   async sendBookingUpdate(booking, status) {
     const businessName = process.env.BUSINESS_NAME || 'Prestige Plus Detailing';
-    const businessPhone = process.env.BUSINESS_PHONE || '(514) 437-4816';
+    const businessPhone = process.env.BUSINESS_PHONE || '(438) 796-8001';
     
     const statusMessages = {
       confirmed: '✅ Confirmed & Assigned',
@@ -115,7 +115,7 @@ Questions? ${businessPhone}`;
   // Send booking reminder SMS
   async sendBookingReminder(booking) {
     const businessName = process.env.BUSINESS_NAME || 'Prestige Plus Detailing';
-    const businessPhone = process.env.BUSINESS_PHONE || '(514) 437-4816';
+    const businessPhone = process.env.BUSINESS_PHONE || '(438) 796-8001';
     
     const message = `⏰ ${businessName} Reminder: 
 ${booking.firstName}, your ${booking.vehicleType} detailing is TOMORROW ${new Date(booking.date).toLocaleDateString()} at ${booking.time}.
@@ -128,7 +128,7 @@ Remove personal items! Questions? ${businessPhone}`;
   // Send detailer assignment notification
   async sendDetailerAssignment(booking, detailerName) {
     const businessName = process.env.BUSINESS_NAME || 'Prestige Plus Detailing';
-    const businessPhone = process.env.BUSINESS_PHONE || '(514) 437-4816';
+    const businessPhone = process.env.BUSINESS_PHONE || '(438) 796-8001';
     
     const message = `👨‍🔧 ${businessName}: Great news ${booking.firstName}! 
 ${detailerName} has been assigned to detail your ${booking.vehicleType} on ${new Date(booking.date).toLocaleDateString()} at ${booking.time}.
@@ -168,7 +168,7 @@ Questions? ${businessPhone}`;
   // Test SMS functionality
   async testSMS(phoneNumber = process.env.TEST_PHONE_NUMBER) {
     if (!phoneNumber) {
-      console.log('❌ No test phone number provided. Set TEST_PHONE_NUMBER in .env file');
+      devError.log('❌ No test phone number provided. Set TEST_PHONE_NUMBER in .env file');
       return false;
     }
 
@@ -176,13 +176,13 @@ Questions? ${businessPhone}`;
 Time: ${new Date().toLocaleTimeString()}
 This is a test message to verify SMS functionality.`;
     
-    console.log(`🧪 Testing SMS to ${phoneNumber}...`);
+    devError.log(`🧪 Testing SMS to ${phoneNumber}...`);
     const result = await this.sendSMS(phoneNumber, testMessage);
     
     if (result) {
-      console.log('✅ SMS test successful!');
+      devError.log('✅ SMS test successful!');
     } else {
-      console.log('❌ SMS test failed');
+      devError.log('❌ SMS test failed');
     }
     
     return result;
@@ -191,7 +191,7 @@ This is a test message to verify SMS functionality.`;
   // Get account balance (useful for monitoring)
   async getAccountBalance() {
     if (!this.isConfigured) {
-      console.log('❌ Twilio not configured');
+      devError.log('❌ Twilio not configured');
       return null;
     }
 
@@ -202,7 +202,7 @@ This is a test message to verify SMS functionality.`;
         currency: 'USD'
       };
     } catch (error) {
-      console.error('❌ Failed to get account balance:', error.message);
+      devError.error('❌ Failed to get account balance:', error.message);
       return null;
     }
   }
@@ -210,7 +210,7 @@ This is a test message to verify SMS functionality.`;
   // Get SMS usage for current month
   async getMonthlyUsage() {
     if (!this.isConfigured) {
-      console.log('❌ Twilio not configured');
+      devError.log('❌ Twilio not configured');
       return null;
     }
 
@@ -230,7 +230,7 @@ This is a test message to verify SMS functionality.`;
       } : { count: 0, price: '0', priceUnit: 'USD' };
       
     } catch (error) {
-      console.error('❌ Failed to get usage data:', error.message);
+      devError.error('❌ Failed to get usage data:', error.message);
       return null;
     }
   }
@@ -249,7 +249,7 @@ This is a test message to verify SMS functionality.`;
       return false;
       
     } catch (error) {
-      console.error('❌ Failed to check opt-out status:', error.message);
+      devError.error('❌ Failed to check opt-out status:', error.message);
       return false;
     }
   }
@@ -257,14 +257,14 @@ This is a test message to verify SMS functionality.`;
   // Send bulk SMS (for admin notifications, etc.)
   async sendBulkSMS(phoneNumbers, message) {
     if (!this.isConfigured) {
-      console.error('❌ Twilio not configured - cannot send bulk SMS');
+      devError.error('❌ Twilio not configured - cannot send bulk SMS');
       return { success: 0, failed: phoneNumbers.length };
     }
 
     let success = 0;
     let failed = 0;
     
-    console.log(`📱 Sending bulk SMS to ${phoneNumbers.length} numbers...`);
+    devError.log(`📱 Sending bulk SMS to ${phoneNumbers.length} numbers...`);
     
     for (const phoneNumber of phoneNumbers) {
       try {
@@ -279,12 +279,12 @@ This is a test message to verify SMS functionality.`;
         await this.delay(500);
         
       } catch (error) {
-        console.error(`❌ Failed to send SMS to ${phoneNumber}:`, error.message);
+        devError.error(`❌ Failed to send SMS to ${phoneNumber}:`, error.message);
         failed++;
       }
     }
     
-    console.log(`📊 Bulk SMS completed: ${success} success, ${failed} failed`);
+    devError.log(`📊 Bulk SMS completed: ${success} success, ${failed} failed`);
     return { success, failed };
   }
 

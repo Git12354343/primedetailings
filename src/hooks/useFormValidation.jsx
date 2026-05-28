@@ -203,7 +203,7 @@ export const useFormValidation = (initialValues = {}, config = {}) => {
       
       return isValid;
     } catch (error) {
-      console.error('Form submission error:', error);
+      devError.error('Form submission error:', error);
       throw error;
     } finally {
       setIsSubmitting(false);

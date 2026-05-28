@@ -30,7 +30,7 @@ const getAllPackages = async (req, res) => {
     });
     res.json({ success: true, packages: packages.map(serialize) });
   } catch (error) {
-    console.error('getAllPackages error:', error);
+    devError.error('getAllPackages error:', error);
     res.status(500).json({ success: false, message: 'Error fetching packages' });
   }
 };
@@ -44,7 +44,7 @@ const getActivePackages = async (req, res) => {
     });
     res.json({ success: true, packages: packages.map(serialize) });
   } catch (error) {
-    console.error('getActivePackages error:', error);
+    devError.error('getActivePackages error:', error);
     res.status(500).json({ success: false, message: 'Error fetching active packages' });
   }
 };
@@ -80,7 +80,7 @@ const createPackage = async (req, res) => {
     });
     res.status(201).json({ success: true, message: 'Package created', package: serialize(pkg) });
   } catch (error) {
-    console.error('createPackage error:', error);
+    devError.error('createPackage error:', error);
     res.status(500).json({ success: false, message: 'Error creating package' });
   }
 };
@@ -117,7 +117,7 @@ const updatePackage = async (req, res) => {
     const updated = await prisma.package.update({ where: { id: parseInt(id) }, data });
     res.json({ success: true, message: 'Package updated', package: serialize(updated) });
   } catch (error) {
-    console.error('updatePackage error:', error);
+    devError.error('updatePackage error:', error);
     res.status(500).json({ success: false, message: 'Error updating package' });
   }
 };
@@ -131,7 +131,7 @@ const deletePackage = async (req, res) => {
     await prisma.package.update({ where: { id: parseInt(id) }, data: { isActive: false } });
     res.json({ success: true, message: 'Package deactivated' });
   } catch (error) {
-    console.error('deletePackage error:', error);
+    devError.error('deletePackage error:', error);
     res.status(500).json({ success: false, message: 'Error deleting package' });
   }
 };
@@ -143,7 +143,7 @@ const permanentDeletePackage = async (req, res) => {
     await prisma.package.delete({ where: { id: parseInt(id) } });
     res.json({ success: true, message: 'Package permanently deleted' });
   } catch (error) {
-    console.error('permanentDeletePackage error:', error);
+    devError.error('permanentDeletePackage error:', error);
     res.status(500).json({ success: false, message: 'Error deleting package' });
   }
 };

@@ -6,10 +6,10 @@ const { isTimeSlotAvailable, BUSINESS_CONFIG } = require('./availabilityControll
 const prisma = new PrismaClient();
 
 // Email helpers — safe wrappers around emailService
-const sendBookingConfirmation = (booking) => emailService.sendBookingConfirmation(booking).catch(e => console.error('Confirmation email failed:', e));
+const sendBookingConfirmation = (booking) => emailService.sendBookingConfirmation(booking).catch(e => devError.error('Confirmation email failed:', e));
 const sendBookingUpdate = (booking, status) => {
   if (typeof emailService.sendBookingUpdate === 'function') {
-    return emailService.sendBookingUpdate(booking, status).catch(e => console.error('Update email failed:', e));
+    return emailService.sendBookingUpdate(booking, status).catch(e => devError.error('Update email failed:', e));
   }
   return Promise.resolve();
 };
@@ -137,7 +137,7 @@ const calculateBookingPrice = async (services, addOns, vehicleType) => {
 
     return breakdown;
   } catch (error) {
-    console.error('Error calculating booking price:', error);
+    devError.error('Error calculating booking price:', error);
     return { total: 0, services: [], addOns: [] };
   }
 };
@@ -207,7 +207,7 @@ const getAssignedBookings = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get assigned bookings error:', error);
+    devError.error('Get assigned bookings error:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching assigned bookings',
@@ -365,7 +365,7 @@ const createBooking = async (req, res) => {
     // Send confirmation email (async, don't wait)
     if (sendBookingConfirmation) {
       sendBookingConfirmation(booking).catch(error => {
-        console.error('Email sending failed:', error);
+        devError.error('Email sending failed:', error);
       });
     }
 
@@ -378,7 +378,7 @@ const createBooking = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create booking error:', error);
+    devError.error('Create booking error:', error);
     res.status(500).json({
       success: false,
       message: 'Error creating booking',
@@ -478,7 +478,7 @@ const markBookingCompleted = async (req, res) => {
     // Send completion notification email
     if (sendBookingUpdate) {
       sendBookingUpdate(updatedBooking, 'completed').catch(error => {
-        console.error('Email sending failed:', error);
+        devError.error('Email sending failed:', error);
       });
     }
 
@@ -489,7 +489,7 @@ const markBookingCompleted = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Mark booking completed error:', error);
+    devError.error('Mark booking completed error:', error);
     res.status(500).json({
       success: false,
       message: 'Error updating booking status',
@@ -638,7 +638,7 @@ const updateBookingStatus = async (req, res) => {
     // Send status update notification
     if (sendBookingUpdate) {
       sendBookingUpdate(updatedBooking, status.toLowerCase()).catch(error => {
-        console.error('Email sending failed:', error);
+        devError.error('Email sending failed:', error);
       });
     }
 
@@ -649,7 +649,7 @@ const updateBookingStatus = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update booking status error:', error);
+    devError.error('Update booking status error:', error);
     res.status(500).json({
       success: false,
       message: 'Error updating booking status',
@@ -726,7 +726,7 @@ const getBookingByCode = async (req, res) => {
         resolvedServices = serviceIds;
       }
     } catch (error) {
-      console.error('Error parsing/resolving services:', error);
+      devError.error('Error parsing/resolving services:', error);
       resolvedServices = [];
     }
 
@@ -763,7 +763,7 @@ const getBookingByCode = async (req, res) => {
         resolvedAddOns = addOnIds;
       }
     } catch (error) {
-      console.error('Error parsing/resolving add-ons:', error);
+      devError.error('Error parsing/resolving add-ons:', error);
       resolvedAddOns = [];
     }
 
@@ -780,7 +780,7 @@ const getBookingByCode = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get booking by code error:', error);
+    devError.error('Get booking by code error:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching booking',
@@ -855,7 +855,7 @@ const updateBookingNotes = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update booking notes error:', error);
+    devError.error('Update booking notes error:', error);
     res.status(500).json({
       success: false,
       message: 'Error updating notes',
@@ -875,7 +875,7 @@ const resendConfirmationEmail = async (req, res) => {
     if (sendBookingConfirmation) await sendBookingConfirmation(booking);
     res.json({ success: true, message: 'Confirmation email resent successfully' });
   } catch (error) {
-    console.error('Resend confirmation email error:', error);
+    devError.error('Resend confirmation email error:', error);
     res.status(500).json({ success: false, message: 'Error resending confirmation email' });
   }
 };
@@ -907,7 +907,7 @@ const rescheduleBooking = async (req, res) => {
     });
     res.json({ success: true, message: 'Booking rescheduled successfully', booking: formatBookingData(updated) });
   } catch (error) {
-    console.error('Reschedule booking error:', error);
+    devError.error('Reschedule booking error:', error);
     res.status(500).json({ success: false, message: 'Error rescheduling booking' });
   }
 };
@@ -927,7 +927,7 @@ const cancelBooking = async (req, res) => {
     });
     res.json({ success: true, message: 'Booking canceled successfully', booking: formatBookingData(updated) });
   } catch (error) {
-    console.error('Cancel booking error:', error);
+    devError.error('Cancel booking error:', error);
     res.status(500).json({ success: false, message: 'Error canceling booking' });
   }
 };

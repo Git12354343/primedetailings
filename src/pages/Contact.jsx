@@ -20,7 +20,7 @@ const CHANNELS = [
     bg: 'rgba(52,211,153,0.08)',
     border: 'rgba(52,211,153,0.2)',
     href: 'tel:+14387968001',
-    cta: '(514) 437-4816',
+    cta: '(438) 796-8001',
   },
   {
     label: 'WhatsApp',
@@ -258,7 +258,7 @@ const ContactPage = () => {
                       <Field label={<>Phone <span style={{ color:'rgba(255,255,255,0.3)', textTransform:'none', letterSpacing:0, fontWeight:400 }}>(optional)</span></>}>
                         <div style={wrapStyle}>
                           <input className={inputCls} type="tel" value={form.phone} onChange={e => set('phone', e.target.value)}
-                            placeholder="(514) 555-0123" disabled={loading}
+                            placeholder="(438) 796-8001" disabled={loading}
                             onFocus={e => focus({target:e.target.parentElement})}
                             onBlur={e => blur({target:e.target.parentElement})} />
                         </div>

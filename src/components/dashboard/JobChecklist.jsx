@@ -35,7 +35,7 @@ const JobChecklist = ({ bookingId, token, onReadyChange }) => {
         notifyReady(data.checklist);
       }
     } catch (err) {
-      console.error('Checklist load error:', err);
+      devError.error('Checklist load error:', err);
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ const JobChecklist = ({ bookingId, token, onReadyChange }) => {
         });
       }
     } catch (err) {
-      console.error('Toggle error:', err);
+      devError.error('Toggle error:', err);
     } finally {
       setUpdating(null);
     }

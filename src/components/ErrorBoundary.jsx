@@ -17,7 +17,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
+    devError.error('Error caught by boundary:', error, errorInfo);
     this.setState({
       error: error,
       errorInfo: errorInfo
@@ -131,7 +131,7 @@ export const useErrorHandler = () => {
   const resetError = () => setError(null);
 
   const handleError = React.useCallback((error) => {
-    console.error('Error handled by useErrorHandler:', error);
+    devError.error('Error handled by useErrorHandler:', error);
     setError(error);
     
     // Log to error reporting service
