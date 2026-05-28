@@ -7,9 +7,9 @@ const VEHICLE_DESCS = { Sedan: 'Standard cars', SUV: 'SUVs & Crossovers', Truck:
 const CATEGORY_ORDER = ['PROTECTION', 'RESTORATION', 'DETAILING', 'MAINTENANCE', 'SPECIALTY'];
 
 const CONTACT_METHODS = [
-  { label: 'Call',     icon: Phone,         color: '#34d399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.25)', baseHref: 'tel:+15144374816' },
-  { label: 'WhatsApp', icon: MessageSquare, color: '#25D366', bg: 'rgba(37,211,102,0.1)',  border: 'rgba(37,211,102,0.25)', baseHref: 'https://wa.me/15144374816' },
-  { label: 'SMS',      icon: MessageSquare, color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.25)', baseHref: 'sms:+15144374816' },
+  { label: 'Call',     icon: Phone,         color: '#34d399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.25)', baseHref: 'tel:+14387968001' },
+  { label: 'WhatsApp', icon: MessageSquare, color: '#25D366', bg: 'rgba(37,211,102,0.1)',  border: 'rgba(37,211,102,0.25)', baseHref: 'https://wa.me/14387968001' },
+  { label: 'SMS',      icon: MessageSquare, color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.25)', baseHref: 'sms:+14387968001' },
   { label: 'Email',    icon: Mail,          color: '#f97316', bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)', baseHref: 'mailto:info@Prestigeplusdetailing.ca' },
 ];
 

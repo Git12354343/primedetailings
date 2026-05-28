@@ -121,7 +121,7 @@ const FleetQuote = () => {
         </div>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link to="/" className="btn-luxury px-6 py-3 rounded-xl text-sm font-bold">Back to Home</Link>
-          <a href="tel:+15144374816" className="btn-ghost-luxury px-6 py-3 rounded-xl text-sm font-semibold">Call Us Now</a>
+          <a href="tel:+14387968001" className="btn-ghost-luxury px-6 py-3 rounded-xl text-sm font-semibold">Call Us Now</a>
         </div>
       </div>
     </div>

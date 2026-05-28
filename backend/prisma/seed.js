@@ -17,7 +17,7 @@ async function main() {
   const email    = 'zakhs93@gmail.com';
   const password = 'detailing123';
   const name     = 'Zak H';
-  const phone    = '514-555-9393';
+  const phone    = '438-796-8001';
 
   const existingDetailer = await prisma.detailer.findUnique({ where: { email } });
 

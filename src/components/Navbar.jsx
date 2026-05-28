@@ -123,7 +123,7 @@ const Navbar = () => {
             <div className="hidden md:flex items-center gap-3">
               <LanguageToggle />
               <a
-                href="tel:+15144374816"
+                href="tel:+14387968001"
                 className="flex items-center gap-1.5 text-sm transition-colors"
                 style={{ color: 'rgba(255,255,255,0.6)' }}
                 onMouseEnter={e => e.currentTarget.style.color = '#f5d376'}
@@ -142,7 +142,7 @@ const Navbar = () => {
             </div>
 
             {/* Mobile: phone icon (right) — hidden on desktop */}
-            <a href="tel:+15144374816"
+            <a href="tel:+14387968001"
               className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
               style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
               aria-label="Call us">
@@ -230,7 +230,7 @@ const Navbar = () => {
         {/* Drawer bottom */}
         <div className="px-4 pb-8 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1.5rem' }}>
           <a
-            href="tel:+15144374816"
+            href="tel:+14387968001"
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium"
             style={{
               background: 'rgba(255,255,255,0.05)',

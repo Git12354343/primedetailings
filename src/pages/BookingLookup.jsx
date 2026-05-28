@@ -481,7 +481,7 @@ const BookingLookup = () => {
                   : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
                 {resentOk ? <><CheckCircle className="w-4 h-4" /> Sent!</> : resending ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending</> : <><Send className="w-4 h-4" /> Resend Email</>}
               </button>
-              <a href="tel:+15144374816" className="flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all"
+              <a href="tel:+14387968001" className="flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-semibold transition-all"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
                 <Phone className="w-4 h-4" /> Call Us
               </a>
@@ -521,7 +521,7 @@ const BookingLookup = () => {
           <div className="text-center pt-4">
             <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>Can't find your booking? We're happy to help.</p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <a href="tel:+15144374816" className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold"
+              <a href="tel:+14387968001" className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
                 <Phone className="w-4 h-4" /> (514) 437-4816
               </a>

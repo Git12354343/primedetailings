@@ -19,7 +19,7 @@ const CHANNELS = [
     color: '#34d399',
     bg: 'rgba(52,211,153,0.08)',
     border: 'rgba(52,211,153,0.2)',
-    href: 'tel:+15144374816',
+    href: 'tel:+14387968001',
     cta: '(514) 437-4816',
   },
   {
@@ -29,7 +29,7 @@ const CHANNELS = [
     color: '#25d366',
     bg: 'rgba(37,211,102,0.08)',
     border: 'rgba(37,211,102,0.2)',
-    href: 'https://wa.me/15144374816',
+    href: 'https://wa.me/14387968001',
     cta: 'Open WhatsApp',
   },
   {

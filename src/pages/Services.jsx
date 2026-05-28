@@ -27,9 +27,9 @@ const ADDON_LABELS = {
 };
 
 const CONTACT_QUICK = [
-  { icon: Phone,         label: 'Call',     href: 'tel:+15144374816',              color: '#34d399' },
-  { icon: MessageSquare, label: 'WhatsApp', href: 'https://wa.me/15144374816',     color: '#25D366' },
-  { icon: MessageSquare, label: 'SMS',      href: 'sms:+15144374816',              color: '#60a5fa' },
+  { icon: Phone,         label: 'Call',     href: 'tel:+14387968001',              color: '#34d399' },
+  { icon: MessageSquare, label: 'WhatsApp', href: 'https://wa.me/14387968001',     color: '#25D366' },
+  { icon: MessageSquare, label: 'SMS',      href: 'sms:+14387968001',              color: '#60a5fa' },
   { icon: Mail,          label: 'Email',    href: 'mailto:info@Prestigeplusdetailing.ca', color: '#f97316' },
 ];
 

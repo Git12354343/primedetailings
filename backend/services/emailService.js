@@ -170,7 +170,7 @@ class EmailService {
           <td style="border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;text-align:center;">
             <p style="margin:0 0 6px;color:rgba(255,255,255,0.4);font-size:13px;">Need to reschedule? Contact us 24+ hours in advance.</p>
             <p style="margin:0;color:#c9a84c;font-size:13px;font-weight:600;">
-              <a href="tel:+15144374816" style="color:#c9a84c;text-decoration:none;">(514) 437-4816</a>
+              <a href="tel:+14387968001" style="color:#c9a84c;text-decoration:none;">(514) 437-4816</a>
               &nbsp;·&nbsp;
               <a href="mailto:info@prestigeplusdetailing.ca" style="color:#c9a84c;text-decoration:none;">info@prestigeplusdetailing.ca</a>
             </p>
