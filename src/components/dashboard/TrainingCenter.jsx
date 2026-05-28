@@ -46,7 +46,7 @@ const TrainingCenter = ({ token }) => {
           setProgress(map);
         }
       } catch (err) {
-        devError.error('Training load error:', err);
+        console.error('Training load error:', err);
       } finally {
         setLoading(false);
       }

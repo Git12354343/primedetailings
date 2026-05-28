@@ -24,6 +24,7 @@ const fleetRoutes        = require('./routes/fleet');
 const { createManualBooking } = require('./controllers/manualBookingController');
 const photoRoutes = require('./routes/photos');
 
+
 // ── Scheduler (cron jobs) ─────────────────────────────────────────────────────
 const { startScheduler } = require('./jobs/scheduler');
 
@@ -41,8 +42,8 @@ const twilioClient = twilio(
 
 // Test email on startup
 emailService.testConnection().then(isReady => {
-  if (isReady) devError.log('📧 Email service initialized successfully');
-  else         devError.warn('⚠️  Email service not configured properly');
+  if (isReady) console.log('📧 Email service initialized successfully');
+  else         console.warn('⚠️  Email service not configured properly');
 });
 
 // ── Security middleware ───────────────────────────────────────────────────────
@@ -181,14 +182,14 @@ app.post('/api/bookings/initiate', async (req, res) => {
           to:   formattedPhone,
         });
         smsSent = true;
-        devError.log(`✅ SMS sent to ${formattedPhone}`);
+        console.log(`✅ SMS sent to ${formattedPhone}`);
       } catch (twilioError) {
-        devError.error('Twilio error:', twilioError.message);
+        console.error('Twilio error:', twilioError.message);
         // Still return success — admin can see code in logs
-        devError.log(`📱 FALLBACK — SMS Code for ${formattedPhone}: ${code}`);
+        console.log(`📱 FALLBACK — SMS Code for ${formattedPhone}: ${code}`);
       }
     } else {
-      devError.log(`📱 Twilio not configured — SMS Code for ${formattedPhone}: ${code}`);
+      console.log(`📱 Twilio not configured — SMS Code for ${formattedPhone}: ${code}`);
     }
 
     res.json({
@@ -197,7 +198,7 @@ app.post('/api/bookings/initiate', async (req, res) => {
       phoneNumber: formattedPhone,
     });
   } catch (error) {
-    devError.error('Initiate booking error:', error);
+    console.error('Initiate booking error:', error);
     res.status(500).json({ success: false, error: 'Failed to send verification code' });
   }
 });
@@ -288,7 +289,7 @@ app.post('/api/bookings/verify', async (req, res) => {
     // Google Calendar (non-blocking)
     try {
       const { addBookingToCalendar } = require('./services/googleCalendar');
-      addBookingToCalendar(booking).catch(err => devError.error('Calendar error:', err));
+      addBookingToCalendar(booking).catch(err => console.error('Calendar error:', err));
     } catch {}
 
     // Confirmation email (non-blocking)
@@ -308,7 +309,7 @@ app.post('/api/bookings/verify', async (req, res) => {
         vehicleInfo:         `${booking.year} ${booking.make} ${booking.model}`,
         totalPrice:          booking.totalPrice,
         specialInstructions: booking.specialInstructions,
-      }).catch(err => devError.error('Email error:', err));
+      }).catch(err => console.error('Email error:', err));
     }
 
     res.json({
@@ -325,7 +326,7 @@ app.post('/api/bookings/verify', async (req, res) => {
       },
     });
   } catch (error) {
-    devError.error('Verify booking error:', error);
+    console.error('Verify booking error:', error);
     res.status(500).json({ success: false, error: 'Failed to create booking' });
   }
 });
@@ -368,7 +369,7 @@ app.get('/api/bookings/:code', async (req, res) => {
       },
     });
   } catch (error) {
-    devError.error('Error fetching booking:', error);
+    console.error('Error fetching booking:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch booking' });
   }
 });
@@ -386,7 +387,7 @@ app.patch('/api/bookings/:id/notes', async (req, res) => {
 
     res.json({ success: true, message: 'Notes updated', booking: { id: updated.id, notes: updated.notes, updatedAt: updated.updatedAt } });
   } catch (error) {
-    devError.error('Error updating notes:', error);
+    console.error('Error updating notes:', error);
     res.status(500).json({ success: false, message: 'Error updating notes' });
   }
 });
@@ -416,11 +417,11 @@ app.post('/api/contact', async (req, res) => {
       name: contact.name, email: contact.email,
       phone: contact.phone, subject: contact.subject,
       message: contact.message, referenceId: contact.id,
-    }).catch(err => devError.error('Contact email error:', err));
+    }).catch(err => console.error('Contact email error:', err));
 
     res.status(201).json({ success: true, message: 'Message received!', referenceId: contact.id });
   } catch (error) {
-    devError.error('Contact form error:', error);
+    console.error('Contact form error:', error);
     res.status(500).json({ success: false, error: 'Failed to submit contact form' });
   }
 });
@@ -485,9 +486,9 @@ app.get('/api/health', async (req, res) => {
 // ── Start ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  devError.log(`🚀 Server running on port ${PORT}`);
-  devError.log(`🗄️  Database: Supabase PostgreSQL`);
-  devError.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🗄️  Database: Supabase PostgreSQL`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   startScheduler();
 });
 

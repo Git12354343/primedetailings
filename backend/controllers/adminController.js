@@ -75,7 +75,7 @@ const assignBookingToDetailer = async (req, res) => {
       booking: { id: updatedBooking.id, confirmationCode: updatedBooking.confirmationCode, detailerId: updatedBooking.detailerId, detailerName: detailer.name, status: updatedBooking.status }
     });
   } catch (error) {
-    devError.error('Assign booking error:', error);
+    console.error('Assign booking error:', error);
     res.status(500).json({ success: false, message: 'Error assigning booking to detailer' });
   }
 };
@@ -88,7 +88,7 @@ const getUnassignedBookings = async (req, res) => {
     });
     res.json({ success: true, bookings: bookings.map(formatBookingData) });
   } catch (error) {
-    devError.error('Get unassigned bookings error:', error);
+    console.error('Get unassigned bookings error:', error);
     res.status(500).json({ success: false, message: 'Error fetching unassigned bookings' });
   }
 };
@@ -101,7 +101,7 @@ const getAllBookings = async (req, res) => {
     });
     res.json({ success: true, bookings: bookings.map(formatBookingData) });
   } catch (error) {
-    devError.error('Get all bookings error:', error);
+    console.error('Get all bookings error:', error);
     res.status(500).json({ success: false, message: 'Error fetching all bookings' });
   }
 };
@@ -115,7 +115,7 @@ const getAssignedBookings = async (req, res) => {
     });
     res.json({ success: true, bookings: bookings.map(formatBookingData) });
   } catch (error) {
-    devError.error('Get assigned bookings error:', error);
+    console.error('Get assigned bookings error:', error);
     res.status(500).json({ success: false, message: 'Error fetching assigned bookings' });
   }
 };
@@ -135,7 +135,7 @@ const getActiveDetailers = async (req, res) => {
       detailers: detailers.map(d => ({ id: d.id, name: d.name, email: d.email, phone: d.phone, activeBookings: d._count.bookings }))
     });
   } catch (error) {
-    devError.error('Get active detailers error:', error);
+    console.error('Get active detailers error:', error);
     res.status(500).json({ success: false, message: 'Error fetching active detailers' });
   }
 };
@@ -159,7 +159,7 @@ const autoAssignBooking = async (req, res) => {
     });
     res.json({ success: true, message: `Booking auto-assigned to ${selected.name}`, booking: { id: updated.id, confirmationCode: updated.confirmationCode, detailerId: updated.detailerId, detailerName: selected.name, status: updated.status } });
   } catch (error) {
-    devError.error('Auto-assign booking error:', error);
+    console.error('Auto-assign booking error:', error);
     res.status(500).json({ success: false, message: 'Error auto-assigning booking' });
   }
 };
@@ -185,7 +185,7 @@ const getAllDetailers = async (req, res) => {
       })),
     });
   } catch (error) {
-    devError.error('getAllDetailers error:', error);
+    console.error('getAllDetailers error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch detailers' });
   }
 };
@@ -251,7 +251,7 @@ const createDetailer = async (req, res) => {
       detailer: { id: detailer.id, name: detailer.name, email: detailer.email, isActive: detailer.isActive }
     });
   } catch (error) {
-    devError.error('createDetailer error:', error);
+    console.error('createDetailer error:', error);
     if (error.code === 'P2002') return res.status(409).json({ success: false, message: 'Email or phone already exists in the system.' });
     res.status(500).json({ success: false, message: 'Failed to create detailer: ' + error.message });
   }
@@ -270,11 +270,11 @@ const updateDetailer = async (req, res) => {
       const { createClient } = require('@supabase/supabase-js');
       const ws = require('ws');
       const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { realtime: { transport: ws } });
-      await supabaseAdmin.auth.admin.updateUserById(detailer.supabaseUserId, { password }).catch(e => devError.error('Password update failed:', e.message));
+      await supabaseAdmin.auth.admin.updateUserById(detailer.supabaseUserId, { password }).catch(e => console.error('Password update failed:', e.message));
     }
     res.json({ success: true, message: 'Detailer updated', detailer: { id: detailer.id, name: detailer.name, email: detailer.email, isActive: detailer.isActive } });
   } catch (error) {
-    devError.error('updateDetailer error:', error);
+    console.error('updateDetailer error:', error);
     res.status(500).json({ success: false, message: 'Failed to update detailer' });
   }
 };
@@ -285,7 +285,7 @@ const deleteDetailer = async (req, res) => {
     const detailer = await prisma.detailer.update({ where: { id }, data: { isActive: false } });
     res.json({ success: true, message: `${detailer.name} has been deactivated` });
   } catch (error) {
-    devError.error('deleteDetailer error:', error);
+    console.error('deleteDetailer error:', error);
     res.status(500).json({ success: false, message: 'Failed to deactivate detailer' });
   }
 };
@@ -327,7 +327,7 @@ const getRevenueAnalytics = async (req, res) => {
     const topVehicles = Object.entries(byVehicle).map(([type, revenue]) => ({ type, revenue: Math.round(revenue * 100) / 100 })).sort((a, b) => b.revenue - a.revenue).slice(0, 4);
     res.json({ success: true, analytics: { weekly, monthRevenue: Math.round(monthRevenue * 100) / 100, lastMonthRev: Math.round(lastMonthRev * 100) / 100, monthChange: lastMonthRev > 0 ? Math.round(((monthRevenue - lastMonthRev) / lastMonthRev) * 100) : null, avgTicket: Math.round(avgTicket * 100) / 100, totalJobs: bookings.length, topVehicles } });
   } catch (error) {
-    devError.error('getRevenueAnalytics error:', error);
+    console.error('getRevenueAnalytics error:', error);
     res.status(500).json({ success: false, message: 'Error fetching revenue analytics' });
   }
 };

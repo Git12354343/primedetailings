@@ -80,7 +80,7 @@ export const NotificationProvider = ({ children }) => {
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.3);
     } catch (error) {
-      devError.error('Audio notification error:', error);
+      console.error('Audio notification error:', error);
     }
   }, []);
 

@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(
 );
 
 async function main() {
-  devError.log('🌱 Start seeding...');
+  console.log('🌱 Start seeding...');
 
   // ── Detailer ──────────────────────────────────────────────────────────────
   const email    = 'zakhs93@gmail.com';
@@ -28,7 +28,7 @@ async function main() {
 
     if (authError) {
       if (authError.message?.includes('already registered')) {
-        devError.log('ℹ️  Supabase Auth user already exists, looking up ID...');
+        console.log('ℹ️  Supabase Auth user already exists, looking up ID...');
         const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
         const existing = listData?.users?.find(u => u.email === email);
         if (existing) await createDetailerRecord(existing.id, name, email, phone);
@@ -39,11 +39,11 @@ async function main() {
       await createDetailerRecord(authData.user.id, name, email, phone);
     }
   } else {
-    devError.log(`ℹ️  Detailer ${email} already exists. Skipping.`);
+    console.log(`ℹ️  Detailer ${email} already exists. Skipping.`);
   }
 
   // ── Checklist Templates ───────────────────────────────────────────────────
-  devError.log('🌱 Seeding checklist templates...');
+  console.log('🌱 Seeding checklist templates...');
 
   const existingTemplates = await prisma.checklistTemplate.count();
   if (existingTemplates === 0) {
@@ -70,7 +70,7 @@ async function main() {
         { templateId: standard.id, label: 'Customer reviewed vehicle',             labelFr: 'Client a inspecté le véhicule',            isRequired: true,  requiresPhoto: false, sortOrder: 8 },
       ],
     });
-    devError.log('  ✅ Standard checklist template created');
+    console.log('  ✅ Standard checklist template created');
 
     // Ceramic coating template
     const ceramic = await prisma.checklistTemplate.create({
@@ -98,7 +98,7 @@ async function main() {
         { templateId: ceramic.id, label: 'Customer signed off on completed work',     labelFr: 'Client a approuvé le travail complété',         isRequired: true, requiresPhoto: false, sortOrder: 12 },
       ],
     });
-    devError.log('  ✅ Ceramic coating checklist template created');
+    console.log('  ✅ Ceramic coating checklist template created');
 
     // Interior only template
     const interior = await prisma.checklistTemplate.create({
@@ -123,14 +123,14 @@ async function main() {
         { templateId: interior.id, label: 'Customer reviewed vehicle',        labelFr: 'Client a inspecté le véhicule',  isRequired: true,  requiresPhoto: false, sortOrder: 9 },
       ],
     });
-    devError.log('  ✅ Interior detail checklist template created');
+    console.log('  ✅ Interior detail checklist template created');
 
   } else {
-    devError.log(`ℹ️  Checklist templates already exist (${existingTemplates}). Skipping.`);
+    console.log(`ℹ️  Checklist templates already exist (${existingTemplates}). Skipping.`);
   }
 
   // ── Training Modules (sample) ─────────────────────────────────────────────
-  devError.log('🌱 Seeding sample training modules...');
+  console.log('🌱 Seeding sample training modules...');
 
   const existingModules = await prisma.trainingModule.count();
   if (existingModules === 0) {
@@ -209,7 +209,7 @@ async function main() {
         },
       ],
     });
-    devError.log('  ✅ Sample training modules created');
+    console.log('  ✅ Sample training modules created');
 
     // Add quiz to first module
     const welcomeModule = await prisma.trainingModule.findFirst({
@@ -243,23 +243,23 @@ async function main() {
           },
         ],
       });
-      devError.log('  ✅ Sample quiz added to Welcome module');
+      console.log('  ✅ Sample quiz added to Welcome module');
     }
 
   } else {
-    devError.log(`ℹ️  Training modules already exist (${existingModules}). Skipping.`);
+    console.log(`ℹ️  Training modules already exist (${existingModules}). Skipping.`);
   }
 
-  devError.log('\n✅ Seeding finished.');
+  console.log('\n✅ Seeding finished.');
 }
 
 async function createDetailerRecord(supabaseUserId, name, email, phone) {
   const detailer = await prisma.detailer.create({
     data: { name, email, phone, supabaseUserId, isActive: true },
   });
-  devError.log(`✅ Created detailer: ${detailer.name} (${detailer.email})`);
+  console.log(`✅ Created detailer: ${detailer.name} (${detailer.email})`);
 }
 
 main()
-  .catch((e) => { devError.error('❌ Seeding error:', e); process.exit(1); })
+  .catch((e) => { console.error('❌ Seeding error:', e); process.exit(1); })
   .finally(async () => { await prisma.$disconnect(); });

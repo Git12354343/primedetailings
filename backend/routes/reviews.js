@@ -30,7 +30,7 @@ router.get('/active', async (req, res) => {
     });
     res.json({ success: true, reviews });
   } catch (err) {
-    devError.error('GET /reviews/active error:', err);
+    console.error('GET /reviews/active error:', err);
     res.status(500).json({ success: false, error: 'Failed to fetch reviews' });
   }
 });
@@ -43,7 +43,7 @@ router.get('/', requireAdmin, async (req, res) => {
     });
     res.json({ success: true, reviews });
   } catch (err) {
-    devError.error('GET /reviews error:', err);
+    console.error('GET /reviews error:', err);
     res.status(500).json({ success: false, error: 'Failed to fetch reviews' });
   }
 });
@@ -68,7 +68,7 @@ router.post('/', requireAdmin, async (req, res) => {
     });
     res.status(201).json({ success: true, review });
   } catch (err) {
-    devError.error('POST /reviews error:', err);
+    console.error('POST /reviews error:', err);
     res.status(500).json({ success: false, error: 'Failed to create review' });
   }
 });
@@ -94,7 +94,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
     res.json({ success: true, review });
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ success: false, error: 'Review not found' });
-    devError.error('PUT /reviews/:id error:', err);
+    console.error('PUT /reviews/:id error:', err);
     res.status(500).json({ success: false, error: 'Failed to update review' });
   }
 });
@@ -108,7 +108,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ success: false, error: 'Review not found' });
-    devError.error('DELETE /reviews/:id error:', err);
+    console.error('DELETE /reviews/:id error:', err);
     res.status(500).json({ success: false, error: 'Failed to delete review' });
   }
 });

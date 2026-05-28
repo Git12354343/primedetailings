@@ -39,7 +39,7 @@ const getScheduleConfig = async (req, res) => {
     const config = await getOrCreate('schedule_config', DEFAULT_SCHEDULE_CONFIG);
     res.json({ success: true, config });
   } catch (error) {
-    devError.error('getScheduleConfig error:', error);
+    console.error('getScheduleConfig error:', error);
     res.status(500).json({ success: false, message: 'Error fetching schedule config' });
   }
 };
@@ -72,7 +72,7 @@ const updateScheduleConfig = async (req, res) => {
 
     res.json({ success: true, message: 'Schedule config updated', config: updated });
   } catch (error) {
-    devError.error('updateScheduleConfig error:', error);
+    console.error('updateScheduleConfig error:', error);
     res.status(500).json({ success: false, message: 'Error updating schedule config' });
   }
 };
@@ -83,7 +83,7 @@ const getBlockedDates = async (req, res) => {
     const blockedDates = await getOrCreate('blocked_dates', DEFAULT_BLOCKED_DATES);
     res.json({ success: true, blockedDates });
   } catch (error) {
-    devError.error('getBlockedDates error:', error);
+    console.error('getBlockedDates error:', error);
     res.status(500).json({ success: false, message: 'Error fetching blocked dates' });
   }
 };
@@ -104,7 +104,7 @@ const blockDate = async (req, res) => {
     await upsert('blocked_dates', existing);
     res.json({ success: true, message: `${date} blocked`, blockedDates: existing });
   } catch (error) {
-    devError.error('blockDate error:', error);
+    console.error('blockDate error:', error);
     res.status(500).json({ success: false, message: 'Error blocking date' });
   }
 };
@@ -118,7 +118,7 @@ const unblockDate = async (req, res) => {
     await upsert('blocked_dates', updated);
     res.json({ success: true, message: `${date} unblocked`, blockedDates: updated });
   } catch (error) {
-    devError.error('unblockDate error:', error);
+    console.error('unblockDate error:', error);
     res.status(500).json({ success: false, message: 'Error unblocking date' });
   }
 };

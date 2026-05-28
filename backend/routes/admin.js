@@ -58,7 +58,7 @@ router.get('/contacts', async (req, res) => {
     });
     res.json({ success: true, contacts });
   } catch (err) {
-    devError.error('GET /admin/contacts error:', err);
+    console.error('GET /admin/contacts error:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch contacts' });
   }
 });
@@ -75,7 +75,7 @@ router.put('/contacts/:id', async (req, res) => {
     res.json({ success: true, contact });
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ success: false, message: 'Contact not found' });
-    devError.error('PUT /admin/contacts/:id error:', err);
+    console.error('PUT /admin/contacts/:id error:', err);
     res.status(500).json({ success: false, message: 'Failed to update contact' });
   }
 });
@@ -89,7 +89,7 @@ router.delete('/contacts/:id', async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     if (err.code === 'P2025') return res.status(404).json({ success: false, message: 'Contact not found' });
-    devError.error('DELETE /admin/contacts/:id error:', err);
+    console.error('DELETE /admin/contacts/:id error:', err);
     res.status(500).json({ success: false, message: 'Failed to delete contact' });
   }
 });

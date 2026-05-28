@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import LanguageToggle from './LanguageToggle';
+import { useTranslation } from '../hooks/useTranslation';
 import { Menu, X, Phone, ChevronRight } from 'lucide-react';
 
-const NAV_LINKS = [
-  { label: 'Home',     to: '/' },
-  { label: 'Ceramic',  to: '/ceramic-coating', featured: true },
-  { label: 'Services', to: '/services' },
-  { label: 'Book Now', to: '/booking' },
-  { label: 'Gallery',  to: '/gallery' },
-  { label: 'Fleet/B2B',to: '/fleet' },
-  { label: 'Contact',  to: '/contact' },
-];
+// NAV_LINKS moved inside component to support translations
 
 const Navbar = () => {
   const [isOpen, setIsOpen]       = useState(false);
   const [scrolled, setScrolled]   = useState(false);
   const location                  = useLocation();
+  const { t } = useTranslation();
+  const NAV_LINKS = [
+    { label: t('nav.home'),     to: '/' },
+    { label: t('nav.ceramic'),  to: '/ceramic-coating', featured: true },
+    { label: t('nav.services'), to: '/services' },
+    { label: t('nav.bookNow'),  to: '/booking' },
+    { label: t('nav.gallery'),  to: '/gallery' },
+    { label: t('nav.fleet'),    to: '/fleet' },
+    { label: t('nav.contact'),  to: '/contact' },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -123,14 +126,14 @@ const Navbar = () => {
             <div className="hidden md:flex items-center gap-3">
               <LanguageToggle />
               <a
-                href="tel:+14387968001"
+                href="tel:+15144374816"
                 className="flex items-center gap-1.5 text-sm transition-colors"
                 style={{ color: 'rgba(255,255,255,0.6)' }}
                 onMouseEnter={e => e.currentTarget.style.color = '#f5d376'}
                 onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
               >
                 <Phone className="w-3.5 h-3.5" />
-                <span>(438) 796-8001</span>
+                <span>(514) 437-4816</span>
               </a>
               <Link
                 to="/booking"
@@ -142,7 +145,7 @@ const Navbar = () => {
             </div>
 
             {/* Mobile: phone icon (right) — hidden on desktop */}
-            <a href="tel:+14387968001"
+            <a href="tel:+15144374816"
               className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
               style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
               aria-label="Call us">
@@ -230,7 +233,7 @@ const Navbar = () => {
         {/* Drawer bottom */}
         <div className="px-4 pb-8 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1.5rem' }}>
           <a
-            href="tel:+14387968001"
+            href="tel:+15144374816"
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-medium"
             style={{
               background: 'rgba(255,255,255,0.05)',
@@ -239,7 +242,7 @@ const Navbar = () => {
             }}
           >
             <Phone className="w-4 h-4" />
-            (438) 796-8001
+            (514) 437-4816
           </a>
           <Link
             to="/booking"

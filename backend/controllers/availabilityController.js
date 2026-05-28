@@ -105,7 +105,7 @@ const isTimeSlotAvailable = async (date, timeSlotId) => {
       slotsRemaining: config.maxBookingsPerSlot - existingCount,
     };
   } catch (error) {
-    devError.error('isTimeSlotAvailable error:', error);
+    console.error('isTimeSlotAvailable error:', error);
     return { available: false, reason: 'Error checking availability' };
   }
 };
@@ -225,7 +225,7 @@ const getAvailability = async (req, res) => {
       },
     });
   } catch (error) {
-    devError.error('getAvailability error:', error);
+    console.error('getAvailability error:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching availability',
@@ -261,7 +261,7 @@ const checkTimeSlot = async (req, res) => {
     const result = await isTimeSlotAvailable(date, slotId);
     res.json({ success: true, date, timeSlot: slotId, ...result });
   } catch (error) {
-    devError.error('checkTimeSlot error:', error);
+    console.error('checkTimeSlot error:', error);
     res.status(500).json({ success: false, message: 'Error checking time slot' });
   }
 };
@@ -288,7 +288,7 @@ const getBlockedDates = async (req, res) => {
       })),
     });
   } catch (error) {
-    devError.error('getBlockedDates error:', error);
+    console.error('getBlockedDates error:', error);
     res.status(500).json({ success: false, message: 'Error fetching blocked dates' });
   }
 };
@@ -315,7 +315,7 @@ const validateBookingRequest = async (req, res) => {
 
     res.json({ success: true, validation: { available: true, date, time, timeSlot: result.timeSlot } });
   } catch (error) {
-    devError.error('validateBookingRequest error:', error);
+    console.error('validateBookingRequest error:', error);
     res.status(500).json({ success: false, message: 'Error validating booking' });
   }
 };
@@ -326,7 +326,7 @@ const getBusinessConfig = async (req, res) => {
     const config = await loadConfig();
     res.json({ success: true, config });
   } catch (error) {
-    devError.error('getBusinessConfig error:', error);
+    console.error('getBusinessConfig error:', error);
     res.status(500).json({ success: false, message: 'Error fetching business config' });
   }
 };

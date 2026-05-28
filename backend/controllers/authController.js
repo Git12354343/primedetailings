@@ -84,7 +84,7 @@ const loginDetailer = async (req, res) => {
     });
 
   } catch (error) {
-    devError.error('Login error:', error);
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during login'
@@ -121,7 +121,7 @@ const verifyDetailer = async (req, res) => {
     res.json({ success: true, detailer });
 
   } catch (error) {
-    devError.error('Verify detailer error:', error);
+    console.error('Verify detailer error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during verification'
@@ -138,7 +138,7 @@ const logoutDetailer = async (req, res) => {
     }
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
-    devError.error('Logout error:', error);
+    console.error('Logout error:', error);
     res.status(500).json({ success: false, message: 'Server error during logout' });
   }
 };
@@ -160,7 +160,7 @@ const refreshDetailerToken = async (req, res) => {
       refreshToken: data.session.refresh_token,
     });
   } catch (error) {
-    devError.error('Refresh token error:', error);
+    console.error('Refresh token error:', error);
     res.status(500).json({ success: false, message: 'Server error during token refresh' });
   }
 };

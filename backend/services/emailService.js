@@ -195,7 +195,7 @@ class EmailService {
 </html>`;
 
     const mailOptions = {
-      from: `"Prestige Plus Detailing Montreal" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || `"Prestige Plus Detailing" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: emailSubject,
       html: emailHTML,
@@ -297,8 +297,8 @@ class EmailService {
     `;
 
     const mailOptions = {
-      from: `"Prestige Plus Detailing System" <${process.env.EMAIL_USER}>`,
-      to: process.env.BUSINESS_EMAIL || process.env.EMAIL_USER,
+      from: process.env.EMAIL_FROM || `"Prestige Plus Detailing" <${process.env.EMAIL_USER}>`,
+      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
       subject: emailSubject,
       html: emailHTML
     };
@@ -344,8 +344,8 @@ class EmailService {
     `;
 
     const mailOptions = {
-      from: `"Prestige Plus Detailing Website" <${process.env.EMAIL_USER}>`,
-      to: process.env.BUSINESS_EMAIL || process.env.EMAIL_USER,
+      from: process.env.EMAIL_FROM || `"Prestige Plus Detailing" <${process.env.EMAIL_USER}>`,
+      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
       subject: emailSubject,
       html: emailHTML,
       replyTo: email // Allow direct reply to customer
@@ -415,7 +415,7 @@ class EmailService {
     `;
 
     const mailOptions = {
-      from: `"Prestige Plus Detailing Montreal" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || `"Prestige Plus Detailing" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: emailSubject,
       html: emailHTML
@@ -429,15 +429,15 @@ class EmailService {
     try {
       // Only test if email credentials are provided
       if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-        devError.log('⚠️  Email credentials not configured - emails will be disabled');
+        console.log('⚠️  Email credentials not configured - emails will be disabled');
         return false;
       }
 
       await this.transporter.verify();
-      devError.log('✅ Email service is ready');
+      console.log('✅ Email service is ready');
       return true;
     } catch (error) {
-      devError.error('❌ Email service error:', error.message);
+      console.error('❌ Email service error:', error.message);
       return false;
     }
   }
@@ -449,7 +449,7 @@ class EmailService {
     }
 
     const mailOptions = {
-      from: `"Prestige Plus Detailing Montreal" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || `"Prestige Plus Detailing" <${process.env.EMAIL_USER}>`,
       to: toEmail,
       subject: 'Test Email - Prestige Plus Detailing System',
       html: `

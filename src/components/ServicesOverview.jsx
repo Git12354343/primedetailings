@@ -5,6 +5,7 @@ import {
   Clock, ArrowRight, Loader2
 } from 'lucide-react';
 import useServicesCache from '../hooks/useServicesCache';
+import { useServiceTranslation } from '../utils/serviceUtils';
 
 const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
 
@@ -111,6 +112,7 @@ const HomePkgCard = ({ pkg, index, visible }) => {
 
 // ── Service card (homepage overview) ──────────────────────────────────────
 const ServiceCard = ({ service, index, visible }) => {
+  const { tField } = useServiceTranslation();
   const cfg = CATEGORY_CONFIG[service.category] || CATEGORY_CONFIG.DEFAULT;
   const Icon = cfg.icon;
   const min = getMinPrice(service.pricing);
@@ -127,10 +129,10 @@ const ServiceCard = ({ service, index, visible }) => {
         <Icon className="w-5 h-5" style={{ color: cfg.color }} />
       </div>
       <h3 className="text-base font-bold text-white mb-2 group-hover:text-yellow-300 transition-colors">
-        {service.name}
+        {tField(service, 'name')}
       </h3>
       <p className="text-gray-400 text-sm leading-relaxed mb-4 line-clamp-2">
-        {service.description || 'Professional detailing service.'}
+        {tField(service, 'description') || 'Professional detailing service.'}
       </p>
       <div className="flex items-center justify-between mt-auto">
         {min ? (

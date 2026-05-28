@@ -55,7 +55,7 @@ const selStyle = { ...iBase, cursor: 'pointer', width: '100%' };
 const lGold = { display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', marginBottom: '6px' };
 const cardD = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' };
 
-const ScheduleManager = ({ adminToken }) => {
+const ScheduleManager = () => {
   const [config, setConfig]         = useState(sanitizeConfig(null));
   const [blockedDates, setBlockedDates] = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -73,7 +73,7 @@ const ScheduleManager = ({ adminToken }) => {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/config`);
       const data = await res.json();
       if (data.success && data.config) setConfig(sanitizeConfig(data.config));
-    } catch (e) { devError.error('fetchConfig error:', e); }
+    } catch (e) { console.error('fetchConfig error:', e); }
     finally { setLoading(false); }
   };
 
@@ -82,14 +82,14 @@ const ScheduleManager = ({ adminToken }) => {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/blocked-dates`);
       const data = await res.json();
       if (data.success) setBlockedDates(data.blockedDates || []);
-    } catch (e) { devError.error('fetchBlockedDates error:', e); }
+    } catch (e) { console.error('fetchBlockedDates error:', e); }
   };
 
   const saveConfig = async () => {
     setSaving(true); setError('');
     try {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/config`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config),
+        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminToken || '' }, body: JSON.stringify(config),
       });
       const data = await res.json();
       if (data.success) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
@@ -126,15 +126,15 @@ const ScheduleManager = ({ adminToken }) => {
       });
       const data = await res.json();
       if (data.success) { setBlockedDates(data.blockedDates || []); setNewBlockDate(''); setNewBlockReason(''); }
-    } catch (e) { devError.error('blockDate error:', e); }
+    } catch (e) { console.error('blockDate error:', e); }
   };
 
   const unblockDate = async (date) => {
     try {
-      const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/blocked-dates/${date}`, { method: 'DELETE' });
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/blocked-dates/${date}`, { method: 'DELETE', headers: { 'X-Admin-Secret': adminToken || '' } });
       const data = await res.json();
       if (data.success) setBlockedDates(data.blockedDates || []);
-    } catch (e) { devError.error('unblockDate error:', e); }
+    } catch (e) { console.error('unblockDate error:', e); }
   };
 
   const sections = [

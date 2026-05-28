@@ -31,7 +31,7 @@ const accountLockout = async (req, res, next) => {
 
     next();
   } catch (err) {
-    devError.error('accountLockout error:', err);
+    console.error('accountLockout error:', err);
     next(); // fail open — don't block login on DB error
   }
 };
@@ -49,7 +49,7 @@ const trackFailedLogin = async (email) => {
       create: { email, count, lockedUntil },
     });
   } catch (err) {
-    devError.error('trackFailedLogin error:', err);
+    console.error('trackFailedLogin error:', err);
   }
 };
 
@@ -119,7 +119,7 @@ const requestLogger = (req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    devError.log(JSON.stringify({
+    console.log(JSON.stringify({
       method: req.method,
       url: req.url,
       status: res.statusCode,

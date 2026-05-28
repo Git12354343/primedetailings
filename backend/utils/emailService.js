@@ -378,15 +378,15 @@ class EmailService {
     try {
       // Only test if email credentials are provided
       if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-        devError.log('⚠️  Email credentials not configured - emails will be disabled');
+        console.log('⚠️  Email credentials not configured - emails will be disabled');
         return false;
       }
 
       await this.transporter.verify();
-      devError.log('✅ Email service is ready');
+      console.log('✅ Email service is ready');
       return true;
     } catch (error) {
-      devError.error('❌ Email service error:', error.message);
+      console.error('❌ Email service error:', error.message);
       return false;
     }
   }

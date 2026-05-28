@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Star, Shield, Zap } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 const Hero = () => {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ const Hero = () => {
           className={`text-5xl sm:text-6xl md:text-7xl font-black leading-none mb-6 tracking-tight transition-all duration-700 delay-100 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
           style={{ textShadow: '0 4px 30px rgba(0,0,0,0.8)' }}
         >
-          <span className="text-white">Your Car.</span>
+          <span className="text-white">{t('hero.title')}</span>
           <br />
           <span style={{
             background: 'linear-gradient(135deg, #c9a84c 0%, #f5d376 50%, #c9a84c 100%)',

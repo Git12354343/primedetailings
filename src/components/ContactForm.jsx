@@ -41,7 +41,7 @@ const ContactForm = () => {
         setError(data.error || 'Failed to submit contact form');
       }
     } catch (err) {
-      devError.error('Error submitting contact form:', err);
+      console.error('Error submitting contact form:', err);
       setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);

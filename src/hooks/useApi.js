@@ -27,7 +27,7 @@ const DEFAULT_OPTIONS = {
 const apiRequest = async (endpoint, options = {}) => {
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
   
-  __DEV && devError.log('🌐 Making API request:', {
+  __DEV && console.log('🌐 Making API request:', {
     url,
     method: options.method || 'GET',
     headers: options.headers,
@@ -47,13 +47,13 @@ const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('detailerToken') || localStorage.getItem('adminToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    __DEV && devError.log('🔑 Added auth token to request');
+    __DEV && console.log('🔑 Added auth token to request');
   }
 
   try {
     const response = await fetch(url, config);
     
-    __DEV && devError.log('📡 Response received:', {
+    __DEV && console.log('📡 Response received:', {
       status: response.status,
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries())
@@ -65,14 +65,14 @@ const apiRequest = async (endpoint, options = {}) => {
     
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
-      __DEV && devError.log('📄 Response data:', data);
+      __DEV && console.log('📄 Response data:', data);
     } else {
       data = await response.text();
-      __DEV && devError.log('📄 Response text:', data);
+      __DEV && console.log('📄 Response text:', data);
     }
 
     if (!response.ok) {
-      __DEV && devError.error('❌ API Error Response:', {
+      __DEV && console.error('❌ API Error Response:', {
         status: response.status,
         statusText: response.statusText,
         data: data
@@ -102,15 +102,15 @@ const apiRequest = async (endpoint, options = {}) => {
       throw error;
     }
 
-    __DEV && devError.log('✅ API request successful');
+    __DEV && console.log('✅ API request successful');
     return data;
 
   } catch (error) {
-    __DEV && devError.error('❌ API request failed:', error);
+    __DEV && console.error('❌ API request failed:', error);
     
     // Network or parsing errors
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      devError.error('🌐 Network error detected');
+      console.error('🌐 Network error detected');
       const networkError = new Error('Network error. Please check your connection and try again.');
       networkError.isNetworkError = true;
       throw networkError;
@@ -118,7 +118,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
     // JSON parsing errors
     if (error instanceof SyntaxError) {
-      devError.error('📄 JSON parsing error detected');
+      console.error('📄 JSON parsing error detected');
       const parseError = new Error('Server returned invalid response format.');
       parseError.isParseError = true;
       throw parseError;
@@ -166,7 +166,7 @@ export const useApi = (options = {}) => {
       return result;
     } catch (err) {
       if (err.name === 'AbortError') {
-        __DEV && devError.log('Request was aborted');
+        __DEV && console.log('Request was aborted');
         return null;
       }
       
@@ -214,7 +214,7 @@ export const useBookingsApi = () => {
 
   const createBooking = useCallback(async (bookingData) => {
     try {
-      __DEV && devError.log('🚀 useBookingsApi: Creating booking with data:', JSON.stringify(bookingData, null, 2));
+      __DEV && console.log('🚀 useBookingsApi: Creating booking with data:', JSON.stringify(bookingData, null, 2));
       
       // Frontend validation before sending
       const requiredFields = {
@@ -233,15 +233,15 @@ export const useBookingsApi = () => {
         time: bookingData.time
       };
 
-      __DEV && devError.log('🔍 Frontend validation check:');
+      __DEV && console.log('🔍 Frontend validation check:');
       for (const [field, value] of Object.entries(requiredFields)) {
         const isEmpty = value === null || value === undefined || value === '' || 
                        (Array.isArray(value) && value.length === 0);
-        __DEV && devError.log(`${field}: ${isEmpty ? '❌ EMPTY' : '✅ OK'} - Value:`, value);
+        __DEV && console.log(`${field}: ${isEmpty ? '❌ EMPTY' : '✅ OK'} - Value:`, value);
         
         if (isEmpty) {
           const error = `Please fill in the ${field} field`;
-          devError.error(`❌ Frontend validation failed: ${error}`);
+          console.error(`❌ Frontend validation failed: ${error}`);
           if (notifyError) notifyError(error);
           throw new Error(error);
         }
@@ -250,14 +250,14 @@ export const useBookingsApi = () => {
       // Additional frontend validations
       if (!Array.isArray(bookingData.services) || bookingData.services.length === 0) {
         const error = 'Please select at least one service';
-        devError.error('❌ Services validation failed:', bookingData.services);
+        console.error('❌ Services validation failed:', bookingData.services);
         if (notifyError) notifyError(error);
         throw new Error(error);
       }
 
       if (isNaN(bookingData.year) || bookingData.year < 1990) {
         const error = 'Please enter a valid vehicle year';
-        devError.error('❌ Year validation failed:', bookingData.year);
+        console.error('❌ Year validation failed:', bookingData.year);
         if (notifyError) notifyError(error);
         throw new Error(error);
       }
@@ -266,12 +266,12 @@ export const useBookingsApi = () => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(bookingData.email)) {
         const error = 'Please enter a valid email address';
-        devError.error('❌ Email validation failed:', bookingData.email);
+        console.error('❌ Email validation failed:', bookingData.email);
         if (notifyError) notifyError(error);
         throw new Error(error);
       }
 
-      __DEV && devError.log('✅ Frontend validation passed, making API call');
+      __DEV && console.log('✅ Frontend validation passed, making API call');
       
       const result = await api.execute('/bookings/initiate', {
       method: HTTP_METHODS.POST,
@@ -281,11 +281,11 @@ export const useBookingsApi = () => {
       })
       });
       
-      __DEV && devError.log('✅ API call successful:', result);
+      __DEV && console.log('✅ API call successful:', result);
       return result;
       
     } catch (error) {
-      devError.error('❌ createBooking error:', error);
+      console.error('❌ createBooking error:', error);
       
       // Don't show notification if we already showed it during validation
       if (!error.message.includes('Please fill in') && 
@@ -305,19 +305,19 @@ export const useBookingsApi = () => {
 
   const verifyBooking = useCallback(async (verificationData) => {
     try {
-      __DEV && devError.log('🔑 useBookingsApi: Verifying booking:', verificationData);
+      __DEV && console.log('🔑 useBookingsApi: Verifying booking:', verificationData);
       
       // Validate verification data
       if (!verificationData.bookingId || !verificationData.verificationCode) {
         const error = 'Booking ID and verification code are required';
-        devError.error('❌ Verification validation failed');
+        console.error('❌ Verification validation failed');
         if (notifyError) notifyError(error);
         throw new Error(error);
       }
 
       if (verificationData.verificationCode.length !== 6) {
         const error = 'Please enter a valid 6-digit verification code';
-        devError.error('❌ Verification code length validation failed');
+        console.error('❌ Verification code length validation failed');
         if (notifyError) notifyError(error);
         throw new Error(error);
       }
@@ -327,7 +327,7 @@ export const useBookingsApi = () => {
         body: JSON.stringify(verificationData)
       });
       
-      __DEV && devError.log('✅ Verification successful:', result);
+      __DEV && console.log('✅ Verification successful:', result);
       
       if (result.success && notifyBookingSuccess) {
         notifyBookingSuccess(result.booking.confirmationCode);
@@ -336,7 +336,7 @@ export const useBookingsApi = () => {
       return result;
       
     } catch (error) {
-      devError.error('❌ verifyBooking error:', error);
+      console.error('❌ verifyBooking error:', error);
       
       // Handle specific verification errors
       if (error.message.includes('Invalid verification code')) {
@@ -356,59 +356,59 @@ export const useBookingsApi = () => {
 
   const getAssignedBookings = useCallback(async () => {
     try {
-      __DEV && devError.log('📋 useBookingsApi: Getting assigned bookings');
+      __DEV && console.log('📋 useBookingsApi: Getting assigned bookings');
       return await api.execute('/bookings/assigned');
     } catch (error) {
-      devError.error('❌ getAssignedBookings error:', error);
+      console.error('❌ getAssignedBookings error:', error);
       throw error;
     }
   }, [api]);
 
   const updateBookingStatus = useCallback(async (bookingId, status, notes = '') => {
     try {
-      __DEV && devError.log('📝 useBookingsApi: Updating booking status:', { bookingId, status, notes });
+      __DEV && console.log('📝 useBookingsApi: Updating booking status:', { bookingId, status, notes });
       return await api.execute(`/bookings/${bookingId}/status`, {
         method: HTTP_METHODS.PATCH,
         body: JSON.stringify({ status, notes })
       });
     } catch (error) {
-      devError.error('❌ updateBookingStatus error:', error);
+      console.error('❌ updateBookingStatus error:', error);
       throw error;
     }
   }, [api]);
 
   const completeBooking = useCallback(async (bookingId, notes = '') => {
     try {
-      __DEV && devError.log('✅ useBookingsApi: Completing booking:', { bookingId, notes });
+      __DEV && console.log('✅ useBookingsApi: Completing booking:', { bookingId, notes });
       return await api.execute(`/bookings/${bookingId}/complete`, {
         method: HTTP_METHODS.PATCH,
         body: JSON.stringify({ notes })
       });
     } catch (error) {
-      devError.error('❌ completeBooking error:', error);
+      console.error('❌ completeBooking error:', error);
       throw error;
     }
   }, [api]);
 
   const updateBookingNotes = useCallback(async (bookingId, notes) => {
     try {
-      __DEV && devError.log('📝 useBookingsApi: Updating booking notes:', { bookingId, notes });
+      __DEV && console.log('📝 useBookingsApi: Updating booking notes:', { bookingId, notes });
       return await api.execute(`/bookings/${bookingId}/notes`, {
         method: HTTP_METHODS.PATCH,
         body: JSON.stringify({ notes })
       });
     } catch (error) {
-      devError.error('❌ updateBookingNotes error:', error);
+      console.error('❌ updateBookingNotes error:', error);
       throw error;
     }
   }, [api]);
 
   const getBookingByCode = useCallback(async (confirmationCode) => {
     try {
-      __DEV && devError.log('🔍 useBookingsApi: Getting booking by code:', confirmationCode);
+      __DEV && console.log('🔍 useBookingsApi: Getting booking by code:', confirmationCode);
       return await api.execute(`/bookings/${confirmationCode}`);
     } catch (error) {
-      devError.error('❌ getBookingByCode error:', error);
+      console.error('❌ getBookingByCode error:', error);
       throw error;
     }
   }, [api]);
@@ -589,7 +589,7 @@ export const usePollingApi = (endpoint, interval = 30000, options = {}) => {
       try {
         await api.execute(endpoint, options);
       } catch (error) {
-        devError.error('Polling error:', error);
+        console.error('Polling error:', error);
       }
     };
 

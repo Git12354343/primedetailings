@@ -89,8 +89,8 @@ model Service {
   id                Int              @id @default(autoincrement())
   name              String           @db.VarChar(100)
   description       String?
+  includes          String?          @db.Text
   category          ServiceCategory  @default(DETAILING)
-  pricingMode       PricingMode      @default(FIXED)
   createdAt         DateTime         @default(now())
   isActive          Boolean          @default(true)
   isFeatured        Boolean          @default(false)
@@ -118,9 +118,9 @@ model ServicePricing {
 
 model AddOn {
   id          Int           @id @default(autoincrement())
-  name        String        @unique @db.VarChar(100)
-  description String?
-  category    AddOnCategory @default(ENHANCEMENT)
+  name          String        @unique @db.VarChar(100)
+  description   String?
+  category      AddOnCategory @default(ENHANCEMENT)
   price       Decimal       @db.Decimal(8, 2)
   createdAt   DateTime      @default(now())
   isActive    Boolean       @default(true)
@@ -200,7 +200,6 @@ model TrainingModule {
   title            String             @db.VarChar(150)
   titleFr          String?            @db.VarChar(150)
   description      String?
-  descriptionFr    String?
   content          String             @db.Text
   contentFr        String?            @db.Text
   category         TrainingCategory   @default(GENERAL)
@@ -258,7 +257,6 @@ model TrainingProgress {
 model ChecklistTemplate {
   id          Int                    @id @default(autoincrement())
   name        String                 @db.VarChar(100)
-  nameFr      String?                @db.VarChar(100)
   serviceType ChecklistServiceType   @default(STANDARD)
   isDefault   Boolean                @default(false)
   isActive    Boolean                @default(true)
@@ -400,11 +398,6 @@ enum AddOnCategory {
 // ENUMS — new
 // ─────────────────────────────────────────────────────────────────────────────
 
-enum PricingMode {
-  FIXED
-  ESTIMATE
-  QUOTE_REQUIRED
-}
 
 enum TrainingCategory {
   GENERAL

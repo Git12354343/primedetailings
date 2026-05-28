@@ -37,7 +37,9 @@ const Modal = ({ title, onClose, children, wide }) => (
 const ServiceFormModal = ({ isOpen, onClose, onSubmit, vehicleTypes, serviceCategories, title, initialData }) => {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
+    nameFr: initialData?.nameFr || '',
     description: initialData?.description || '',
+    descriptionFr: initialData?.descriptionFr || '',
     category: initialData?.category || 'DETAILING',
     pricing: initialData?.pricing || vehicleTypes.reduce((a, t) => ({ ...a, [t]: '' }), {}),
     isActive: initialData?.isActive ?? true,
@@ -56,16 +58,31 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, vehicleTypes, serviceCate
     <Modal title={title} onClose={onClose} wide>
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         <div>
-          <label style={labelCls}>Service Name *</label>
+          <label style={labelCls}>Service Name (EN) *</label>
           <input style={inputCls} value={formData.name} required
             onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
             onFocus={e => e.target.style.borderColor = GOLD_S} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
         </div>
         <div>
-          <label style={labelCls}>Description</label>
+          <label style={labelCls}>Service Name (FR) <span style={{color:'rgba(255,255,255,0.35)',fontWeight:400}}>— optionnel</span></label>
+          <input style={inputCls} value={formData.nameFr || ''}
+            onChange={e => setFormData(p => ({ ...p, nameFr: e.target.value }))}
+            placeholder="ex. Nettoyage intérieur complet"
+            onFocus={e => e.target.style.borderColor = GOLD_S} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
+        </div>
+        <div>
+          <label style={labelCls}>Description (EN)</label>
           <textarea style={{ ...inputCls, resize: 'vertical', minHeight: '80px' }} rows={3}
             value={formData.description}
             onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
+            onFocus={e => e.target.style.borderColor = GOLD_S} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
+        </div>
+        <div>
+          <label style={labelCls}>Description (FR) <span style={{color:'rgba(255,255,255,0.35)',fontWeight:400}}>— optionnel</span></label>
+          <textarea style={{ ...inputCls, resize: 'vertical', minHeight: '80px' }} rows={3}
+            value={formData.descriptionFr || ''}
+            onChange={e => setFormData(p => ({ ...p, descriptionFr: e.target.value }))}
+            placeholder="ex. Description du service en français..."
             onFocus={e => e.target.style.borderColor = GOLD_S} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
         </div>
         <div>
@@ -119,7 +136,8 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, vehicleTypes, serviceCate
 // ── Add-on form ────────────────────────────────────────────────────────────────
 const AddOnFormModal = ({ isOpen, onClose, onSubmit, addOnCategories, title, initialData }) => {
   const [formData, setFormData] = useState({
-    name: initialData?.name || '', description: initialData?.description || '',
+    name: initialData?.name || '', nameFr: initialData?.nameFr || '',
+    description: initialData?.description || '', descriptionFr: initialData?.descriptionFr || '',
     category: initialData?.category || 'ENHANCEMENT', price: initialData?.price || '',
     sortOrder: initialData?.sortOrder || 0, isActive: initialData?.isActive ?? true,
   });
@@ -137,7 +155,7 @@ const AddOnFormModal = ({ isOpen, onClose, onSubmit, addOnCategories, title, ini
     <Modal title={title} onClose={onClose}>
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         <div>
-          <label style={labelCls}>Add-on Name *</label>
+          <label style={labelCls}>Add-on Name (EN) *</label>
           <input style={inputCls} value={formData.name} required
             onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
             onFocus={e => e.target.style.borderColor = GOLD_S} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />

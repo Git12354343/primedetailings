@@ -24,25 +24,25 @@ class TwilioSMSService {
       this.fromNumber = process.env.TWILIO_PHONE_NUMBER;
       this.isConfigured = true;
       
-      devError.log('✅ Twilio SMS service configured successfully');
-      devError.log(`📱 Sending from: ${this.fromNumber}`);
+      console.log('✅ Twilio SMS service configured successfully');
+      console.log(`📱 Sending from: ${this.fromNumber}`);
       
     } catch (error) {
-      devError.error('❌ Twilio service initialization failed:', error.message);
-      devError.log('💡 Make sure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER are set in your .env file');
+      console.error('❌ Twilio service initialization failed:', error.message);
+      console.log('💡 Make sure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER are set in your .env file');
     }
   }
 
   // Send SMS
   async sendSMS(phoneNumber, message) {
     if (!this.isConfigured) {
-      devError.error('❌ Twilio not configured - cannot send SMS');
+      console.error('❌ Twilio not configured - cannot send SMS');
       return false;
     }
 
     // Validate phone number
     if (!this.isValidPhoneNumber(phoneNumber)) {
-      devError.error('❌ Invalid phone number format:', phoneNumber);
+      console.error('❌ Invalid phone number format:', phoneNumber);
       return false;
     }
 
@@ -59,19 +59,19 @@ class TwilioSMSService {
         to: this.formatPhoneNumber(phoneNumber)
       });
 
-      devError.log(`✅ SMS sent to ${phoneNumber}. SID: ${result.sid}`);
+      console.log(`✅ SMS sent to ${phoneNumber}. SID: ${result.sid}`);
       return true;
       
     } catch (error) {
-      devError.error('❌ Twilio SMS error:', error.message);
+      console.error('❌ Twilio SMS error:', error.message);
       
       // Handle common Twilio errors
       if (error.code === 21211) {
-        devError.error('❌ Invalid phone number format');
+        console.error('❌ Invalid phone number format');
       } else if (error.code === 21408) {
-        devError.error('❌ Permission denied for this phone number');
+        console.error('❌ Permission denied for this phone number');
       } else if (error.code === 21610) {
-        devError.error('❌ Message blocked - likely unsubscribed number');
+        console.error('❌ Message blocked - likely unsubscribed number');
       }
       
       return false;
@@ -168,7 +168,7 @@ Questions? ${businessPhone}`;
   // Test SMS functionality
   async testSMS(phoneNumber = process.env.TEST_PHONE_NUMBER) {
     if (!phoneNumber) {
-      devError.log('❌ No test phone number provided. Set TEST_PHONE_NUMBER in .env file');
+      console.log('❌ No test phone number provided. Set TEST_PHONE_NUMBER in .env file');
       return false;
     }
 
@@ -176,13 +176,13 @@ Questions? ${businessPhone}`;
 Time: ${new Date().toLocaleTimeString()}
 This is a test message to verify SMS functionality.`;
     
-    devError.log(`🧪 Testing SMS to ${phoneNumber}...`);
+    console.log(`🧪 Testing SMS to ${phoneNumber}...`);
     const result = await this.sendSMS(phoneNumber, testMessage);
     
     if (result) {
-      devError.log('✅ SMS test successful!');
+      console.log('✅ SMS test successful!');
     } else {
-      devError.log('❌ SMS test failed');
+      console.log('❌ SMS test failed');
     }
     
     return result;
@@ -191,7 +191,7 @@ This is a test message to verify SMS functionality.`;
   // Get account balance (useful for monitoring)
   async getAccountBalance() {
     if (!this.isConfigured) {
-      devError.log('❌ Twilio not configured');
+      console.log('❌ Twilio not configured');
       return null;
     }
 
@@ -202,7 +202,7 @@ This is a test message to verify SMS functionality.`;
         currency: 'USD'
       };
     } catch (error) {
-      devError.error('❌ Failed to get account balance:', error.message);
+      console.error('❌ Failed to get account balance:', error.message);
       return null;
     }
   }
@@ -210,7 +210,7 @@ This is a test message to verify SMS functionality.`;
   // Get SMS usage for current month
   async getMonthlyUsage() {
     if (!this.isConfigured) {
-      devError.log('❌ Twilio not configured');
+      console.log('❌ Twilio not configured');
       return null;
     }
 
@@ -230,7 +230,7 @@ This is a test message to verify SMS functionality.`;
       } : { count: 0, price: '0', priceUnit: 'USD' };
       
     } catch (error) {
-      devError.error('❌ Failed to get usage data:', error.message);
+      console.error('❌ Failed to get usage data:', error.message);
       return null;
     }
   }
@@ -249,7 +249,7 @@ This is a test message to verify SMS functionality.`;
       return false;
       
     } catch (error) {
-      devError.error('❌ Failed to check opt-out status:', error.message);
+      console.error('❌ Failed to check opt-out status:', error.message);
       return false;
     }
   }
@@ -257,14 +257,14 @@ This is a test message to verify SMS functionality.`;
   // Send bulk SMS (for admin notifications, etc.)
   async sendBulkSMS(phoneNumbers, message) {
     if (!this.isConfigured) {
-      devError.error('❌ Twilio not configured - cannot send bulk SMS');
+      console.error('❌ Twilio not configured - cannot send bulk SMS');
       return { success: 0, failed: phoneNumbers.length };
     }
 
     let success = 0;
     let failed = 0;
     
-    devError.log(`📱 Sending bulk SMS to ${phoneNumbers.length} numbers...`);
+    console.log(`📱 Sending bulk SMS to ${phoneNumbers.length} numbers...`);
     
     for (const phoneNumber of phoneNumbers) {
       try {
@@ -279,12 +279,12 @@ This is a test message to verify SMS functionality.`;
         await this.delay(500);
         
       } catch (error) {
-        devError.error(`❌ Failed to send SMS to ${phoneNumber}:`, error.message);
+        console.error(`❌ Failed to send SMS to ${phoneNumber}:`, error.message);
         failed++;
       }
     }
     
-    devError.log(`📊 Bulk SMS completed: ${success} success, ${failed} failed`);
+    console.log(`📊 Bulk SMS completed: ${success} success, ${failed} failed`);
     return { success, failed };
   }
 

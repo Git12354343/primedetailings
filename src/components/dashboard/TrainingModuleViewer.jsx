@@ -44,7 +44,7 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
         const data = await res.json();
         if (data.success) setModule(data.module);
       } catch (err) {
-        devError.error('Module load error:', err);
+        console.error('Module load error:', err);
       } finally {
         setLoading(false);
       }
@@ -66,7 +66,7 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
         setPhase('result');
       }
     } catch (err) {
-      devError.error('Quiz submit error:', err);
+      console.error('Quiz submit error:', err);
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +83,7 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
       const data = await res.json();
       if (data.success) onComplete?.(moduleId, { status: 'COMPLETED', score: 100 });
     } catch (err) {
-      devError.error(err);
+      console.error(err);
     } finally {
       setSubmitting(false);
     }

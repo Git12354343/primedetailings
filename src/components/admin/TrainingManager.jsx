@@ -31,7 +31,7 @@ const TrainingManager = ({ adminToken }) => {
       const res  = await fetch(`${API_URL}/training/admin/modules`, { headers });
       const data = await res.json();
       if (data.success) setModules(data.modules);
-    } catch (err) { devError.error(err); }
+    } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
 
@@ -48,7 +48,7 @@ const TrainingManager = ({ adminToken }) => {
       const res    = await fetch(url, { method, headers, body: JSON.stringify({ ...form, estimatedMinutes: parseInt(form.estimatedMinutes) || null }) });
       const data   = await res.json();
       if (data.success) { await load(); setCreating(false); setEditing(null); setForm(emptyForm); }
-    } catch (err) { devError.error(err); }
+    } catch (err) { console.error(err); }
     finally { setSaving(false); }
   };
 

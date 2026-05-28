@@ -1,3 +1,4 @@
+import { useTranslation } from '../hooks/useTranslation';
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Phone, Zap } from 'lucide-react';
@@ -5,6 +6,7 @@ import { ChevronRight, Phone, Zap } from 'lucide-react';
 const HIDDEN_ROUTES = ['/booking', '/detailer-login', '/detailer-dashboard', '/admin'];
 
 const StickyBookBar = () => {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const location = useLocation();
 
@@ -51,10 +53,10 @@ const StickyBookBar = () => {
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 16px 4px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
             <Zap style={{ width:'12px', height:'12px', color:'#f59e0b' }} />
-            <span style={{ fontSize:'12px', fontWeight:600, color:'#f59e0b' }}>Available today</span>
+            <span style={{ fontSize:'12px', fontWeight:600, color:'#f59e0b' }}>{t('stickyBar.available')}</span>
           </div>
           <span style={{ fontSize:'12px', color:'rgba(255,255,255,0.5)' }}>
-            Starting at <span style={{ color:'#fff', fontWeight:700 }}>$89</span>
+            {t('stickyBar.startingAt')} <span style={{ color:'#fff', fontWeight:700 }}>$89</span>
           </span>
         </div>
 
@@ -70,7 +72,7 @@ const StickyBookBar = () => {
             }}
           >
             <Phone style={{ width:'16px', height:'16px' }} />
-            Call
+            {t('stickyBar.call')}
           </a>
 
           <Link
@@ -82,7 +84,7 @@ const StickyBookBar = () => {
               textDecoration:'none',
             }}
           >
-            Book Appointment
+            {t('stickyBar.book')}
             <ChevronRight style={{ width:'16px', height:'16px' }} />
           </Link>
         </div>

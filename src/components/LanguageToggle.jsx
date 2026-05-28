@@ -3,25 +3,36 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 
 const LanguageToggle = ({ className = '' }) => {
-  const { lang, toggle } = useLanguage();
+  const { lang, setLang } = useLanguage();
 
   return (
-    <button
-      onClick={toggle}
-      className={`flex items-center gap-0.5 text-xs font-bold tracking-wider transition-all ${className}`}
-      aria-label={lang === 'en' ? 'Switch to French' : 'Passer en anglais'}
-      style={{ color: 'rgba(255,255,255,0.6)' }}
-      onMouseEnter={e => e.currentTarget.style.color = '#f5d376'}
-      onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
-    >
-      <span style={{ color: lang === 'en' ? '#f5d376' : 'rgba(255,255,255,0.4)', fontWeight: lang === 'en' ? 700 : 400 }}>
+    <div className={`flex items-center ${className}`}
+      style={{ gap:'2px', background:'rgba(255,255,255,0.06)', borderRadius:'8px', padding:'3px', border:'1px solid rgba(255,255,255,0.1)' }}>
+      <button
+        onClick={() => setLang('en')}
+        style={{
+          padding:'3px 8px', borderRadius:'6px', fontSize:'11px', fontWeight:700,
+          letterSpacing:'0.05em', transition:'all 0.15s', cursor:'pointer', border:'none',
+          background: lang === 'en' ? 'linear-gradient(135deg,#c9a84c,#f5d376)' : 'transparent',
+          color: lang === 'en' ? '#0a0a0a' : 'rgba(255,255,255,0.45)',
+        }}
+        aria-label="Switch to English"
+      >
         EN
-      </span>
-      <span style={{ color: 'rgba(255,255,255,0.3)', margin: '0 2px' }}>|</span>
-      <span style={{ color: lang === 'fr' ? '#f5d376' : 'rgba(255,255,255,0.4)', fontWeight: lang === 'fr' ? 700 : 400 }}>
+      </button>
+      <button
+        onClick={() => setLang('fr')}
+        style={{
+          padding:'3px 8px', borderRadius:'6px', fontSize:'11px', fontWeight:700,
+          letterSpacing:'0.05em', transition:'all 0.15s', cursor:'pointer', border:'none',
+          background: lang === 'fr' ? 'linear-gradient(135deg,#c9a84c,#f5d376)' : 'transparent',
+          color: lang === 'fr' ? '#0a0a0a' : 'rgba(255,255,255,0.45)',
+        }}
+        aria-label="Passer en français"
+      >
         FR
-      </span>
-    </button>
+      </button>
+    </div>
   );
 };
 

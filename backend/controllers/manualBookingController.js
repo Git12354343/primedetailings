@@ -65,7 +65,7 @@ const createManualBooking = async (req, res) => {
 
     // Add to Google Calendar (non-blocking, safe)
     if (addBookingToCalendar) {
-      addBookingToCalendar(booking).catch(err => devError.error('Calendar error:', err));
+      addBookingToCalendar(booking).catch(err => console.error('Calendar error:', err));
     }
 
     res.status(201).json({
@@ -84,7 +84,7 @@ const createManualBooking = async (req, res) => {
     });
 
   } catch (error) {
-    devError.error('Create manual booking error:', error);
+    console.error('Create manual booking error:', error);
     if (error.code === 'P2002') {
       return res.status(400).json({ success: false, message: 'Confirmation code conflict, please try again' });
     }

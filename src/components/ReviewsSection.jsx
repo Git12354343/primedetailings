@@ -1,3 +1,4 @@
+import { useTranslation } from '../hooks/useTranslation';
 // src/components/ReviewsSection.jsx — MERGED
 // Uses the Testimonials card style (avatar initials, colored accents, service
 // badge, stats row, hover glow) but fetches live from GET /api/reviews/active.
@@ -23,7 +24,7 @@ const SEED = [
 const STATS = [
   { value:'5★',    label:'Trusted by Montréal drivers' },
   { value:'100%',  label:'Mobile — we come to you'     },
-  { value:'Real',  label:'Verified customer results'   },
+  { value:'Real',  label:'Verified customer results' },
   { value:'MTL',   label:'Across Greater Montréal'     },
 ];
 
@@ -83,6 +84,7 @@ const ReviewCard = ({ review, color }) => (
 );
 
 const ReviewsSection = () => {
+  const { t } = useTranslation();
   const [reviews, setReviews]   = useState(SEED);
   const [current, setCurrent]   = useState(0);
   const [paused, setPaused]     = useState(false);

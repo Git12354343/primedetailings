@@ -36,7 +36,7 @@ async function scheduleImageDeletion(bookingId) {
   });
 
   if (updated.count > 0) {
-    devError.log(
+    console.log(
       `[ImageCleanup] Scheduled ${updated.count} images for deletion (bookingId=${bookingId})`
     );
   }
@@ -70,7 +70,7 @@ async function cleanupExpiredImages() {
         .remove([img.storagePath]);
 
       if (error) {
-        devError.error(
+        console.error(
           `[ImageCleanup] Storage delete failed for ${img.storagePath}:`,
           error.message
         );
@@ -87,7 +87,7 @@ async function cleanupExpiredImages() {
 
       deleted++;
     } catch (err) {
-      devError.error(
+      console.error(
         `[ImageCleanup] Error deleting image id=${img.id}:`,
         err.message
       );
@@ -122,7 +122,7 @@ async function cleanupExpiredImages() {
 
       deleted++;
     } catch (err) {
-      devError.error(
+      console.error(
         `[ImageCleanup] Orphan delete error id=${img.id}:`,
         err.message
       );
@@ -130,7 +130,7 @@ async function cleanupExpiredImages() {
     }
   }
 
-  devError.log(
+  console.log(
     `[ImageCleanup] Done — deleted: ${deleted}, errors: ${errors}`
   );
 

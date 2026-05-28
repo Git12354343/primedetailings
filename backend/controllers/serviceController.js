@@ -7,7 +7,12 @@ const VEHICLE_TYPES = ['Sedan', 'SUV', 'Truck', 'Coupe'];
 const serializeService = (service) => ({
   id:                service.id,
   name:              service.name,
+  nameFr:            service.nameFr        || null,
   description:       service.description,
+  descriptionFr:     service.descriptionFr || null,
+  includes:          service.includes      || null,
+  includesFr:        service.includesFr    || null,
+  pricingMode:       service.pricingMode   || 'FIXED',
   category:          service.category,
   isActive:          service.isActive,
   isFeatured:        service.isFeatured   ?? false,
@@ -31,7 +36,7 @@ const getAllServices = async (req, res) => {
     });
     res.json({ success: true, services: services.map(serializeService) });
   } catch (error) {
-    devError.error('getAllServices error:', error);
+    console.error('getAllServices error:', error);
     res.status(500).json({ success: false, message: 'Error fetching services' });
   }
 };
@@ -46,7 +51,7 @@ const getActiveServices = async (req, res) => {
     });
     res.json({ success: true, services: services.map(serializeService) });
   } catch (error) {
-    devError.error('getActiveServices error:', error);
+    console.error('getActiveServices error:', error);
     res.status(500).json({ success: false, message: 'Error fetching active services' });
   }
 };
@@ -54,7 +59,7 @@ const getActiveServices = async (req, res) => {
 // ── POST /api/services ────────────────────────────────────────────────────────
 const createService = async (req, res) => {
   try {
-    const { name, description, category, pricing, sortOrder, isFeatured, estimatedDuration, promoPrice } = req.body;
+    const { name, nameFr, description, descriptionFr, includes, includesFr, category, pricing, sortOrder, isFeatured, estimatedDuration, promoPrice, pricingMode } = req.body;
 
     if (!name || !pricing) {
       return res.status(400).json({ success: false, message: 'Name and pricing are required' });
@@ -68,7 +73,12 @@ const createService = async (req, res) => {
     const service = await prisma.service.create({
       data: {
         name:              name.trim(),
-        description:       description?.trim() || null,
+        nameFr:            nameFr?.trim()            || null,
+        description:       description?.trim()       || null,
+        descriptionFr:     descriptionFr?.trim()     || null,
+        includes:          includes?.trim()          || null,
+        includesFr:        includesFr?.trim()        || null,
+        pricingMode:       pricingMode               || 'FIXED',
         category:          category || 'DETAILING',
         sortOrder:         sortOrder || 0,
         isFeatured:        isFeatured ?? false,
@@ -86,7 +96,7 @@ const createService = async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Service created', service: serializeService(service) });
   } catch (error) {
-    devError.error('createService error:', error);
+    console.error('createService error:', error);
     if (error.code === 'P2002') return res.status(400).json({ success: false, message: 'Service name already exists' });
     res.status(500).json({ success: false, message: 'Error creating service' });
   }
@@ -96,7 +106,7 @@ const createService = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, category, pricing, isActive, isFeatured, sortOrder, estimatedDuration, promoPrice } = req.body;
+    const { name, nameFr, description, descriptionFr, includes, includesFr, category, pricing, isActive, isFeatured, sortOrder, estimatedDuration, promoPrice, pricingMode } = req.body;
 
     const existing = await prisma.service.findUnique({ where: { id: parseInt(id) }, include: { pricing: true } });
     if (!existing) return res.status(404).json({ success: false, message: 'Service not found' });
@@ -108,7 +118,12 @@ const updateService = async (req, res) => {
 
     const updateData = {};
     if (name              !== undefined) updateData.name              = name.trim();
-    if (description       !== undefined) updateData.description       = description?.trim() || null;
+    if (nameFr            !== undefined) updateData.nameFr            = nameFr?.trim()        || null;
+    if (description       !== undefined) updateData.description       = description?.trim()   || null;
+    if (descriptionFr     !== undefined) updateData.descriptionFr     = descriptionFr?.trim() || null;
+    if (includes          !== undefined) updateData.includes          = includes?.trim()      || null;
+    if (includesFr        !== undefined) updateData.includesFr        = includesFr?.trim()    || null;
+    if (pricingMode       !== undefined) updateData.pricingMode       = pricingMode;
     if (category          !== undefined) updateData.category          = category;
     if (isActive          !== undefined) updateData.isActive          = isActive;
     if (isFeatured        !== undefined) updateData.isFeatured        = isFeatured;
@@ -136,7 +151,7 @@ const updateService = async (req, res) => {
 
     res.json({ success: true, message: 'Service updated', service: serializeService(updatedService) });
   } catch (error) {
-    devError.error('updateService error:', error);
+    console.error('updateService error:', error);
     res.status(500).json({ success: false, message: 'Error updating service' });
   }
 };
@@ -151,7 +166,7 @@ const deleteService = async (req, res) => {
     await prisma.service.update({ where: { id: parseInt(id) }, data: { isActive: false } });
     res.json({ success: true, message: 'Service deactivated' });
   } catch (error) {
-    devError.error('deleteService error:', error);
+    console.error('deleteService error:', error);
     res.status(500).json({ success: false, message: 'Error deactivating service' });
   }
 };
@@ -167,14 +182,14 @@ const permanentDeleteService = async (req, res) => {
     await prisma.service.delete({ where: { id: parseInt(id) } });
     res.json({ success: true, message: 'Service permanently deleted' });
   } catch (error) {
-    devError.error('permanentDeleteService error:', error);
+    console.error('permanentDeleteService error:', error);
     res.status(500).json({ success: false, message: 'Error deleting service' });
   }
 };
 
 // ── Add-ons ───────────────────────────────────────────────────────────────────
 const serializeAddOn = (a) => ({
-  id: a.id, name: a.name, description: a.description,
+  id: a.id, name: a.name, nameFr: a.nameFr || null, description: a.description, descriptionFr: a.descriptionFr || null,
   category: a.category, price: parseFloat(a.price),
   isActive: a.isActive, sortOrder: a.sortOrder,
   createdAt: a.createdAt, updatedAt: a.updatedAt,
@@ -185,7 +200,7 @@ const getAllAddOns = async (req, res) => {
     const addOns = await prisma.addOn.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
     res.json({ success: true, addOns: addOns.map(serializeAddOn) });
   } catch (error) {
-    devError.error('getAllAddOns error:', error);
+    console.error('getAllAddOns error:', error);
     res.status(500).json({ success: false, message: 'Error fetching add-ons' });
   }
 };
@@ -195,7 +210,7 @@ const getActiveAddOns = async (req, res) => {
     const addOns = await prisma.addOn.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
     res.json({ success: true, addOns: addOns.map(serializeAddOn) });
   } catch (error) {
-    devError.error('getActiveAddOns error:', error);
+    console.error('getActiveAddOns error:', error);
     res.status(500).json({ success: false, message: 'Error fetching active add-ons' });
   }
 };
@@ -209,7 +224,7 @@ const createAddOn = async (req, res) => {
     });
     res.status(201).json({ success: true, message: 'Add-on created', addOn: serializeAddOn(addOn) });
   } catch (error) {
-    devError.error('createAddOn error:', error);
+    console.error('createAddOn error:', error);
     res.status(500).json({ success: false, message: 'Error creating add-on' });
   }
 };
@@ -217,12 +232,15 @@ const createAddOn = async (req, res) => {
 const updateAddOn = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, category, price, isActive, sortOrder } = req.body;
+    const { name, nameFr, description, descriptionFr, category, price, isActive, sortOrder } = req.body;
     const existing = await prisma.addOn.findUnique({ where: { id: parseInt(id) } });
     if (!existing) return res.status(404).json({ success: false, message: 'Add-on not found' });
 
     const data = {};
-    if (name        !== undefined) data.name        = name.trim();
+    if (name        !== undefined) data.name          = name.trim();
+    if (nameFr      !== undefined) data.nameFr        = nameFr?.trim() || null;
+    if (description !== undefined) data.description    = description?.trim() || null;
+    if (descriptionFr !== undefined) data.descriptionFr = descriptionFr?.trim() || null;
     if (description !== undefined) data.description = description?.trim() || null;
     if (category    !== undefined) data.category    = category;
     if (price       !== undefined) {
@@ -235,7 +253,7 @@ const updateAddOn = async (req, res) => {
     const updated = await prisma.addOn.update({ where: { id: parseInt(id) }, data });
     res.json({ success: true, message: 'Add-on updated', addOn: serializeAddOn(updated) });
   } catch (error) {
-    devError.error('updateAddOn error:', error);
+    console.error('updateAddOn error:', error);
     res.status(500).json({ success: false, message: 'Error updating add-on' });
   }
 };
@@ -248,7 +266,7 @@ const deleteAddOn = async (req, res) => {
     await prisma.addOn.update({ where: { id: parseInt(id) }, data: { isActive: false } });
     res.json({ success: true, message: 'Add-on deactivated' });
   } catch (error) {
-    devError.error('deleteAddOn error:', error);
+    console.error('deleteAddOn error:', error);
     res.status(500).json({ success: false, message: 'Error deactivating add-on' });
   }
 };
@@ -295,7 +313,7 @@ const calculateDynamicPricing = async (req, res) => {
     breakdown.total    = total;
     res.json({ success: true, pricing: breakdown });
   } catch (error) {
-    devError.error('calculateDynamicPricing error:', error);
+    console.error('calculateDynamicPricing error:', error);
     res.status(500).json({ success: false, message: 'Error calculating pricing' });
   }
 };

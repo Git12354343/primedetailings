@@ -70,7 +70,7 @@ const getPhotos = async (req, res) => {
     });
     res.json({ success: true, photos });
   } catch (error) {
-    devError.error('getPhotos error:', error);
+    console.error('getPhotos error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch photos' });
   }
 };
@@ -115,7 +115,7 @@ const uploadPhoto = async (req, res) => {
 
     res.json({ success: true, photo });
   } catch (error) {
-    devError.error('uploadPhoto error:', error);
+    console.error('uploadPhoto error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -131,7 +131,7 @@ const updatePhoto = async (req, res) => {
     const photo = await prisma.jobPhoto.update({ where: { id: parseInt(req.params.id) }, data });
     res.json({ success: true, photo });
   } catch (error) {
-    devError.error('updatePhoto error:', error);
+    console.error('updatePhoto error:', error);
     res.status(500).json({ success: false, message: 'Failed to update photo' });
   }
 };
@@ -150,13 +150,13 @@ const deletePhoto = async (req, res) => {
     };
     const paths = [extractPath(photo.beforeUrl), photo.afterUrl ? extractPath(photo.afterUrl) : null].filter(Boolean);
     if (paths.length) {
-      await supabase.storage.from('job-photos').remove(paths).catch(e => devError.error('Storage remove:', e.message));
+      await supabase.storage.from('job-photos').remove(paths).catch(e => console.error('Storage remove:', e.message));
     }
 
     await prisma.jobPhoto.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ success: true });
   } catch (error) {
-    devError.error('deletePhoto error:', error);
+    console.error('deletePhoto error:', error);
     res.status(500).json({ success: false, message: 'Failed to delete photo' });
   }
 };

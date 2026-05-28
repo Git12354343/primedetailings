@@ -1,17 +1,16 @@
-export const devLog = (...args) => {
-  if (import.meta.env.DEV) {
-    console.log(...args);
-  }
+// backend/logger.js — dev-only logging for Node.js backend
+const isDev = process.env.NODE_ENV !== 'production';
+
+const devLog = (...args) => {
+  if (isDev) console.log(...args);
 };
 
-export const devWarn = (...args) => {
-  if (import.meta.env.DEV) {
-    console.warn(...args);
-  }
+const devWarn = (...args) => {
+  if (isDev) console.warn(...args);
 };
 
-export const devError = (...args) => {
-  if (import.meta.env.DEV) {
-    console.error(...args);
-  }
+const devError = (...args) => {
+  if (isDev) console.error(...args);
 };
+
+module.exports = { devLog, devWarn, devError };
