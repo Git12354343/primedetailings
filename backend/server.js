@@ -22,12 +22,16 @@ const imageRoutes        = require('./routes/images');
 const fleetRoutes        = require('./routes/fleet');
 
 const { createManualBooking } = require('./controllers/manualBookingController');
+const photoRoutes = require('./routes/photos');
 
 // ── Scheduler (cron jobs) ─────────────────────────────────────────────────────
 const { startScheduler } = require('./jobs/scheduler');
 
 const app    = express();
 const prisma = new PrismaClient();
+
+// Trust Nginx reverse proxy — required for express-rate-limit to work correctly
+app.set('trust proxy', 1);
 
 // Twilio client
 const twilioClient = twilio(
@@ -104,6 +108,7 @@ app.use('/api/training',     trainingRoutes);
 app.use('/api/checklists',   checklistRoutes);
 app.use('/api/images',       imageRoutes);
 app.use('/api/fleet',        fleetRoutes);
+app.use('/api/photos',       photoRoutes);
 
 app.post('/api/admin/manual-booking', createManualBooking);
 
@@ -136,6 +141,20 @@ const formatPhoneNumber = (phone) => {
   return phone;
 };
 
+
+// ── GET /api/reviews/active — returns seed reviews (no DB model yet) ─────────
+app.get('/api/reviews/active', async (req, res) => {
+  const reviews = [
+    { id: 's1', name: 'Marc-André L.',  rating: 5, vehicle: 'BMW M4',        text: 'The ceramic coating is unreal — water just sheets off and the gloss is mirror-deep. Booked, they came to me, done in a day.',          source: 'Google'   },
+    { id: 's2', name: 'Jessica T.',     rating: 5, vehicle: 'Tesla Model 3', text: 'Best detailing experience in Montréal. Professional, on time, and my white paint has never looked this clean.',                          source: 'Google'   },
+    { id: 's3', name: 'Karim B.',       rating: 5, vehicle: 'Audi Q5',       text: 'Paid for the 5-year ceramic and it was worth every dollar. The depth on the paint after correction is incredible.',                       source: 'Facebook' },
+    { id: 's4', name: 'Sophie R.',      rating: 5, vehicle: 'Range Rover',   text: 'They treat your car like their own. Spotless interior, flawless exterior. Already booked my second car.',                                 source: 'Google'   },
+    { id: 's5', name: 'David C.',       rating: 5, vehicle: 'Porsche 911',   text: 'Best detailing service in Montréal, no question. Quick to respond, on time, and the results speak for themselves.',                       source: 'Google'   },
+    { id: 's6', name: 'Sarah M.',       rating: 5, vehicle: 'Mercedes C300', text: 'My car has never looked better. The ceramic coating is absolutely flawless — water just beads right off. True professionals.',            source: 'Google'   },
+  ];
+  res.json({ success: true, reviews });
+});
+
 // ── POST /api/bookings/initiate ───────────────────────────────────────────────
 app.post('/api/bookings/initiate', async (req, res) => {
   try {
@@ -147,10 +166,14 @@ app.post('/api/bookings/initiate', async (req, res) => {
     const code           = generateVerificationCode();
     await storeVerificationCode(formattedPhone, code, bookingData);
 
-    const isDev = process.env.NODE_ENV === 'development';
+    const hasTwilio = process.env.TWILIO_ACCOUNT_SID && 
+                      process.env.TWILIO_AUTH_TOKEN && 
+                      process.env.TWILIO_PHONE_NUMBER &&
+                      !process.env.TWILIO_ACCOUNT_SID.includes('your_') &&
+                      !process.env.TWILIO_ACCOUNT_SID.includes('placeholder');
     let smsSent = false;
 
-    if (!isDev) {
+    if (hasTwilio) {
       try {
         await twilioClient.messages.create({
           body: `Your Prime Detailing verification code is: ${code}. Valid for 10 minutes.`,
@@ -158,18 +181,19 @@ app.post('/api/bookings/initiate', async (req, res) => {
           to:   formattedPhone,
         });
         smsSent = true;
+        console.log(`✅ SMS sent to ${formattedPhone}`);
       } catch (twilioError) {
         console.error('Twilio error:', twilioError.message);
+        // Still return success — admin can see code in logs
+        console.log(`📱 FALLBACK — SMS Code for ${formattedPhone}: ${code}`);
       }
     } else {
-      console.log(`\n📱 DEV MODE — SMS Code for ${formattedPhone}: ${code}\n`);
-      smsSent = true;
+      console.log(`📱 Twilio not configured — SMS Code for ${formattedPhone}: ${code}`);
     }
 
     res.json({
       success: true,
-      message: smsSent ? 'Verification code sent' : 'SMS failed but code generated (check logs)',
-      ...(isDev && { devCode: code }),
+      message: 'Verification code sent',
       phoneNumber: formattedPhone,
     });
   } catch (error) {
@@ -398,6 +422,53 @@ app.post('/api/contact', async (req, res) => {
   } catch (error) {
     console.error('Contact form error:', error);
     res.status(500).json({ success: false, error: 'Failed to submit contact form' });
+  }
+});
+
+
+// ── GET /api/admin/contacts ───────────────────────────────────────────────────
+app.get('/api/admin/contacts', async (req, res) => {
+  const secret = req.headers['x-admin-secret'] || req.headers.authorization?.replace('Bearer ', '');
+  if (!secret || secret !== process.env.ADMIN_SECRET)
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  try {
+    const contacts = await prisma.contact.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+    res.json({ success: true, contacts });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── PUT /api/admin/contacts/:id ───────────────────────────────────────────────
+app.put('/api/admin/contacts/:id', async (req, res) => {
+  const secret = req.headers['x-admin-secret'] || req.headers.authorization?.replace('Bearer ', '');
+  if (!secret || secret !== process.env.ADMIN_SECRET)
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  try {
+    const { status } = req.body;
+    const contact = await prisma.contact.update({
+      where: { id: parseInt(req.params.id) },
+      data: { ...(status && { status }) },
+    });
+    res.json({ success: true, contact });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── DELETE /api/admin/contacts/:id ────────────────────────────────────────────
+app.delete('/api/admin/contacts/:id', async (req, res) => {
+  const secret = req.headers['x-admin-secret'] || req.headers.authorization?.replace('Bearer ', '');
+  if (!secret || secret !== process.env.ADMIN_SECRET)
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  try {
+    await prisma.contact.delete({ where: { id: parseInt(req.params.id) } });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

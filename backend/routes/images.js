@@ -1,145 +1,135 @@
-// backend/routes/images.js
+// backend/routes/checklists.js
 const express  = require('express');
 const router   = express.Router();
+
+// ── requireAdmin (inline — matches existing pattern in admin.js) ──────────────
+const requireAdmin = (req, res, next) => {
+  const secret = req.headers['x-admin-secret'] || req.headers.authorization?.replace('Bearer ', '');
+  if (!secret || secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  next();
+};
 const { PrismaClient } = require('@prisma/client');
-const { createClient } = require('@supabase/supabase-js');
-const { verifyToken }  = require('../middleware/verifyToken');
-const { requireAdmin } = require('../middleware/middleware');
-const { cleanupExpiredImages } = require('../services/imageCleanupService');
+const verifyToken = require('../middleware/verifyToken');
 
 const prisma = new PrismaClient();
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
-const QUOTE_BUCKET = 'quote-uploads';
-const JOB_BUCKET   = 'job-photos';
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_FILES_PER_BOOKING = 5;
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+// Helper — detect if booking needs ceramic template
+function detectTemplateType(booking) {
+  const services = booking.services?.toLowerCase() || '';
+  if (services.includes('ceramic') || services.includes('céramique')) return 'CERAMIC_COATING';
+  if (services.includes('interior') || services.includes('intérieur')) return 'INTERIOR_ONLY';
+  return 'STANDARD';
+}
 
-// ── CUSTOMER (public, rate-limited via server.js) ────────────────────────────
+// ── DETAILER ─────────────────────────────────────────────────────────────────
 
-// POST /api/images/upload/quote
-// Body: { fileName, mimeType, fileSize, fileBase64, bookingId? }
-router.post('/upload/quote', async (req, res) => {
+// POST /api/checklists/booking/:bookingId/init — create checklist from template
+router.post('/booking/:bookingId/init', verifyToken, async (req, res) => {
   try {
-    const { fileName, mimeType, fileSize, fileBase64, bookingId } = req.body;
+    const bookingId = parseInt(req.params.bookingId);
 
-    if (!ALLOWED_TYPES.includes(mimeType))
-      return res.status(400).json({ success: false, error: 'Invalid file type. Use JPEG, PNG, or WebP.' });
-    if (fileSize > MAX_FILE_SIZE)
-      return res.status(400).json({ success: false, error: 'File too large. Max 10MB per image.' });
-    if (!fileBase64)
-      return res.status(400).json({ success: false, error: 'No file data provided.' });
+    // Already exists?
+    const existing = await prisma.jobChecklist.findUnique({ where: { bookingId } });
+    if (existing) return res.json({ success: true, message: 'Already exists', checklistId: existing.id });
 
-    // Check max files per booking
-    if (bookingId) {
-      const count = await prisma.bookingImage.count({
-        where: { bookingId: parseInt(bookingId), isTemporary: true },
-      });
-      if (count >= MAX_FILES_PER_BOOKING)
-        return res.status(400).json({ success: false, error: `Max ${MAX_FILES_PER_BOOKING} images per booking.` });
-    }
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) return res.status(404).json({ success: false, error: 'Booking not found' });
 
-    // Build storage path
-    const timestamp = Date.now();
-    const safeExt   = mimeType.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
-    const folder    = bookingId ? `booking-${bookingId}` : 'temp';
-    const path      = `${folder}/${timestamp}-${Math.random().toString(36).slice(2)}.${safeExt}`;
-
-    // Decode base64 and upload
-    const buffer = Buffer.from(fileBase64, 'base64');
-    const { error: uploadError } = await supabase.storage
-      .from(QUOTE_BUCKET)
-      .upload(path, buffer, { contentType: mimeType, upsert: false });
-
-    if (uploadError)
-      return res.status(500).json({ success: false, error: 'Upload failed: ' + uploadError.message });
-
-    const { data: urlData } = supabase.storage.from(QUOTE_BUCKET).getPublicUrl(path);
-
-    const image = await prisma.bookingImage.create({
-      data: {
-        bookingId: bookingId ? parseInt(bookingId) : null,
-        storagePath: path,
-        publicUrl: urlData.publicUrl,
-        imageType: 'CUSTOMER_QUOTE',
-        uploadedBy: 'customer',
-        isTemporary: true,
-        fileSize,
-        mimeType,
-      },
+    const type = detectTemplateType(booking);
+    const template = await prisma.checklistTemplate.findFirst({
+      where: { serviceType: type, isDefault: true, isActive: true },
+      include: { items: { orderBy: { sortOrder: 'asc' } } },
     });
 
-    res.json({ success: true, image: { id: image.id, publicUrl: image.publicUrl } });
+    if (!template) return res.status(404).json({ success: false, error: 'No checklist template found' });
+
+    const checklist = await prisma.jobChecklist.create({
+      data: {
+        bookingId,
+        templateId: template.id,
+        items: {
+          create: template.items.map(item => ({
+            label:        item.label,
+            labelFr:      item.labelFr,
+            isRequired:   item.isRequired,
+            requiresPhoto:item.requiresPhoto,
+            sortOrder:    item.sortOrder,
+          })),
+        },
+      },
+      include: { items: { orderBy: { sortOrder: 'asc' } } },
+    });
+
+    res.json({ success: true, checklist });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// DELETE /api/images/:id — customer deletes their own temp image
-router.delete('/:id', async (req, res) => {
+// GET /api/checklists/booking/:bookingId — get checklist
+router.get('/booking/:bookingId', verifyToken, async (req, res) => {
   try {
-    const image = await prisma.bookingImage.findUnique({
-      where: { id: parseInt(req.params.id) },
+    const checklist = await prisma.jobChecklist.findUnique({
+      where: { bookingId: parseInt(req.params.bookingId) },
+      include: { items: { orderBy: { sortOrder: 'asc' } } },
     });
-
-    if (!image) return res.status(404).json({ success: false, error: 'Image not found' });
-    if (!image.isTemporary) return res.status(403).json({ success: false, error: 'Cannot delete permanent image' });
-
-    await supabase.storage.from(QUOTE_BUCKET).remove([image.storagePath]);
-    await prisma.bookingImage.delete({ where: { id: image.id } });
-
-    res.json({ success: true });
+    if (!checklist) return res.status(404).json({ success: false, error: 'No checklist found. Call /init first.' });
+    res.json({ success: true, checklist });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ── DETAILER ──────────────────────────────────────────────────────────────────
-
-// POST /api/images/upload/job
-// Body: { fileName, mimeType, fileSize, fileBase64, bookingId, imageType }
-router.post('/upload/job', verifyToken, async (req, res) => {
+// GET /api/checklists/booking/:bookingId/ready — can job be marked complete?
+router.get('/booking/:bookingId/ready', verifyToken, async (req, res) => {
   try {
-    const { fileName, mimeType, fileSize, fileBase64, bookingId, imageType, caption } = req.body;
-
-    if (!ALLOWED_TYPES.includes(mimeType))
-      return res.status(400).json({ success: false, error: 'Invalid file type.' });
-    if (fileSize > MAX_FILE_SIZE)
-      return res.status(400).json({ success: false, error: 'File too large. Max 10MB.' });
-    if (!['BEFORE_JOB', 'AFTER_JOB', 'DAMAGE_REPORT'].includes(imageType))
-      return res.status(400).json({ success: false, error: 'Invalid imageType for job upload.' });
-
-    const timestamp = Date.now();
-    const safeExt   = mimeType.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg';
-    const path      = `booking-${bookingId}/${imageType.toLowerCase()}-${timestamp}.${safeExt}`;
-
-    const buffer = Buffer.from(fileBase64, 'base64');
-    const { error: uploadError } = await supabase.storage
-      .from(JOB_BUCKET)
-      .upload(path, buffer, { contentType: mimeType, upsert: false });
-
-    if (uploadError)
-      return res.status(500).json({ success: false, error: 'Upload failed: ' + uploadError.message });
-
-    const { data: urlData } = supabase.storage.from(JOB_BUCKET).getPublicUrl(path);
-
-    const image = await prisma.bookingImage.create({
-      data: {
-        bookingId: bookingId ? parseInt(bookingId) : null,
-        storagePath: path,
-        publicUrl: urlData.publicUrl,
-        imageType,
-        uploadedBy: req.detailer?.name || 'detailer',
-        isTemporary: false,
-        fileSize, mimeType, caption,
-      },
+    const checklist = await prisma.jobChecklist.findUnique({
+      where: { bookingId: parseInt(req.params.bookingId) },
+      include: { items: true },
     });
 
-    res.json({ success: true, image: { id: image.id, publicUrl: image.publicUrl, imageType } });
+    if (!checklist) return res.json({ canComplete: true, missing: [] }); // no checklist = no block
+
+    const missing = checklist.items.filter(i => i.isRequired && !i.isCompleted);
+    res.json({
+      canComplete: missing.length === 0,
+      missing: missing.map(i => ({ id: i.id, label: i.label, requiresPhoto: i.requiresPhoto })),
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /api/checklists/item/:itemId/complete — check off item
+router.patch('/item/:itemId/complete', verifyToken, async (req, res) => {
+  try {
+    const { notes, photoUrl } = req.body;
+    const item = await prisma.jobChecklistItem.update({
+      where: { id: parseInt(req.params.itemId) },
+      data: {
+        isCompleted: true,
+        completedAt: new Date(),
+        completedBy: req.detailer?.name || 'detailer',
+        notes: notes || null,
+        photoUrl: photoUrl || null,
+      },
+    });
+    res.json({ success: true, item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /api/checklists/item/:itemId/uncomplete — uncheck item
+router.patch('/item/:itemId/uncomplete', verifyToken, async (req, res) => {
+  try {
+    const item = await prisma.jobChecklistItem.update({
+      where: { id: parseInt(req.params.itemId) },
+      data: { isCompleted: false, completedAt: null, completedBy: null },
+    });
+    res.json({ success: true, item });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -147,61 +137,48 @@ router.post('/upload/job', verifyToken, async (req, res) => {
 
 // ── ADMIN ─────────────────────────────────────────────────────────────────────
 
-// GET /api/images/admin — all images with filters
-router.get('/admin', requireAdmin, async (req, res) => {
+// GET /api/checklists/admin/templates
+router.get('/admin/templates', requireAdmin, async (req, res) => {
   try {
-    const { bookingId, imageType, isTemporary, isApproved } = req.query;
-    const where = {};
-    if (bookingId)   where.bookingId  = parseInt(bookingId);
-    if (imageType)   where.imageType  = imageType;
-    if (isTemporary !== undefined) where.isTemporary = isTemporary === 'true';
-    if (isApproved  !== undefined) where.isApproved  = isApproved  === 'true';
-
-    const images = await prisma.bookingImage.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: 100,
+    const templates = await prisma.checklistTemplate.findMany({
+      include: { items: { orderBy: { sortOrder: 'asc' } } },
+      orderBy: { serviceType: 'asc' },
     });
-    res.json({ success: true, images });
+    res.json({ success: true, templates });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// PATCH /api/images/admin/:id/approve — approve for gallery
-router.patch('/admin/:id/approve', requireAdmin, async (req, res) => {
+// POST /api/checklists/admin/templates
+router.post('/admin/templates', requireAdmin, async (req, res) => {
   try {
-    const image = await prisma.bookingImage.update({
+    const { name, nameFr, serviceType, items } = req.body;
+    const template = await prisma.checklistTemplate.create({
+      data: {
+        name, nameFr,
+        serviceType: serviceType || 'STANDARD',
+        items: items?.length ? {
+          create: items.map((item, i) => ({ ...item, sortOrder: item.sortOrder ?? i })),
+        } : undefined,
+      },
+      include: { items: true },
+    });
+    res.json({ success: true, template });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PUT /api/checklists/admin/templates/:id
+router.put('/admin/templates/:id', requireAdmin, async (req, res) => {
+  try {
+    const { name, nameFr, serviceType, isActive } = req.body;
+    const template = await prisma.checklistTemplate.update({
       where: { id: parseInt(req.params.id) },
-      data: { isApproved: req.body.isApproved, imageType: req.body.isApproved ? 'GALLERY' : undefined },
+      data: { name, nameFr, serviceType, isActive },
     });
-    res.json({ success: true, image });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// DELETE /api/images/admin/:id — permanent delete
-router.delete('/admin/:id', requireAdmin, async (req, res) => {
-  try {
-    const image = await prisma.bookingImage.findUnique({ where: { id: parseInt(req.params.id) } });
-    if (!image) return res.status(404).json({ success: false, error: 'Not found' });
-
-    const bucket = image.isTemporary ? QUOTE_BUCKET : JOB_BUCKET;
-    await supabase.storage.from(bucket).remove([image.storagePath]);
-    await prisma.bookingImage.delete({ where: { id: image.id } });
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// POST /api/images/admin/cleanup — manual trigger
-router.post('/admin/cleanup', requireAdmin, async (req, res) => {
-  try {
-    const result = await cleanupExpiredImages();
-    res.json({ success: true, ...result });
+    res.json({ success: true, template });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -1,288 +1,197 @@
-import React, { useState, useEffect } from 'react';
-import { X, User, Car, Calendar, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
-import { vehicleData } from '../../data/vehicleData';
+// src/components/admin/ReviewManagement.jsx
+// Admin CRUD for the (editable, curated) reviews shown on the public site.
+// Talks to:
+//   GET    /api/reviews            -> { success, reviews: [...] }
+//   POST   /api/reviews            -> create
+//   PUT    /api/reviews/:id        -> update
+//   DELETE /api/reviews/:id        -> delete
+// If the backend isn't wired yet, it shows a clear notice and lets you draft
+// locally so the UI is fully testable now (your dev can connect the routes).
+import React, { useEffect, useState } from 'react';
+import { Star, Plus, Trash2, Edit2, Save, X, Loader2, GripVertical, Eye, EyeOff } from 'lucide-react';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const API = import.meta.env.VITE_API_URL;
+const token = () => adminToken || sessionStorage.getItem('adminToken') || '';
 
-const iStyle = {
-  width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '10px', color: '#fff', padding: '10px 14px', fontSize: '13px', outline: 'none', fontFamily: 'inherit',
-};
-const lStyle = {
-  display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.07em',
-  textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', marginBottom: '5px',
-};
-const focus = e => e.target.style.borderColor = GOLD_S;
-const blur  = e => e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+const EMPTY = { name: '', rating: 5, vehicle: '', text: '', source: 'Google', isActive: true, sortOrder: 0 };
 
-const Section = ({ icon: Icon, title, children }) => (
+const authHeaders = () => ({ 'Content-Type': 'application/json', ...(token() ? { Authorization: `Bearer ${token()}` } : {}) });
+
+const StarPicker = ({ value, onChange }) => (
+  <div className="flex gap-1">
+    {[1, 2, 3, 4, 5].map((n) => (
+      <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n} stars`}>
+        <Star className="w-5 h-5" style={{ color: n <= value ? '#f5d376' : '#3f3f46', fill: n <= value ? '#f5d376' : 'none' }} />
+      </button>
+    ))}
+  </div>
+);
+
+const Field = ({ label, children }) => (
   <div>
-    <div className="flex items-center gap-2 mb-3">
-      <Icon className="w-4 h-4" style={{ color: GOLD_S }} />
-      <h3 className="text-sm font-bold text-white">{title}</h3>
-    </div>
+    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{label}</label>
     {children}
   </div>
 );
 
-const ManualBookingForm = ({ onClose, onSuccess, detailers = [] }) => {
-  const [services, setServices] = useState([]);
-  const [addOns, setAddOns]     = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
+const inputCls = 'w-full px-3 py-2.5 rounded-lg text-sm text-white outline-none';
+const inputStyle = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' };
 
-  const [form, setForm] = useState({
-    firstName: '', lastName: '', phoneNumber: '', email: '',
-    address: '', city: '', postalCode: '',
-    vehicleType: '', make: '', model: '', year: '',
-    services: [], extras: [],
-    date: '', time: '8:00 AM',
-    totalPrice: '', specialInstructions: '', notes: '',
-    detailerId: ''
-  });
+const ReviewForm = ({ initial, onSave, onCancel, saving }) => {
+  const [v, setV] = useState(initial);
+  const set = (k, val) => setV((p) => ({ ...p, [k]: val }));
 
-  useEffect(() => {
-    Promise.all([
-      fetch(`${import.meta.env.VITE_API_URL}/services/active`).then(r => r.json()),
-      fetch(`${import.meta.env.VITE_API_URL}/services/addons/active`).then(r => r.json()),
-    ]).then(([sd, ad]) => {
-      if (sd.success) setServices(sd.services);
-      if (ad.success) setAddOns(ad.addOns);
-    }).catch(() => {});
-  }, []);
-
-  const set = (field, value) => setForm(p => ({ ...p, [field]: value }));
-  const getAvailableMakes  = () => form.vehicleType ? Object.keys(vehicleData[form.vehicleType] || {}) : [];
-  const getAvailableModels = () => form.vehicleType && form.make ? Object.keys(vehicleData[form.vehicleType][form.make] || {}) : [];
-  const getAvailableYears  = () => form.vehicleType && form.make && form.model ? vehicleData[form.vehicleType][form.make][form.model] || [] : [];
-  const toggleService = id => set('services', form.services.includes(id) ? form.services.filter(s => s !== id) : [...form.services, id]);
-  const toggleAddOn   = id => set('extras',   form.extras.includes(id)   ? form.extras.filter(a => a !== id)   : [...form.extras,   id]);
-
-  const handleSubmit = async () => {
-    setError('');
-    if (!form.firstName || !form.lastName || !form.phoneNumber) return setError('Name and phone number are required');
-    if (!form.vehicleType || !form.make || !form.model || !form.year) return setError('Complete vehicle information is required');
-    if (form.services.length === 0) return setError('At least one service must be selected');
-    if (!form.date || !form.time) return setError('Date and time are required');
-
-    setLoading(true);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/manual-booking`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (data.success) { onSuccess(data.booking); }
-      else setError(data.message || 'Failed to create booking');
-    } catch { setError('Network error. Please try again.'); }
-    finally { setLoading(false); }
-  };
-
-  // Render inline (not a modal overlay) — wraps in a styled panel
   return (
-    <div className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-        <div>
-          <h2 className="text-white font-bold">Add Manual Booking</h2>
-          <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>For phone or walk-in clients</p>
-        </div>
-        {onClose && (
-          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <X className="w-4 h-4 text-gray-400" />
-          </button>
-        )}
+    <div className="rounded-xl p-5 mb-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)' }}>
+      <div className="grid sm:grid-cols-2 gap-4 mb-4">
+        <Field label="Customer name"><input className={inputCls} style={inputStyle} value={v.name} onChange={(e) => set('name', e.target.value)} placeholder="Marc-André L." /></Field>
+        <Field label="Vehicle (optional)"><input className={inputCls} style={inputStyle} value={v.vehicle} onChange={(e) => set('vehicle', e.target.value)} placeholder="BMW M4" /></Field>
       </div>
-
-      <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-        {/* Error */}
-        {error && (
-          <div className="flex items-center gap-2 p-3 rounded-xl text-sm"
-            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5' }}>
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />{error}
-          </div>
-        )}
-
-        {/* Customer */}
-        <Section icon={User} title="Customer Information">
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { ph: 'First Name *', field: 'firstName' },
-              { ph: 'Last Name *',  field: 'lastName'  },
-              { ph: 'Phone *',      field: 'phoneNumber' },
-              { ph: 'Email',        field: 'email'      },
-            ].map(({ ph, field }) => (
-              <div key={field}>
-                <label style={lStyle}>{ph.replace(' *', '')}</label>
-                <input style={iStyle} placeholder={ph} value={form[field]} onFocus={focus} onBlur={blur}
-                  onChange={e => set(field, e.target.value)} />
-              </div>
-            ))}
-            <div className="col-span-2">
-              <label style={lStyle}>Address</label>
-              <input style={iStyle} placeholder="Address" value={form.address} onFocus={focus} onBlur={blur}
-                onChange={e => set('address', e.target.value)} />
-            </div>
-            <div>
-              <label style={lStyle}>City</label>
-              <input style={iStyle} placeholder="City" value={form.city} onFocus={focus} onBlur={blur}
-                onChange={e => set('city', e.target.value)} />
-            </div>
-            <div>
-              <label style={lStyle}>Postal Code</label>
-              <input style={iStyle} placeholder="H1A 1A1" value={form.postalCode} onFocus={focus} onBlur={blur}
-                onChange={e => set('postalCode', e.target.value)} />
-            </div>
-          </div>
-        </Section>
-
-        {/* Vehicle */}
-        <Section icon={Car} title="Vehicle Information">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label style={lStyle}>Type *</label>
-              <select style={{ ...iStyle, cursor: 'pointer' }} value={form.vehicleType}
-                onChange={e => { set('vehicleType', e.target.value); set('make', ''); set('model', ''); set('year', ''); }}>
-                <option value="" style={{ background: '#1a1a1a' }}>Select type</option>
-                {Object.keys(vehicleData).map(t => <option key={t} value={t} style={{ background: '#1a1a1a' }}>{t}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={lStyle}>Make *</label>
-              <select style={{ ...iStyle, cursor: 'pointer', opacity: !form.vehicleType ? 0.5 : 1 }} value={form.make}
-                onChange={e => { set('make', e.target.value); set('model', ''); set('year', ''); }} disabled={!form.vehicleType}>
-                <option value="" style={{ background: '#1a1a1a' }}>Select make</option>
-                {getAvailableMakes().map(m => <option key={m} value={m} style={{ background: '#1a1a1a' }}>{m}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={lStyle}>Model *</label>
-              <select style={{ ...iStyle, cursor: 'pointer', opacity: !form.make ? 0.5 : 1 }} value={form.model}
-                onChange={e => { set('model', e.target.value); set('year', ''); }} disabled={!form.make}>
-                <option value="" style={{ background: '#1a1a1a' }}>Select model</option>
-                {getAvailableModels().map(m => <option key={m} value={m} style={{ background: '#1a1a1a' }}>{m}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={lStyle}>Year *</label>
-              <select style={{ ...iStyle, cursor: 'pointer', opacity: !form.model ? 0.5 : 1 }} value={form.year}
-                onChange={e => set('year', e.target.value)} disabled={!form.model}>
-                <option value="" style={{ background: '#1a1a1a' }}>Select year</option>
-                {getAvailableYears().map(y => <option key={y} value={y} style={{ background: '#1a1a1a' }}>{y}</option>)}
-              </select>
-            </div>
-          </div>
-        </Section>
-
-        {/* Services */}
-        <Section icon={CheckCircle} title="Services *">
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            {services.map(s => {
-              const sel = form.services.includes(s.id);
-              return (
-                <button key={s.id} onClick={() => toggleService(s.id)} type="button"
-                  className="flex items-center justify-between p-3 rounded-xl text-left transition-all"
-                  style={{
-                    background: sel ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
-                    border: sel ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                  }}>
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: sel ? '#f5d376' : 'rgba(255,255,255,0.8)' }}>{s.name}</p>
-                    {form.vehicleType && s.pricing?.[form.vehicleType] && (
-                      <p className="text-xs mt-0.5" style={{ color: sel ? GOLD_S : 'rgba(255,255,255,0.4)' }}>${s.pricing[form.vehicleType]}</p>
-                    )}
-                  </div>
-                  {sel && <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: GOLD_S }} />}
-                </button>
-              );
-            })}
-          </div>
-          {addOns.length > 0 && (
-            <>
-              <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>Add-ons (optional)</p>
-              <div className="grid grid-cols-2 gap-2">
-                {addOns.map(a => {
-                  const sel = form.extras.includes(a.id);
-                  return (
-                    <button key={a.id} onClick={() => toggleAddOn(a.id)} type="button"
-                      className="flex items-center justify-between p-3 rounded-xl text-left transition-all"
-                      style={{
-                        background: sel ? 'rgba(52,211,153,0.08)' : 'rgba(255,255,255,0.03)',
-                        border: sel ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                      }}>
-                      <div>
-                        <p className="text-sm font-medium" style={{ color: sel ? '#6ee7b7' : 'rgba(255,255,255,0.7)' }}>{a.name}</p>
-                        <p className="text-xs" style={{ color: sel ? '#34d399' : 'rgba(255,255,255,0.4)' }}>+${a.price}</p>
-                      </div>
-                      {sel && <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </Section>
-
-        {/* Appointment */}
-        <Section icon={Calendar} title="Appointment">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label style={lStyle}>Date *</label>
-              <input style={iStyle} type="date" value={form.date} onFocus={focus} onBlur={blur}
-                min={new Date().toISOString().split('T')[0]}
-                onChange={e => set('date', e.target.value)} />
-            </div>
-            <div>
-              <label style={lStyle}>Time *</label>
-              <select style={{ ...iStyle, cursor: 'pointer' }} value={form.time} onChange={e => set('time', e.target.value)}>
-                <option value="8:00 AM"  style={{ background: '#1a1a1a' }}>8:00 AM</option>
-                <option value="12:00 PM" style={{ background: '#1a1a1a' }}>12:00 PM</option>
-              </select>
-            </div>
-            <div>
-              <label style={lStyle}>Total Price ($)</label>
-              <input style={iStyle} type="number" placeholder="0.00" value={form.totalPrice} onFocus={focus} onBlur={blur}
-                onChange={e => set('totalPrice', e.target.value)} />
-            </div>
-            <div>
-              <label style={lStyle}>Assign Detailer</label>
-              <select style={{ ...iStyle, cursor: 'pointer' }} value={form.detailerId} onChange={e => set('detailerId', e.target.value)}>
-                <option value="" style={{ background: '#1a1a1a' }}>Unassigned</option>
-                {detailers.map(d => <option key={d.id} value={d.id} style={{ background: '#1a1a1a' }}>{d.name}</option>)}
-              </select>
-            </div>
-            <div className="col-span-2">
-              <label style={lStyle}>Special Instructions</label>
-              <textarea style={{ ...iStyle, resize: 'vertical' }} rows={2} placeholder="Notes for the detailer..."
-                value={form.notes} onChange={e => set('notes', e.target.value)}
-                onFocus={focus} onBlur={blur} />
-            </div>
-          </div>
-        </Section>
+      <Field label="Review text">
+        <textarea className={inputCls} style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }} value={v.text} onChange={(e) => set('text', e.target.value)} placeholder="The ceramic coating is unreal…" />
+      </Field>
+      <div className="grid sm:grid-cols-3 gap-4 mt-4 items-end">
+        <Field label="Rating"><StarPicker value={v.rating} onChange={(n) => set('rating', n)} /></Field>
+        <Field label="Source">
+          <select className={inputCls} style={inputStyle} value={v.source} onChange={(e) => set('source', e.target.value)}>
+            <option>Google</option><option>Facebook</option><option>Instagram</option><option>Direct</option>
+          </select>
+        </Field>
+        <Field label="Sort order"><input type="number" className={inputCls} style={inputStyle} value={v.sortOrder} onChange={(e) => set('sortOrder', parseInt(e.target.value) || 0)} /></Field>
       </div>
-
-      {/* Footer */}
-      <div className="flex gap-3 px-6 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-        {onClose && (
-          <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-400 transition-all"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            Cancel
-          </button>
-        )}
-        <button onClick={handleSubmit} disabled={loading}
-          className="flex-1 py-2.5 rounded-xl text-sm font-bold text-black flex items-center justify-center gap-2 disabled:opacity-50"
-          style={{ background: GOLD }}>
-          {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating...</> : <><CheckCircle className="w-4 h-4" /> Create Booking</>}
+      <div className="flex items-center gap-3 mt-5">
+        <button onClick={() => onSave(v)} disabled={saving || !v.name || !v.text}
+          className="btn-luxury inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold disabled:opacity-50">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save review
+        </button>
+        <button onClick={onCancel} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm text-gray-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <X className="w-4 h-4" /> Cancel
         </button>
       </div>
     </div>
   );
 };
 
-export default ManualBookingForm;
+const ReviewManagement = ({ adminToken }) => {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [offline, setOffline] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/reviews`, { headers: authHeaders() });
+      const d = await res.json();
+      if (d?.success) { setReviews(d.reviews || []); setOffline(false); }
+      else setOffline(true);
+    } catch { setOffline(true); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, []);
+
+  const create = async (data) => {
+    setSaving(true);
+    try {
+      if (offline) { setReviews((p) => [...p, { ...data, id: `local-${Date.now()}` }]); }
+      else {
+        const res = await fetch(`${API}/reviews`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(data) });
+        const d = await res.json();
+        if (d?.success) await load();
+      }
+      setAdding(false);
+    } finally { setSaving(false); }
+  };
+
+  const update = async (id, data) => {
+    setSaving(true);
+    try {
+      if (offline || String(id).startsWith('local-')) { setReviews((p) => p.map((r) => (r.id === id ? { ...r, ...data } : r))); }
+      else {
+        const res = await fetch(`${API}/reviews/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(data) });
+        const d = await res.json();
+        if (d?.success) await load();
+      }
+      setEditId(null);
+    } finally { setSaving(false); }
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm('Delete this review?')) return;
+    if (offline || String(id).startsWith('local-')) { setReviews((p) => p.filter((r) => r.id !== id)); return; }
+    const res = await fetch(`${API}/reviews/${id}`, { method: 'DELETE', headers: authHeaders() });
+    const d = await res.json();
+    if (d?.success) await load();
+  };
+
+  const toggleActive = (r) => update(r.id, { ...r, isActive: !r.isActive });
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="text-lg font-bold text-white">Reviews</h2>
+          <p className="text-gray-500 text-sm">Curated reviews shown on your website.</p>
+        </div>
+        {!adding && (
+          <button onClick={() => setAdding(true)} className="btn-luxury inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold">
+            <Plus className="w-4 h-4" /> Add review
+          </button>
+        )}
+      </div>
+
+      {offline && (
+        <div className="mb-4 p-3 rounded-lg text-xs" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}>
+          Reviews API not detected — you can draft reviews here, but they won't persist until the backend <code>/api/reviews</code> routes are connected. (Drafts are kept only for this session.)
+        </div>
+      )}
+
+      {adding && <ReviewForm initial={EMPTY} onSave={create} onCancel={() => setAdding(false)} saving={saving} />}
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-yellow-500" /></div>
+      ) : reviews.length === 0 && !adding ? (
+        <div className="text-center py-12 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <Star className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+          <p className="text-gray-400">No reviews yet. Add your first one.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {reviews.map((r) =>
+            editId === r.id ? (
+              <ReviewForm key={r.id} initial={r} onSave={(data) => update(r.id, data)} onCancel={() => setEditId(null)} saving={saving} />
+            ) : (
+              <div key={r.id} className="rounded-xl p-4 flex items-start gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', opacity: r.isActive === false ? 0.5 : 1 }}>
+                <GripVertical className="w-4 h-4 text-gray-700 mt-1 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="text-white font-bold text-sm">{r.name}</span>
+                    {r.vehicle && <span className="text-gray-500 text-xs">· {r.vehicle}</span>}
+                    <div className="flex gap-0.5">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className="w-3 h-3" style={{ color: i < r.rating ? '#f5d376' : '#3f3f46', fill: i < r.rating ? '#f5d376' : 'none' }} />)}</div>
+                    {r.source && <span className="text-gray-600 text-[10px] uppercase tracking-wider">via {r.source}</span>}
+                  </div>
+                  <p className="text-gray-400 text-sm leading-relaxed">"{r.text}"</p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => toggleActive(r)} aria-label="Toggle visibility" className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                    {r.isActive === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                  <button onClick={() => setEditId(r.id)} aria-label="Edit" className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-yellow-400 transition-colors" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => remove(r.id)} aria-label="Delete" className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ReviewManagement;

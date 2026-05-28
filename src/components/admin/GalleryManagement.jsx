@@ -131,10 +131,10 @@ const UploadModal = ({ onClose, onUploaded, adminToken }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <ImagePicker label="Before *" value={form.beforeImage}
-              onChange={v => setForm(p => ({ ...p, beforeImage: v }))} />
-            <ImagePicker label="After" value={form.afterImage}
-              onChange={v => setForm(p => ({ ...p, afterImage: v }))} />
+            <ImagePicker label="Before *" file={form.beforeFile}
+              onChange={v => setForm(p => ({ ...p, beforeFile: v }))} />
+            <ImagePicker label="After" file={form.afterFile}
+              onChange={v => setForm(p => ({ ...p, afterFile: v }))} />
           </div>
 
           {error && (
@@ -151,7 +151,7 @@ const UploadModal = ({ onClose, onUploaded, adminToken }) => {
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
             Cancel
           </button>
-          <button onClick={handleUpload} disabled={saving || !form.beforeImage}
+          <button onClick={handleUpload} disabled={saving || !form.beforeFile}
             className="flex-1 py-3 rounded-xl text-sm font-bold text-black flex items-center justify-center gap-2 disabled:opacity-50"
             style={{ background: GOLD }}>
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload</>}

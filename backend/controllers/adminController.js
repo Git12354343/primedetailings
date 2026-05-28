@@ -196,19 +196,64 @@ const createDetailer = async (req, res) => {
     if (!name || !email || !phone || !password) {
       return res.status(400).json({ success: false, message: 'Name, email, phone, and password are required' });
     }
+
+    // Check if detailer already exists in our DB
+    const existingDetailer = await prisma.detailer.findUnique({ where: { email: email.toLowerCase().trim() } });
+    if (existingDetailer) {
+      return res.status(409).json({ success: false, message: 'A detailer with this email already exists in your system.' });
+    }
+
     const { createClient } = require('@supabase/supabase-js');
     const ws = require('ws');
     const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { realtime: { transport: ws } });
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({ email: email.toLowerCase(), password, email_confirm: true });
-    if (authError) return res.status(400).json({ success: false, message: authError.message });
-    const detailer = await prisma.detailer.create({
-      data: { name: name.trim(), email: email.toLowerCase().trim(), phone: phone.trim(), isActive: true, supabaseUserId: authData.user.id },
+
+    let supabaseUserId = null;
+
+    // Try to create Supabase Auth user
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: email.toLowerCase(), password, email_confirm: true
     });
-    res.json({ success: true, message: 'Detailer account created', detailer: { id: detailer.id, name: detailer.name, email: detailer.email, isActive: detailer.isActive } });
+
+    if (authError) {
+      // If user already exists in Supabase, look them up and link them
+      const alreadyExists = authError.message?.toLowerCase().includes('already registered') ||
+                            authError.message?.toLowerCase().includes('already been registered');
+      if (alreadyExists) {
+        const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = listData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+        if (existingUser) {
+          supabaseUserId = existingUser.id;
+          // Update their password to the new one
+          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, { password }).catch(() => {});
+        } else {
+          return res.status(400).json({ success: false, message: 'Email already exists in auth but could not be found. Please use a different email.' });
+        }
+      } else {
+        return res.status(400).json({ success: false, message: authError.message });
+      }
+    } else {
+      supabaseUserId = authData.user.id;
+    }
+
+    const detailer = await prisma.detailer.create({
+      data: {
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        phone: phone.trim(),
+        isActive: true,
+        supabaseUserId,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Detailer account created',
+      detailer: { id: detailer.id, name: detailer.name, email: detailer.email, isActive: detailer.isActive }
+    });
   } catch (error) {
     console.error('createDetailer error:', error);
-    if (error.code === 'P2002') return res.status(409).json({ success: false, message: 'Email or phone already exists' });
-    res.status(500).json({ success: false, message: 'Failed to create detailer' });
+    if (error.code === 'P2002') return res.status(409).json({ success: false, message: 'Email or phone already exists in the system.' });
+    res.status(500).json({ success: false, message: 'Failed to create detailer: ' + error.message });
   }
 };
 

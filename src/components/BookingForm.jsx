@@ -278,7 +278,7 @@ const BookingForm = () => {
   const { success, error: notifyErr } = useNotifications();
 
   const { values, errors, handleChange, getFieldProps } = useBookingFormValidation({
-    firstName: '', lastName: '', email: '', phone: '',
+    displayName: '', email: '', phone: '',
     address: '', city: '', postalCode: '',
     vehicleType: '', make: '', model: '', year: '',
     services: [], addOns: [], date: '', time: '',
@@ -320,7 +320,7 @@ const BookingForm = () => {
       return mode === 'packages' ? !!selectedPkg : values.services.length > 0;
     }
     if (step === 2) return values.date && values.time && !availErr;
-    if (step === 3) return values.firstName && values.lastName && values.phone &&
+    if (step === 3) return values.phone &&
                           values.address && values.city && values.postalCode &&
                           values.make && values.model && values.year;
     return false;
@@ -341,7 +341,7 @@ const BookingForm = () => {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber: values.phone,
-          bookingData: { ...values, packageId: selectedPkg?.id || null, packageName: selectedPkg?.name || null, totalPrice: total },
+          bookingData: { ...values, firstName: values.displayName?.split(' ')[0] || 'Customer', lastName: values.displayName?.split(' ').slice(1).join(' ') || '', packageId: selectedPkg?.id || null, packageName: selectedPkg?.name || null, totalPrice: total },
         }),
       });
       const d = await res.json();
@@ -359,7 +359,7 @@ const BookingForm = () => {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber: values.phone, code: sms.code,
-          bookingData: { ...values, packageId: selectedPkg?.id || null, packageName: selectedPkg?.name || null, totalPrice: pkgPrice || pricing.total || null },
+          bookingData: { ...values, firstName: values.displayName?.split(' ')[0] || 'Customer', lastName: values.displayName?.split(' ').slice(1).join(' ') || '', packageId: selectedPkg?.id || null, packageName: selectedPkg?.name || null, totalPrice: pkgPrice || pricing.total || null },
         }),
       });
       const d = await res.json();
@@ -647,13 +647,12 @@ const BookingForm = () => {
       <div>
         <h3 className="text-white font-bold text-sm mb-4">Your Information</h3>
         <div className="grid grid-cols-2 gap-4">
-          {[['firstName','First Name'],['lastName','Last Name']].map(([f,l]) => (
-            <div key={f}>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{l} *</label>
-              <input style={iStyle(errors[f])} placeholder={l} {...safeProps(getFieldProps(f))} />
-              {errors[f] && <p className="text-red-400 text-xs mt-1">{errors[f]}</p>}
+          <div>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                Name or Nickname <span className="text-gray-600 normal-case font-normal">— optional</span>
+              </label>
+              <input style={iStyle(false)} placeholder="How should we call you?" {...safeProps(getFieldProps('displayName'))} />
             </div>
-          ))}
         </div>
         <div className="grid grid-cols-2 gap-4 mt-4">
           {[['phone','Phone','tel','(514) 555-0123'],['email','Email','email','you@email.com']].map(([f,l,t,p]) => (

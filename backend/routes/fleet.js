@@ -1,8 +1,16 @@
 // backend/routes/fleet.js
 const express  = require('express');
 const router   = express.Router();
+
+// ── requireAdmin (inline — matches existing pattern in admin.js) ──────────────
+const requireAdmin = (req, res, next) => {
+  const secret = req.headers['x-admin-secret'] || req.headers.authorization?.replace('Bearer ', '');
+  if (!secret || secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  next();
+};
 const { PrismaClient } = require('@prisma/client');
-const { requireAdmin } = require('../middleware/middleware');
 const nodemailer = require('nodemailer');
 
 const prisma = new PrismaClient();

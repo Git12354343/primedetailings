@@ -54,7 +54,7 @@ const StatCard = ({ icon: Icon, label, value, sub, subUp }) => (
 );
 
 // ── Main component ────────────────────────────────────────────────────────────
-const RevenueAnalytics = () => {
+const RevenueAnalytics = ({ adminToken }) => {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
@@ -64,7 +64,7 @@ const RevenueAnalytics = () => {
     setLoading(true);
     setError('');
     try {
-      const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || localStorage.getItem('detailerToken');
+      const token = adminToken || sessionStorage.getItem('adminToken') || '';
       const res = await fetch(`${import.meta.env.VITE_API_URL}/admin/revenue`, {
         headers: { Authorization: `Bearer ${token}` },
       });

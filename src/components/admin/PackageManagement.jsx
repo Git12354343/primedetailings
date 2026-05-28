@@ -266,7 +266,16 @@ const PackageFormModal = ({ initial, services, addOns, onClose, onSubmit, saving
 };
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-const PackageManagement = ({ packages, services, addOns, onRefresh, authFetch }) => {
+const PackageManagement = ({ packages, services, addOns, onRefresh, adminToken }) => {
+  // Build authFetch from adminToken
+  const authFetch = (url, opts = {}) => fetch(url, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Admin-Secret': adminToken || '',
+      ...(opts.headers || {}),
+    },
+  });
   const [editPkg, setEditPkg] = useState(null); // null | 'new' | pkg
   const [saving, setSaving]   = useState(false);
   const [confirm, setConfirm] = useState(null);

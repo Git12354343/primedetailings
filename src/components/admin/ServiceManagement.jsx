@@ -213,6 +213,7 @@ const ServiceManagement = ({ services = [], addOns = [], onRefresh, adminToken }
       method,
       headers: {
         'Content-Type': 'application/json',
+        'X-Admin-Secret': adminToken || '',
         ...(adminToken ? { 'X-Admin-Secret': adminToken } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,

@@ -11,7 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { Star, Plus, Trash2, Edit2, Save, X, Loader2, GripVertical, Eye, EyeOff } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL;
-const token = () => sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || localStorage.getItem('detailerToken');
+const token = () => adminToken || sessionStorage.getItem('adminToken') || '';
 
 const EMPTY = { name: '', rating: 5, vehicle: '', text: '', source: 'Google', isActive: true, sortOrder: 0 };
 
@@ -72,7 +72,7 @@ const ReviewForm = ({ initial, onSave, onCancel, saving }) => {
   );
 };
 
-const ReviewManagement = () => {
+const ReviewManagement = ({ adminToken }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
