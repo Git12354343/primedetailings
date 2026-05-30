@@ -51,6 +51,7 @@ app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Secret'],
 }));
 app.use(express.json({ limit: '20mb' })); // increased for base64 image uploads
 
@@ -79,6 +80,12 @@ const imageUploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, max: 20, // 20 uploads per hour per IP
   message: { success: false, message: 'Too many image uploads, please try again later.' }
 });
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 5,
+  message: { success: false, message: 'Too many admin login attempts. Try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 const fleetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, max: 5,
   message: { success: false, message: 'Too many fleet quote requests.' }
@@ -96,6 +103,7 @@ app.use('/api/bookings/initiate',      smsLimiter);
 app.use('/api/contact',                contactLimiter);
 app.use('/api/images/upload/quote',    imageUploadLimiter);
 app.use('/api/fleet/quote',            fleetLimiter);
+app.use('/api/admin/login',            adminLoginLimiter);
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',         authRoutes);

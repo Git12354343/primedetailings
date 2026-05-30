@@ -95,14 +95,20 @@ const TimeSlotPicker = ({ selectedDate, selectedTime, onTimeSelect, businessConf
     );
   }
 
+  // Support both id-based and label-based selection for backwards compat
+  const getIsSelected = (slot) => {
+    if (!selectedTime || selectedTime === '') return false;
+    return selectedTime === slot.id || selectedTime === slot.label;
+  };
+
   return (
     <div className={`space-y-2 ${className}`}>
       {availableSlots.map(slot => {
-        const isSelected = selectedTime === slot.label;
+        const isSelected = getIsSelected(slot);
         return (
           <button
             key={slot.id}
-            onClick={() => onTimeSelect?.(slot.label)}
+            onClick={() => onTimeSelect?.(slot.id)}
             className="w-full flex items-center justify-between p-4 rounded-2xl text-left transition-all duration-200 active:scale-98"
             style={{
               background: isSelected ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',

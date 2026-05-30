@@ -242,7 +242,7 @@ const BookingSummary = ({ mode, pkg, values, services, addOns, pricing }) => {
           <Calendar className="w-3.5 h-3.5 text-gray-400" />
           <span className="text-gray-300 text-xs">
             {new Date(values.date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
-            {values.time && ` · ${values.time}`}
+            {values.time && ` · ${resolveTimeLabel(values.time)}`}
           </span>
         </div>
       )}
@@ -305,9 +305,17 @@ const BookingForm = () => {
     }
   }, [values.services, values.addOns, values.vehicleType, mode]);
 
+  // Resolve slot id → label for backend calls (backend stores/checks by label)
+  const resolveTimeLabel = (timeIdOrLabel) => {
+    if (!timeIdOrLabel) return '';
+    const slot = businessConfig?.timeSlots?.find(s => s.id === timeIdOrLabel || s.label === timeIdOrLabel);
+    return slot ? slot.label : timeIdOrLabel;
+  };
+
   useEffect(() => {
     if (!values.date || !values.time) return;
-    fetch(`${import.meta.env.VITE_API_URL}/availability/check?date=${values.date}&time=${encodeURIComponent(values.time)}`)
+    const label = resolveTimeLabel(values.time);
+    fetch(`${import.meta.env.VITE_API_URL}/availability/check?date=${values.date}&time=${encodeURIComponent(label)}`)
       .then(r => r.json()).then(d => {
         if (!d.available) setAvailErr(d.reason || 'Slot unavailable');
         else setAvailErr('');
@@ -337,11 +345,12 @@ const BookingForm = () => {
     try {
       const pkgPrice  = mode === 'packages' && selectedPkg ? getPkgPrice(selectedPkg, values.vehicleType) : null;
       const total     = pkgPrice || pricing.total || null;
+      const timeLabel = resolveTimeLabel(values.time);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/bookings/initiate`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber: values.phone,
-          bookingData: { ...values, firstName: values.displayName?.split(' ')[0] || 'Customer', lastName: values.displayName?.split(' ').slice(1).join(' ') || '', packageId: selectedPkg?.id || null, packageName: selectedPkg?.name || null, totalPrice: total },
+          bookingData: { ...values, time: timeLabel, firstName: values.displayName?.split(' ')[0] || 'Customer', lastName: values.displayName?.split(' ').slice(1).join(' ') || '', packageId: selectedPkg?.id || null, packageName: selectedPkg?.name || null, totalPrice: total },
         }),
       });
       const d = await res.json();
@@ -355,11 +364,12 @@ const BookingForm = () => {
     setApiLoading(true);
     try {
       const pkgPrice = mode === 'packages' && selectedPkg ? getPkgPrice(selectedPkg, values.vehicleType) : null;
+      const timeLabel = resolveTimeLabel(values.time);
       const res = await fetch(`${import.meta.env.VITE_API_URL}/bookings/verify`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber: values.phone, code: sms.code,
-          bookingData: { ...values, firstName: values.displayName?.split(' ')[0] || 'Customer', lastName: values.displayName?.split(' ').slice(1).join(' ') || '', packageId: selectedPkg?.id || null, packageName: selectedPkg?.name || null, totalPrice: pkgPrice || pricing.total || null },
+          bookingData: { ...values, time: timeLabel, firstName: values.displayName?.split(' ')[0] || 'Customer', lastName: values.displayName?.split(' ').slice(1).join(' ') || '', packageId: selectedPkg?.id || null, packageName: selectedPkg?.name || null, totalPrice: pkgPrice || pricing.total || null },
         }),
       });
       const d = await res.json();

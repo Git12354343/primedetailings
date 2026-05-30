@@ -55,7 +55,7 @@ const selStyle = { ...iBase, cursor: 'pointer', width: '100%' };
 const lGold = { display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', marginBottom: '6px' };
 const cardD = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' };
 
-const ScheduleManager = () => {
+const ScheduleManager = ({ adminToken }) => {
   const [config, setConfig]         = useState(sanitizeConfig(null));
   const [blockedDates, setBlockedDates] = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -89,7 +89,7 @@ const ScheduleManager = () => {
     setSaving(true); setError('');
     try {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/config`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminToken || '' }, body: JSON.stringify(config),
+        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminToken || '', 'Authorization': `Bearer ${adminToken || ''}` }, body: JSON.stringify(config),
       });
       const data = await res.json();
       if (data.success) { setSaved(true); setTimeout(() => setSaved(false), 3000); }

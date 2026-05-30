@@ -79,7 +79,9 @@ const AnimatedRoutes = () => {
           {/* Auth / dashboard — no layout */}
           <Route path="/detailer-login"     element={<ProtectedLayout><DetailerLogin /></ProtectedLayout>} />
           <Route path="/detailer-dashboard" element={<ProtectedLayout><DetailerDashboard /></ProtectedLayout>} />
-          <Route path="/admin"              element={<ProtectedLayout><AdminPage /></ProtectedLayout>} />
+          {/* Admin panel — secret path from env, /admin returns 404 */}
+          <Route path={import.meta.env.VITE_ADMIN_PATH || '/xadmin-9f3k'} element={<ProtectedLayout><AdminPage /></ProtectedLayout>} />
+          <Route path="/admin" element={<PublicLayout><NotFoundPage /></PublicLayout>} />
 
           {/* Public pages */}
           <Route path="/"              element={<PublicLayout><Home /></PublicLayout>} />

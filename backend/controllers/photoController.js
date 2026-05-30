@@ -16,11 +16,16 @@ const upload = multer({
   storage,
   limits: { fileSize: 15 * 1024 * 1024 }, // 15MB raw file is fine — NOT JSON
   fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|webp/i;
-    if (allowed.test(path.extname(file.originalname)) && allowed.test(file.mimetype)) {
+    // Accept if EITHER mimetype OR extension is a valid image type
+    // (browser-image-compression may send image/webp with a .jpg originalname)
+    const allowedMime = /^image\/(jpeg|jpg|png|webp|gif|bmp|heic|heif)$/i;
+    const allowedExt  = /\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i;
+    const okMime = allowedMime.test(file.mimetype);
+    const okExt  = allowedExt.test(path.extname(file.originalname));
+    if (okMime || okExt) {
       cb(null, true);
     } else {
-      cb(new Error('Only JPEG, PNG, and WebP images are allowed'));
+      cb(new Error(`Invalid file type: ${file.mimetype}. Use JPEG, PNG, or WebP.`));
     }
   },
 });
@@ -39,12 +44,20 @@ const getSupabase = () => createClient(
 
 // Upload a buffer to Supabase Storage, return the public URL
 const uploadToSupabase = async (supabase, buffer, mimetype, suffix) => {
-  const ext = mimetype.includes('png') ? 'png' : mimetype.includes('webp') ? 'webp' : 'jpg';
+  // Derive extension from mimetype reliably
+  const mimeToExt = {
+    'image/webp': 'webp',
+    'image/png':  'png',
+    'image/gif':  'gif',
+    'image/jpeg': 'jpg',
+    'image/jpg':  'jpg',
+  };
+  const ext = mimeToExt[mimetype?.toLowerCase()] || 'jpg';
   const filePath = `${Date.now()}_${Math.random().toString(36).slice(2)}_${suffix}.${ext}`;
 
   const { error } = await supabase.storage
     .from('job-photos')
-    .upload(filePath, buffer, { contentType: mimetype, upsert: false });
+    .upload(filePath, buffer, { contentType: mimetype || 'image/jpeg', upsert: false });
 
   if (error) throw new Error(`Supabase upload failed: ${error.message}`);
 
@@ -92,11 +105,13 @@ const uploadPhoto = async (req, res) => {
     const supabase = getSupabase();
 
     const beforeFile = files.beforeImage[0];
+    console.log(`[uploadPhoto] before: ${beforeFile.originalname} · ${beforeFile.mimetype} · ${(beforeFile.size/1024).toFixed(1)}KB`);
     const { url: beforeUrl } = await uploadToSupabase(supabase, beforeFile.buffer, beforeFile.mimetype, 'before');
 
     let afterUrl = null;
     if (files.afterImage?.[0]) {
       const afterFile = files.afterImage[0];
+      console.log(`[uploadPhoto] after: ${afterFile.originalname} · ${afterFile.mimetype} · ${(afterFile.size/1024).toFixed(1)}KB`);
       const result = await uploadToSupabase(supabase, afterFile.buffer, afterFile.mimetype, 'after');
       afterUrl = result.url;
     }

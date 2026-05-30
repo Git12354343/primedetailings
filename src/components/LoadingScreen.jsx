@@ -26,27 +26,33 @@ const LoadingScreen = ({ onDone }) => {
       />
 
       <div className="flex flex-col items-center gap-5">
-        {/* Logo mark */}
+        {/* Logo */}
         <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center animate-pulse-gold"
           style={{
-            background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
-            boxShadow: '0 0 40px rgba(201,168,76,0.4)',
+            width: '80px',
+            height: '80px',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            boxShadow: '0 0 40px rgba(201,168,76,0.35)',
             animation: 'pulseGold 1.5s ease-in-out infinite',
           }}
         >
-          <span className="text-black font-black text-2xl tracking-tight">PD</span>
+          <img
+            src="/logo.png"
+            alt="Prestige Plus"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
         </div>
 
         {/* Brand name */}
         <div className="text-center">
           <div className="text-white font-black text-xl tracking-wide">
-            Prime{' '}
+            Prestige{' '}
             <span style={{
               background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>
-              Detailing
+              Plus
             </span>
           </div>
           <div className="text-gray-600 text-xs tracking-widest uppercase mt-1">Montreal</div>
