@@ -10,7 +10,7 @@ const CONTACT_METHODS = [
   { label: 'Call',     icon: Phone,         color: '#34d399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.25)', baseHref: 'tel:+14387968001' },
   { label: 'WhatsApp', icon: MessageSquare, color: '#25D366', bg: 'rgba(37,211,102,0.1)',  border: 'rgba(37,211,102,0.25)', baseHref: 'https://wa.me/14387968001' },
   { label: 'SMS',      icon: MessageSquare, color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',  border: 'rgba(96,165,250,0.25)', baseHref: 'sms:+14387968001' },
-  { label: 'Email',    icon: Mail,          color: '#f97316', bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)', baseHref: 'mailto:info@Prestigeplusdetailing.ca' },
+  { label: 'Email',    icon: Mail,          color: '#f97316', bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)', baseHref: 'mailto:info@prestigeplus.services' },
 ];
 
 const getMinPrice = (pricing) => {
@@ -81,24 +81,24 @@ const QuoteEstimator = () => {
   });
 
   return (
-    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#0a0a0a' }}>
+    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#0b0f1a' }}>
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(201,168,76,0.07) 0%, transparent 60%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(0,168,204,0.07) 0%, transparent 60%)' }} />
       <div className="absolute top-0 left-0 right-0 h-px"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent)' }} />
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(0,168,204,0.3), transparent)' }} />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6">
 
         {/* Header */}
         <div className={`text-center mb-12 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
-            <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Free Estimate</span>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
+            <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">Free Estimate</span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-black text-white mb-4">
             Get a{' '}
             <span style={{
-              background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+              background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>Quote</span>
           </h2>
@@ -109,14 +109,14 @@ const QuoteEstimator = () => {
 
         {loading && (
           <div className="flex justify-center py-16">
-            <Loader2 className="w-7 h-7 animate-spin text-yellow-500" />
+            <Loader2 className="w-7 h-7 animate-spin text-cyan-500" />
           </div>
         )}
 
         {error && !loading && (
           <div className="text-center py-10">
             <p className="text-gray-500 mb-3">{error}</p>
-            <button onClick={load} className="inline-flex items-center gap-2 text-yellow-400 text-sm hover:text-yellow-300">
+            <button onClick={load} className="inline-flex items-center gap-2 text-cyan-400 text-sm hover:text-cyan-300">
               <RefreshCw className="w-4 h-4" /> Retry
             </button>
           </div>
@@ -141,13 +141,13 @@ const QuoteEstimator = () => {
                       <button key={v} onClick={() => setVehicle(v)}
                         className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 active:scale-95"
                         style={{
-                          background: isSelected ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)',
-                          border: isSelected ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                          background: isSelected ? 'rgba(0,168,204,0.12)' : 'rgba(255,255,255,0.03)',
+                          border: isSelected ? '1px solid rgba(0,168,204,0.4)' : '1px solid rgba(255,255,255,0.07)',
                           transform: isSelected ? 'translateY(-2px)' : 'none',
                         }}
                       >
-                        <Icon className="w-6 h-6" style={{ color: isSelected ? '#f5d376' : '#6b7280' }} />
-                        <span className="text-sm font-bold" style={{ color: isSelected ? '#f5d376' : '#9ca3af' }}>{v}</span>
+                        <Icon className="w-6 h-6" style={{ color: isSelected ? '#00d4ff' : '#6b7280' }} />
+                        <span className="text-sm font-bold" style={{ color: isSelected ? '#00d4ff' : '#9ca3af' }}>{v}</span>
                         <span className="text-xs text-gray-600">{VEHICLE_DESCS[v] || v}</span>
                       </button>
                     );
@@ -168,14 +168,14 @@ const QuoteEstimator = () => {
                       <button key={svc.id} onClick={() => setServiceId(svc.id)}
                         className="flex items-center justify-between px-4 py-3 rounded-xl text-left transition-all duration-200 active:scale-95"
                         style={{
-                          background: isSelected ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
-                          border: isSelected ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.07)',
+                          background: isSelected ? 'rgba(0,168,204,0.1)' : 'rgba(255,255,255,0.03)',
+                          border: isSelected ? '1px solid rgba(0,168,204,0.35)' : '1px solid rgba(255,255,255,0.07)',
                         }}
                       >
-                        <span className="text-sm font-semibold pr-3" style={{ color: isSelected ? '#f5d376' : '#d1d5db' }}>
+                        <span className="text-sm font-semibold pr-3" style={{ color: isSelected ? '#00d4ff' : '#d1d5db' }}>
                           {svc.name}
                         </span>
-                        <span className="text-xs font-bold flex-shrink-0" style={{ color: isSelected ? '#f5d376' : '#6b7280' }}>
+                        <span className="text-xs font-bold flex-shrink-0" style={{ color: isSelected ? '#00d4ff' : '#6b7280' }}>
                           {p ? `$${p}+` : 'Call'}
                         </span>
                       </button>
@@ -186,7 +186,7 @@ const QuoteEstimator = () => {
 
               {/* Price result */}
               <div className="rounded-2xl p-6 text-center"
-                style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                style={{ background: 'rgba(0,168,204,0.06)', border: '1px solid rgba(0,168,204,0.2)' }}>
                 {selectedService ? (
                   <>
                     <p className="text-gray-400 text-sm mb-2">
@@ -194,7 +194,7 @@ const QuoteEstimator = () => {
                       {' '}— <span className="text-white font-semibold">{displayVehicle}</span>
                     </p>
                     <div className="text-5xl font-black mb-1" style={{
-                      background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+                      background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
                       WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                     }}>
                       {price ? `From $${price}` : 'Call for price'}

@@ -17,7 +17,7 @@ const ConfirmDialog = ({ msg, onConfirm, onCancel }) => (
     <div className="rounded-2xl p-6 max-w-sm w-full"
       style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.1)' }}>
       <div className="flex items-start gap-3 mb-5">
-        <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="w-5 h-5 text-cyan-500 flex-shrink-0 mt-0.5" />
         <p className="text-white text-sm leading-relaxed">{msg}</p>
       </div>
       <div className="flex gap-3">
@@ -58,8 +58,8 @@ const Toggle = ({ label, value, onChange }) => (
     <span className="text-white text-sm">{label}</span>
     <button onClick={() => onChange(!value)}
       className="w-11 h-6 rounded-full relative transition-all duration-300"
-      style={{ background: value ? 'rgba(201,168,76,0.8)' : 'rgba(255,255,255,0.1)' }}>
-      <div className="w-5 h-5 rounded-full bg-white shadow absolute top-0.5 transition-all duration-300"
+      style={{ background: value ? 'rgba(0,168,204,0.8)' : 'rgba(255,255,255,0.1)' }}>
+      <div className="w-5 h-5 rounded-full bg-[#111827] shadow absolute top-0.5 transition-all duration-300"
         style={{ left: value ? '24px' : '2px' }} />
     </button>
   </div>
@@ -165,7 +165,7 @@ const PackageFormModal = ({ initial, services, addOns, onClose, onSubmit, saving
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <div className="text-xs text-gray-500 mb-1.5">{t}</div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-yellow-500 font-bold text-sm">$</span>
+                    <span className="text-cyan-500 font-bold text-sm">$</span>
                     <input type="number" min="0" step="0.01"
                       style={{ background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: '16px', fontWeight: 700, width: '100%' }}
                       placeholder="0"
@@ -187,14 +187,14 @@ const PackageFormModal = ({ initial, services, addOns, onClose, onSubmit, saving
                     <button key={s.id} onClick={() => toggleSvc(s.id)}
                       className="flex items-center gap-2 p-3 rounded-xl text-left transition-all"
                       style={{
-                        background: sel ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
-                        border: sel ? '1px solid rgba(201,168,76,0.35)' : '1px solid rgba(255,255,255,0.07)',
+                        background: sel ? 'rgba(0,168,204,0.1)' : 'rgba(255,255,255,0.03)',
+                        border: sel ? '1px solid rgba(0,168,204,0.35)' : '1px solid rgba(255,255,255,0.07)',
                       }}>
                       <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
-                        style={{ background: sel ? 'linear-gradient(135deg,#c9a84c,#f5d376)' : 'rgba(255,255,255,0.1)', color: '#000' }}>
+                        style={{ background: sel ? 'linear-gradient(135deg,#00a8cc,#00d4ff)' : 'rgba(255,255,255,0.1)', color: '#000' }}>
                         {sel && <Check className="w-3 h-3" />}
                       </div>
-                      <span className="text-sm" style={{ color: sel ? '#f5d376' : '#9ca3af' }}>{s.name}</span>
+                      <span className="text-sm" style={{ color: sel ? '#00d4ff' : '#9ca3af' }}>{s.name}</span>
                     </button>
                   );
                 })}
@@ -255,7 +255,7 @@ const PackageFormModal = ({ initial, services, addOns, onClose, onSubmit, saving
           </button>
           <button onClick={submit} disabled={saving}
             className="flex-1 py-3 rounded-xl text-sm font-bold text-black flex items-center justify-center gap-2 disabled:opacity-60"
-            style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)' }}>
+            style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)' }}>
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
               : <><Check className="w-4 h-4" /> {isEdit ? 'Update' : 'Create'} Package</>}
           </button>
@@ -341,7 +341,7 @@ const PackageManagement = ({ packages, services, addOns, onRefresh, adminToken }
           </button>
           <button onClick={() => setEditPkg('new')}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-black"
-            style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)' }}>
+            style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)' }}>
             <Plus className="w-4 h-4" /> Add Package
           </button>
         </div>
@@ -351,11 +351,11 @@ const PackageManagement = ({ packages, services, addOns, onRefresh, adminToken }
       {(packages || []).length === 0 && (
         <div className="text-center py-16 rounded-2xl"
           style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <Package className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+          <Package className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 text-sm mb-4">No packages yet.</p>
           <button onClick={() => setEditPkg('new')}
             className="px-5 py-2.5 rounded-xl text-sm font-bold text-black"
-            style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)' }}>
+            style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)' }}>
             Create First Package
           </button>
         </div>
@@ -377,7 +377,7 @@ const PackageManagement = ({ packages, services, addOns, onRefresh, adminToken }
                 <div className="flex flex-col gap-1 flex-shrink-0">
                   {pkg.isMostPopular && (
                     <span className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
-                      style={{ background: 'rgba(201,168,76,0.15)', color: '#f5d376' }}>
+                      style={{ background: 'rgba(0,168,204,0.15)', color: '#00d4ff' }}>
                       <Star className="w-3 h-3" />
                     </span>
                   )}
@@ -402,7 +402,7 @@ const PackageManagement = ({ packages, services, addOns, onRefresh, adminToken }
                   {pkg.tagline && <p className="text-gray-500 text-xs mt-0.5 italic">{pkg.tagline}</p>}
                   <div className="flex items-center gap-4 mt-1.5 flex-wrap">
                     {min && (
-                      <span className="flex items-center gap-1 text-xs" style={{ color: '#c9a84c' }}>
+                      <span className="flex items-center gap-1 text-xs" style={{ color: '#00a8cc' }}>
                         <DollarSign className="w-3 h-3" /> From ${min}
                       </span>
                     )}
@@ -442,7 +442,7 @@ const PackageManagement = ({ packages, services, addOns, onRefresh, adminToken }
                   <div key={vt} className="px-3 first:pl-0 last:pr-0">
                     <div className="text-gray-600 text-xs">{vt}</div>
                     <div className="text-sm font-bold mt-0.5" style={{
-                      background: pkg.pricing?.[vt] ? 'linear-gradient(135deg,#c9a84c,#f5d376)' : 'none',
+                      background: pkg.pricing?.[vt] ? 'linear-gradient(135deg,#00a8cc,#00d4ff)' : 'none',
                       WebkitBackgroundClip: pkg.pricing?.[vt] ? 'text' : 'unset',
                       WebkitTextFillColor: pkg.pricing?.[vt] ? 'transparent' : '#4b5563',
                       backgroundClip: pkg.pricing?.[vt] ? 'text' : 'unset',

@@ -22,6 +22,8 @@ const Hero = () => {
           alt="Luxury car"
           className="w-full h-full object-cover opacity-40"
           loading="eager"
+          fetchpriority="high"
+          decoding="async"
         />
         {/* Multi-layer dark gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/90" />
@@ -30,8 +32,8 @@ const Hero = () => {
 
       {/* Animated gold shimmer lines */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent animate-pulse-slow" />
-        <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/10 to-transparent animate-pulse-slow delay-500" />
+        <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent animate-pulse-slow" />
+        <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent animate-pulse-slow delay-500" />
       </div>
 
       {/* Main content */}
@@ -40,10 +42,10 @@ const Hero = () => {
         {/* Eyebrow tag */}
         <div
           className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-          style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)' }}
+          style={{ background: 'rgba(0,168,204,0.12)', border: '1px solid rgba(0,168,204,0.3)' }}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse-slow" />
-          <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse-slow" />
+          <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">
             Québec's Premier Mobile Detailing
           </span>
         </div>
@@ -56,7 +58,7 @@ const Hero = () => {
           <span className="text-white">{t('hero.title')}</span>
           <br />
           <span style={{
-            background: 'linear-gradient(135deg, #c9a84c 0%, #f5d376 50%, #c9a84c 100%)',
+            background: 'linear-gradient(135deg, #00a8cc 0%, #00d4ff 50%, #00a8cc 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
@@ -106,7 +108,7 @@ const Hero = () => {
               className="flex items-center gap-2 px-4 py-2 rounded-full"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
             >
-              <Icon className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+              <Icon className="w-4 h-4 text-cyan-400 flex-shrink-0" />
               <div className="text-left">
                 <div className="text-white text-xs font-bold leading-tight">{label}</div>
                 <div className="text-gray-400 text-xs leading-tight">{sub}</div>
@@ -126,7 +128,7 @@ const Hero = () => {
           ].map(({ num, label }, i) => (
             <div key={i} className="text-center">
               <div className="text-2xl font-black" style={{
-                background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+                background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
               }}>{num}</div>
               <div className="text-gray-400 text-xs mt-0.5">{label}</div>

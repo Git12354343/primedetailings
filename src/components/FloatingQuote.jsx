@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { X, ChevronRight, Zap } from 'lucide-react';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 const HIDDEN_ROUTES = ['/booking', '/detailer-login', '/detailer-dashboard', '/admin'];
 
 const VEHICLES = [
@@ -64,7 +64,7 @@ const FloatingQuote = () => {
         {/* Expanded panel */}
         {open && (
           <div className="mb-3 w-72 rounded-2xl overflow-hidden shadow-2xl"
-            style={{ background: 'rgba(12,12,12,0.98)', border: '1px solid rgba(201,168,76,0.3)', backdropFilter: 'blur(20px)' }}>
+            style={{ background: 'rgba(12,12,12,0.98)', border: '1px solid rgba(0,168,204,0.3)', backdropFilter: 'blur(20px)' }}>
 
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3"
@@ -82,7 +82,7 @@ const FloatingQuote = () => {
               {/* Step 1 — Vehicle */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider mb-2.5"
-                  style={{ color: 'rgba(201,168,76,0.7)' }}>
+                  style={{ color: 'rgba(0,168,204,0.7)' }}>
                   1. Your vehicle
                 </p>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -90,11 +90,11 @@ const FloatingQuote = () => {
                     <button key={v.id} onClick={() => setVehicle(v.id)}
                       className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-center transition-all active:scale-95"
                       style={{
-                        background: vehicle === v.id ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.04)',
-                        border: vehicle === v.id ? '1px solid rgba(201,168,76,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                        background: vehicle === v.id ? 'rgba(0,168,204,0.12)' : 'rgba(255,255,255,0.04)',
+                        border: vehicle === v.id ? '1px solid rgba(0,168,204,0.45)' : '1px solid rgba(255,255,255,0.08)',
                       }}>
                       <span style={{ fontSize: '18px', lineHeight: 1 }}>{v.icon}</span>
-                      <span className="text-xs font-medium" style={{ color: vehicle === v.id ? '#f5d376' : 'rgba(255,255,255,0.5)' }}>
+                      <span className="text-xs font-medium" style={{ color: vehicle === v.id ? '#00d4ff' : 'rgba(255,255,255,0.5)' }}>
                         {v.label}
                       </span>
                     </button>
@@ -105,7 +105,7 @@ const FloatingQuote = () => {
               {/* Step 2 — Tier */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider mb-2.5"
-                  style={{ color: 'rgba(201,168,76,0.7)' }}>
+                  style={{ color: 'rgba(0,168,204,0.7)' }}>
                   2. Service tier
                 </p>
                 <div className="space-y-1.5">
@@ -113,10 +113,10 @@ const FloatingQuote = () => {
                     <button key={t.id} onClick={() => setTier(t.id)}
                       className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all active:scale-[0.98]"
                       style={{
-                        background: tier === t.id ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.04)',
-                        border: tier === t.id ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                        background: tier === t.id ? 'rgba(0,168,204,0.1)' : 'rgba(255,255,255,0.04)',
+                        border: tier === t.id ? '1px solid rgba(0,168,204,0.4)' : '1px solid rgba(255,255,255,0.08)',
                       }}>
-                      <span className="text-sm font-medium" style={{ color: tier === t.id ? '#f5d376' : 'rgba(255,255,255,0.7)' }}>
+                      <span className="text-sm font-medium" style={{ color: tier === t.id ? '#00d4ff' : 'rgba(255,255,255,0.7)' }}>
                         {t.label}
                       </span>
                       <span className="text-xs font-bold" style={{ color: GOLD_S }}>
@@ -131,7 +131,7 @@ const FloatingQuote = () => {
               {price ? (
                 <Link to={bookUrl}
                   className="flex items-center justify-between w-full px-4 py-3.5 rounded-xl text-black font-bold text-sm"
-                  style={{ background: GOLD, boxShadow: '0 0 20px rgba(201,168,76,0.3)' }}>
+                  style={{ background: GOLD, boxShadow: '0 0 20px rgba(0,168,204,0.3)' }}>
                   <div>
                     <div className="font-black">Book for ~${price}</div>
                     <div className="text-xs opacity-70 font-medium">Exact price at checkout</div>
@@ -154,9 +154,9 @@ const FloatingQuote = () => {
           className="flex items-center gap-2.5 px-4 py-3 rounded-full shadow-2xl transition-all active:scale-95"
           style={{
             background: open ? 'rgba(20,20,20,0.95)' : GOLD,
-            border: open ? '1px solid rgba(201,168,76,0.3)' : 'none',
-            color: open ? GOLD_S : '#0a0a0a',
-            boxShadow: '0 4px 30px rgba(201,168,76,0.4)',
+            border: open ? '1px solid rgba(0,168,204,0.3)' : 'none',
+            color: open ? GOLD_S : '#0b0f1a',
+            boxShadow: '0 4px 30px rgba(0,168,204,0.4)',
           }}>
           <Zap className="w-4 h-4" />
           <span className="text-sm font-bold">{open ? 'Close' : 'Get a Quote'}</span>

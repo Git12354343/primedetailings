@@ -55,7 +55,7 @@ const DetailerLogin = () => {
 
         .dl-root {
           min-height: 100vh;
-          background: #080808;
+          background: #0b0f1a;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -74,7 +74,7 @@ const DetailerLogin = () => {
           transform: translateX(-50%);
           width: 600px;
           height: 600px;
-          background: radial-gradient(ellipse, rgba(201,168,76,0.07) 0%, transparent 70%);
+          background: radial-gradient(ellipse, rgba(0,168,204,0.07) 0%, transparent 70%);
           pointer-events: none;
         }
 
@@ -84,8 +84,8 @@ const DetailerLogin = () => {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+            linear-gradient(rgba(0,168,204,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,168,204,0.03) 1px, transparent 1px);
           background-size: 60px 60px;
           pointer-events: none;
         }
@@ -94,7 +94,7 @@ const DetailerLogin = () => {
           width: 100%;
           max-width: 420px;
           background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(201,168,76,0.15);
+          border: 1px solid rgba(0,168,204,0.15);
           border-radius: 24px;
           padding: 48px 40px;
           position: relative;
@@ -115,7 +115,7 @@ const DetailerLogin = () => {
           position: absolute;
           top: 0; left: 10%; right: 10%;
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(201,168,76,0.6), transparent);
+          background: linear-gradient(90deg, transparent, rgba(0,168,204,0.6), transparent);
         }
 
         .dl-logo {
@@ -129,12 +129,12 @@ const DetailerLogin = () => {
           width: 56px;
           height: 56px;
           border-radius: 16px;
-          background: linear-gradient(135deg, #c9a84c, #f5d376);
+          background: linear-gradient(135deg, #00a8cc, #00d4ff);
           display: flex;
           align-items: center;
           justify-content: center;
           margin-bottom: 16px;
-          box-shadow: 0 0 30px rgba(201,168,76,0.25);
+          box-shadow: 0 0 30px rgba(0,168,204,0.25);
         }
 
         .dl-logo-icon svg {
@@ -179,7 +179,7 @@ const DetailerLogin = () => {
           font-weight: 600;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: rgba(201,168,76,0.7);
+          color: rgba(0,168,204,0.7);
           margin-bottom: 8px;
         }
 
@@ -202,7 +202,7 @@ const DetailerLogin = () => {
         }
 
         .dl-input:focus {
-          border-color: rgba(201,168,76,0.5);
+          border-color: rgba(0,168,204,0.5);
           background: rgba(255,255,255,0.06);
         }
 
@@ -232,7 +232,7 @@ const DetailerLogin = () => {
           padding: 14px;
           border-radius: 12px;
           border: none;
-          background: linear-gradient(135deg, #c9a84c, #f5d376);
+          background: linear-gradient(135deg, #00a8cc, #00d4ff);
           color: #000;
           font-family: 'Inter', sans-serif;
           font-size: 14px;
@@ -244,12 +244,12 @@ const DetailerLogin = () => {
           justify-content: center;
           gap: 8px;
           transition: opacity 0.2s, transform 0.15s;
-          box-shadow: 0 4px 20px rgba(201,168,76,0.2);
+          box-shadow: 0 4px 20px rgba(0,168,204,0.2);
         }
         .dl-submit:hover:not(:disabled) {
           opacity: 0.9;
           transform: translateY(-1px);
-          box-shadow: 0 6px 28px rgba(201,168,76,0.3);
+          box-shadow: 0 6px 28px rgba(0,168,204,0.3);
         }
         .dl-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -292,7 +292,7 @@ const DetailerLogin = () => {
                 <path d="M10 13h8" stroke="#000" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             </div>
-            <h1 className="dl-title">Prestige Plus Detailing</h1>
+            <h1 className="dl-title">Prestige Plus Services</h1>
             <p className="dl-subtitle">Detailer Portal</p>
           </div>
 
@@ -310,7 +310,7 @@ const DetailerLogin = () => {
                 value={formData.email}
                 onChange={handleChange}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                placeholder="you@Prestigeplusdetailing.ca"
+                placeholder="you@prestigeplus.services"
                 autoComplete="email"
               />
             </div>

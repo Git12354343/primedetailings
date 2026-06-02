@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Camera, Loader2, AlertCircle } from 'lucide-react';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 const FILTERS = ['All', 'Full Detail', 'Interior', 'Exterior', 'Ceramic Coat', 'Paint Correction', 'Engine Bay'];
 
 // ── Drag-reveal card ──────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ const RevealCard = ({ photo }) => {
       {/* Reveal area */}
       <div ref={cardRef}
         className="relative select-none overflow-hidden"
-        style={{ aspectRatio: '16/10', cursor: photo.afterUrl ? 'col-resize' : 'default' }}
+        style={{ aspectRatio: '16/9', cursor: photo.afterUrl ? 'col-resize' : 'default' }}
         onMouseDown={() => photo.afterUrl && setDragging(true)}
         onTouchStart={() => photo.afterUrl && setDragging(true)}
         onTouchMove={e => { e.preventDefault(); photo.afterUrl && setPos(getPos(e.touches[0].clientX)); }}
@@ -54,7 +54,7 @@ const RevealCard = ({ photo }) => {
         )}
 
         {/* AFTER / single image */}
-        <img src={photo.afterUrl || photo.beforeUrl} alt="After"
+        <img src={photo.afterUrl || photo.beforeUrl} alt="After" loading="lazy" decoding="async"
           className="absolute inset-0 w-full h-full object-cover"
           onLoad={() => setImgLoaded(p => ({ ...p, after: true }))} />
 
@@ -62,7 +62,7 @@ const RevealCard = ({ photo }) => {
         {photo.afterUrl && (
           <>
             <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
-              <img src={photo.beforeUrl} alt="Before"
+              <img src={photo.beforeUrl} alt="Before" loading="lazy" decoding="async"
                 className="absolute inset-0 h-full object-cover"
                 style={{ width: `${100 / (pos / 100)}%`, maxWidth: 'none' }}
                 onLoad={() => setImgLoaded(p => ({ ...p, before: true }))} />
@@ -78,11 +78,11 @@ const RevealCard = ({ photo }) => {
             </div>
             {/* Gold divider */}
             <div className="absolute top-0 bottom-0 z-10 w-0.5 pointer-events-none"
-              style={{ left: `${pos}%`, background: GOLD, boxShadow: '0 0 12px rgba(201,168,76,0.7)' }}>
+              style={{ left: `${pos}%`, background: GOLD, boxShadow: '0 0 12px rgba(0,168,204,0.7)' }}>
               <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center"
-                style={{ background: GOLD, boxShadow: '0 0 16px rgba(201,168,76,0.6)', cursor: 'col-resize' }}>
+                style={{ background: GOLD, boxShadow: '0 0 16px rgba(0,168,204,0.6)', cursor: 'col-resize' }}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M4 3l-3 4 3 4M10 3l3 4-3 4" stroke="#0a0a0a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4 3l-3 4 3 4M10 3l3 4-3 4" stroke="#0b0f1a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
             </div>
@@ -104,7 +104,7 @@ const RevealCard = ({ photo }) => {
         <div>
           <p className="text-white text-sm font-semibold">{photo.caption || photo.vehicle}</p>
           <span className="text-xs px-2 py-0.5 rounded-md font-medium mt-1 inline-block"
-            style={{ background: 'rgba(201,168,76,0.1)', color: GOLD_S }}>
+            style={{ background: 'rgba(0,168,204,0.1)', color: GOLD_S }}>
             {photo.serviceType}
           </span>
         </div>
@@ -140,18 +140,18 @@ const Gallery = () => {
     : photos.filter(p => p.serviceType === activeFilter);
 
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen" style={{ background: '#0b0f1a' }}>
       <style>{`@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }`}</style>
 
       {/* Hero */}
       <section className="relative pt-32 pb-16 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent)' }} />
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(201,168,76,0.03)' }} />
+          <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(0,168,204,0.3),transparent)' }} />
+          <div className="absolute top-1/2 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(0,168,204,0.03)' }} />
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-semibold uppercase tracking-widest"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)', color: GOLD_S }}>
             <Camera className="w-3.5 h-3.5" /> Our Work
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-5">
@@ -171,7 +171,7 @@ const Gallery = () => {
                 <button key={f} onClick={() => setActiveFilter(f)}
                   className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
                   style={activeFilter === f
-                    ? { background: GOLD, color: '#0a0a0a' }
+                    ? { background: GOLD, color: '#0b0f1a' }
                     : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}>
                   {f}
                 </button>
@@ -210,7 +210,7 @@ const Gallery = () => {
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>No {activeFilter} photos yet.</p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {filtered.map(photo => <RevealCard key={photo.id} photo={photo} />)}
           </div>
         )}
@@ -240,7 +240,7 @@ const Gallery = () => {
         <h2 className="text-3xl font-black text-white mb-4">Ready for Your Transformation?</h2>
         <p className="mb-8" style={{ color: 'rgba(255,255,255,0.45)' }}>Your vehicle deserves the same treatment. Book in under 3 minutes.</p>
         <Link to="/booking" className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-sm text-black"
-          style={{ background: GOLD, boxShadow: '0 0 30px rgba(201,168,76,0.3)' }}>
+          style={{ background: GOLD, boxShadow: '0 0 30px rgba(0,168,204,0.3)' }}>
           Book Your Detail <ChevronRight className="w-4 h-4" />
         </Link>
       </section>

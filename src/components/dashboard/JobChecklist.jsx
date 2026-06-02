@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckSquare, Square, Camera, ChevronDown, ChevronUp, Loader2, AlertCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const GOLD_S  = '#c9a84c';
+const GOLD_S  = '#00a8cc';
 
 const JobChecklist = ({ bookingId, token, onReadyChange }) => {
   const [checklist, setChecklist] = useState(null);
@@ -108,7 +108,7 @@ const JobChecklist = ({ bookingId, token, onReadyChange }) => {
           <span className="text-white font-bold text-sm">Job Checklist</span>
           <span className="text-xs font-medium px-2 py-0.5 rounded-full"
             style={{
-              background: canDone ? 'rgba(52,211,153,0.12)' : 'rgba(201,168,76,0.1)',
+              background: canDone ? 'rgba(52,211,153,0.12)' : 'rgba(0,168,204,0.1)',
               color: canDone ? '#34d399' : GOLD_S,
             }}>
             {done}/{total}
@@ -132,7 +132,7 @@ const JobChecklist = ({ bookingId, token, onReadyChange }) => {
             width: `${progress}%`,
             background: canDone
               ? 'linear-gradient(90deg,#34d399,#10b981)'
-              : `linear-gradient(90deg,#c9a84c,#f5d376)`,
+              : `linear-gradient(90deg,#00a8cc,#00d4ff)`,
           }} />
       </div>
 
@@ -192,7 +192,7 @@ const JobChecklist = ({ bookingId, token, onReadyChange }) => {
           {/* Completion status */}
           {!canDone && (
             <div className="flex items-center gap-2 mt-3 px-3 py-2.5 rounded-xl"
-              style={{ background:'rgba(201,168,76,0.06)', border:'1px solid rgba(201,168,76,0.2)' }}>
+              style={{ background:'rgba(0,168,204,0.06)', border:'1px solid rgba(0,168,204,0.2)' }}>
               <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: GOLD_S }} />
               <p className="text-xs" style={{ color:'rgba(255,255,255,0.7)' }}>
                 Complete all required items before marking job done.

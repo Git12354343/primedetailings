@@ -49,7 +49,7 @@ const QuoteTeaser = () => {
   }, [selected, vehicle]);
 
   return (
-    <section ref={ref} className="relative py-20" style={{ background: '#0a0a0a' }}>
+    <section ref={ref} className="relative py-20" style={{ background: '#0b0f1a' }}>
       <div className="divider-gold absolute top-0 inset-x-0" />
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="rounded-3xl p-7 sm:p-9 glass-card"
@@ -69,11 +69,11 @@ const QuoteTeaser = () => {
                   <button key={key} onClick={() => setVehicle(key)}
                     className="flex flex-col items-center gap-1.5 py-3 rounded-xl transition-all active:scale-95"
                     style={{
-                      background: active ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)',
-                      border: active ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                      background: active ? 'rgba(0,168,204,0.12)' : 'rgba(255,255,255,0.03)',
+                      border: active ? '1px solid rgba(0,168,204,0.4)' : '1px solid rgba(255,255,255,0.08)',
                     }}>
-                    <Icon className="w-5 h-5" style={{ color: active ? '#f5d376' : '#6b7280' }} />
-                    <span className="text-xs font-bold" style={{ color: active ? '#f5d376' : '#9ca3af' }}>{label}</span>
+                    <Icon className="w-5 h-5" style={{ color: active ? '#00d4ff' : '#6b7280' }} />
+                    <span className="text-xs font-bold" style={{ color: active ? '#00d4ff' : '#9ca3af' }}>{label}</span>
                   </button>
                 );
               })}
@@ -94,9 +94,9 @@ const QuoteTeaser = () => {
           </div>
 
           {/* Estimate */}
-          <div className="rounded-2xl p-5 mb-6 text-center" style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)' }}>
+          <div className="rounded-2xl p-5 mb-6 text-center" style={{ background: 'rgba(0,168,204,0.05)', border: '1px solid rgba(0,168,204,0.15)' }}>
             <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Starting around</div>
-            <div className="text-4xl font-black" style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <div className="text-4xl font-black" style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               {loading ? '—' : startingAt ? `$${startingAt}` : 'Custom quote'}
             </div>
             <div className="flex items-center justify-center gap-1.5 text-gray-500 text-xs mt-2">

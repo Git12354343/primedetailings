@@ -151,12 +151,12 @@ const StartNavigationComponent = ({ booking, onStartNavigation }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div className="rounded-lg border border-white/10 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <MapPin className="w-5 h-5 text-blue-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Navigate to Customer</h3>
+          <MapPin className="w-5 h-5 text-cyan-400 mr-2" />
+          <h3 className="text-lg font-semibold text-white">Navigate to Customer</h3>
         </div>
         <div className="text-sm text-gray-500">
           ETA: {getEstimatedTravelTime()}
@@ -164,12 +164,12 @@ const StartNavigationComponent = ({ booking, onStartNavigation }) => {
       </div>
 
       {/* Address Display */}
-      <div className="bg-gray-50 rounded-lg p-3 mb-4">
+      <div className="rounded-lg p-3 mb-4" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <div className="flex items-start">
           <MapPin className="w-4 h-4 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <p className="font-medium text-gray-900">{booking.customer.address}</p>
-            <p className="text-sm text-gray-600">{booking.customer.city}</p>
+            <p className="font-medium text-white">{booking.customer.address}</p>
+            <p className="text-sm text-gray-400">{booking.customer.city}</p>
           </div>
         </div>
       </div>
@@ -181,7 +181,7 @@ const StartNavigationComponent = ({ booking, onStartNavigation }) => {
         className={`w-full flex items-center justify-center px-4 py-3 rounded-lg font-medium text-white transition-all duration-200 mb-4 ${
           isNavigating 
             ? 'bg-gray-400 cursor-not-allowed' 
-            : 'bg-blue-600 hover:bg-blue-700 active:scale-98'
+            : 'bg-cyan-500 hover:bg-cyan-400 active:scale-98 !text-[#0b0f1a]'
         }`}
       >
         {isNavigating ? (
@@ -200,13 +200,13 @@ const StartNavigationComponent = ({ booking, onStartNavigation }) => {
 
       {/* Quick Action Buttons */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-gray-700 mb-2">Or choose your preferred app:</p>
+        <p className="text-sm font-medium text-gray-300 mb-2">Or choose your preferred app:</p>
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {/* Google Maps */}
           <button
             onClick={() => handleQuickNavigation('google')}
-            className="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+            className="flex items-center justify-center px-3 py-2 border border-white/15 rounded-lg hover:bg-white/10 transition-colors text-sm text-gray-200"
           >
             <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
             Google Maps
@@ -216,7 +216,7 @@ const StartNavigationComponent = ({ booking, onStartNavigation }) => {
           {/* Waze */}
           <button
             onClick={() => handleQuickNavigation('waze')}
-            className="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+            className="flex items-center justify-center px-3 py-2 border border-white/15 rounded-lg hover:bg-white/10 transition-colors text-sm text-gray-200"
           >
             <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
             Waze
@@ -227,7 +227,7 @@ const StartNavigationComponent = ({ booking, onStartNavigation }) => {
           {/iPad|iPhone|iPod/.test(navigator.userAgent) && (
             <button
               onClick={() => handleQuickNavigation('apple')}
-              className="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              className="flex items-center justify-center px-3 py-2 border border-white/15 rounded-lg hover:bg-white/10 transition-colors text-sm text-gray-200"
             >
               <div className="w-4 h-4 bg-gray-800 rounded mr-2"></div>
               Apple Maps
@@ -238,8 +238,8 @@ const StartNavigationComponent = ({ booking, onStartNavigation }) => {
       </div>
 
       {/* Additional Info */}
-      <div className="mt-4 pt-3 border-t border-gray-200">
-        <div className="flex items-center justify-between text-sm text-gray-600">
+      <div className="mt-4 pt-3 border-t border-white/10">
+        <div className="flex items-center justify-between text-sm text-gray-400">
           <div className="flex items-center">
             <Clock className="w-4 h-4 mr-1" />
             <span>Appointment: {booking.time}</span>

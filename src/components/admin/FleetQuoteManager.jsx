@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Phone, Mail, Car, RefreshCw, ChevronDown, Loader2 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const GOLD_S  = '#c9a84c';
+const GOLD_S  = '#00a8cc';
 
 const STATUS_STYLES = {
-  NEW:       { bg:'rgba(201,168,76,0.12)',  color:'#f5d376',  label:'New'       },
+  NEW:       { bg:'rgba(0,168,204,0.12)',  color:'#00d4ff',  label:'New'       },
   CONTACTED: { bg:'rgba(96,165,250,0.12)',  color:'#60a5fa',  label:'Contacted' },
   QUOTED:    { bg:'rgba(167,139,250,0.12)', color:'#a78bfa',  label:'Quoted'    },
   ACCEPTED:  { bg:'rgba(52,211,153,0.12)',  color:'#34d399',  label:'Accepted'  },
@@ -107,7 +107,7 @@ const FleetQuoteManager = ({ adminToken }) => {
                   className="w-full flex items-center justify-between px-4 py-4 text-left">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.2)' }}>
+                      style={{ background:'rgba(0,168,204,0.1)', border:'1px solid rgba(0,168,204,0.2)' }}>
                       <Building2 className="w-4 h-4" style={{ color: GOLD_S }} />
                     </div>
                     <div>
@@ -132,11 +132,11 @@ const FleetQuoteManager = ({ adminToken }) => {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Phone className="w-3.5 h-3.5" style={{ color: GOLD_S }} />
-                          <a href={`tel:${q.phone}`} className="text-sm text-white hover:text-yellow-400">{q.phone}</a>
+                          <a href={`tel:${q.phone}`} className="text-sm text-white hover:text-cyan-400">{q.phone}</a>
                         </div>
                         <div className="flex items-center gap-2">
                           <Mail className="w-3.5 h-3.5" style={{ color: GOLD_S }} />
-                          <a href={`mailto:${q.email}`} className="text-sm text-white hover:text-yellow-400">{q.email}</a>
+                          <a href={`mailto:${q.email}`} className="text-sm text-white hover:text-cyan-400">{q.email}</a>
                         </div>
                         <div className="flex items-start gap-2">
                           <Car className="w-3.5 h-3.5 mt-0.5" style={{ color: GOLD_S }} />

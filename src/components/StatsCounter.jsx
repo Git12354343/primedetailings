@@ -29,10 +29,10 @@ const Counter = ({ stat, active, index }) => {
     <div className="text-center px-4 py-2">
       <div className="text-4xl sm:text-5xl font-black leading-none mb-2"
         style={{
-          background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+          background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           textShadow: 'none',
-          filter: active ? 'drop-shadow(0 0 20px rgba(201,168,76,0.4))' : 'none',
+          filter: active ? 'drop-shadow(0 0 20px rgba(0,168,204,0.4))' : 'none',
           transition: 'filter 0.6s ease',
         }}>
         {stat.prefix}{stat.decimals ? val.toFixed(stat.decimals) : Math.floor(val)}{stat.suffix}
@@ -60,16 +60,16 @@ const StatsCounter = () => {
 
   return (
     <section ref={ref} className="py-14 relative overflow-hidden"
-      style={{ background: '#0d0d0d', borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      style={{ background: '#111827', borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
 
       {/* Subtle gold glow center */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.05) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(0,168,204,0.05) 0%, transparent 70%)' }} />
 
       <div className="max-w-5xl mx-auto px-4 relative z-10">
         {/* Label */}
         <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] mb-8"
-          style={{ color: 'rgba(201,168,76,0.5)' }}>
+          style={{ color: 'rgba(0,168,204,0.5)' }}>
           Trusted Across Québec
         </p>
 

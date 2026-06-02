@@ -4,7 +4,7 @@ import { AlertCircle, Users, Briefcase, Activity, Settings } from 'lucide-react'
 const STATS_CONFIG = [
   { key: 'unassigned',    label: 'Unassigned',      icon: AlertCircle, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
   { key: 'detailers',    label: 'Active Detailers', icon: Users,       color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
-  { key: 'total',        label: 'Total Jobs',       icon: Briefcase,   color: '#c9a84c', bg: 'rgba(201,168,76,0.12)' },
+  { key: 'total',        label: 'Total Jobs',       icon: Briefcase,   color: '#00a8cc', bg: 'rgba(0,168,204,0.12)' },
   { key: 'active',       label: 'Active Jobs',      icon: Activity,    color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
   { key: 'services',     label: 'Services',         icon: Settings,    color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
 ];

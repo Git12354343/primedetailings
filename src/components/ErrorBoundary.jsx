@@ -18,7 +18,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ minHeight:'100vh', background:'#0a0a0a', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}>
+        <div style={{ minHeight:'100vh', background:'#0b0f1a', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}>
           <div style={{ maxWidth:'400px', width:'100%', textAlign:'center' }}>
             <div style={{ width:'64px', height:'64px', background:'rgba(239,68,68,0.12)', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px' }}>
               <AlertTriangle style={{ width:'32px', height:'32px', color:'#ef4444' }} />
@@ -29,7 +29,7 @@ class ErrorBoundary extends React.Component {
             </p>
             <div style={{ display:'flex', gap:'12px', justifyContent:'center' }}>
               <button onClick={() => this.setState({ hasError:false, error:null })}
-                style={{ display:'flex', alignItems:'center', gap:'8px', padding:'10px 20px', background:'linear-gradient(135deg,#c9a84c,#f5d376)', color:'#0a0a0a', borderRadius:'12px', border:'none', fontWeight:700, cursor:'pointer', fontSize:'14px' }}>
+                style={{ display:'flex', alignItems:'center', gap:'8px', padding:'10px 20px', background:'linear-gradient(135deg,#00a8cc,#00d4ff)', color:'#0b0f1a', borderRadius:'12px', border:'none', fontWeight:700, cursor:'pointer', fontSize:'14px' }}>
                 <RefreshCw style={{ width:'16px', height:'16px' }} /> Try Again
               </button>
               <button onClick={() => window.location.href = '/'}

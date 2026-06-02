@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { CalendarCheck, MessageSquare, Car, Sparkles, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
-const GOLD   = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD   = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 
-const STEP_COLORS = ['#c9a84c', '#60a5fa', '#a78bfa', '#34d399'];
+const STEP_COLORS = ['#00a8cc', '#60a5fa', '#a78bfa', '#34d399'];
 const STEP_ICONS  = [CalendarCheck, MessageSquare, Car, Sparkles];
 
 const BookingJourney = () => {
@@ -46,17 +46,17 @@ const BookingJourney = () => {
   }, [active]);
 
   return (
-    <section ref={ref} className="py-20 relative overflow-hidden" style={{ background: '#0a0a0a' }}>
+    <section ref={ref} className="py-20 relative overflow-hidden" style={{ background: '#0b0f1a' }}>
 
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(201,168,76,0.04) 0%, transparent 65%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(0,168,204,0.04) 0%, transparent 65%)' }} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
         {/* Header */}
         <div className={`text-center mb-14 transition-all duration-700 ${active ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 text-xs font-semibold uppercase tracking-widest"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)', color: GOLD_S }}>
             {t('howItWorks.badge')}
           </div>
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
@@ -77,7 +77,7 @@ const BookingJourney = () => {
           <div className="hidden lg:block absolute top-10 left-0 right-0 h-px mx-20"
             style={{ background: 'rgba(255,255,255,0.07)', zIndex: 0 }}>
             <div className="h-full"
-              style={{ width: `${lineW}%`, background: GOLD, boxShadow: '0 0 8px rgba(201,168,76,0.5)' }} />
+              style={{ width: `${lineW}%`, background: GOLD, boxShadow: '0 0 8px rgba(0,168,204,0.5)' }} />
           </div>
 
           {/* Mobile vertical line */}
@@ -99,7 +99,7 @@ const BookingJourney = () => {
                   <div className="relative flex-shrink-0">
                     {active && i === 0 && (
                       <div className="absolute inset-0 rounded-full animate-ping"
-                        style={{ background: 'rgba(201,168,76,0.2)', animationDuration: '2s' }} />
+                        style={{ background: 'rgba(0,168,204,0.2)', animationDuration: '2s' }} />
                     )}
                     <div className="w-[52px] h-[52px] lg:w-[60px] lg:h-[60px] rounded-2xl flex items-center justify-center relative z-10 lg:mx-auto lg:mb-5"
                       style={{
@@ -113,7 +113,7 @@ const BookingJourney = () => {
                         style={{ color: active ? step.color : 'rgba(255,255,255,0.3)', transition: 'color 0.5s ease', transitionDelay: `${i * 120 + 200}ms` }} />
                     </div>
                     <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black"
-                      style={{ background: GOLD, color: '#0a0a0a', fontSize: '10px' }}>
+                      style={{ background: GOLD, color: '#0b0f1a', fontSize: '10px' }}>
                       {i + 1}
                     </div>
                   </div>
@@ -134,7 +134,7 @@ const BookingJourney = () => {
         <div className={`text-center mt-12 transition-all duration-700 delay-700 ${active ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <Link to="/booking"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold text-sm text-black group"
-            style={{ background: GOLD, boxShadow: '0 0 30px rgba(201,168,76,0.3)' }}>
+            style={{ background: GOLD, boxShadow: '0 0 30px rgba(0,168,204,0.3)' }}>
             {t('howItWorks.cta')}
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>

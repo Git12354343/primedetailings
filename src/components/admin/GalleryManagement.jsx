@@ -1,150 +1,59 @@
-// src/components/admin/GalleryManagement.jsx
-// Before/after gallery management with automatic image compression
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Camera, Upload, Trash2, Star, StarOff, Loader2,
-  AlertCircle, CheckCircle, X, Plus, Zap
+  AlertCircle, CheckCircle, X, Plus, Edit3
 } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
-import { compressImage, formatBytes } from '../../utils/imageCompression';
 
-const GOLD   = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 
 const SERVICE_TYPES = ['Full Detail', 'Interior', 'Exterior', 'Ceramic Coat', 'Paint Correction', 'Engine Bay'];
 const VEHICLE_TYPES = ['Sedan', 'SUV', 'Truck', 'Coupe', 'Van'];
 
-// ── Compressed image picker ───────────────────────────────────────────────────
-// Compresses on selection and exposes the compressed File via onChange
-const ImagePicker = ({ label, file: fileProp, stats: statsProp, onChange, required = false }) => {
-  const inputRef   = useRef(null);
-  const [preview,      setPreview]      = useState(null);
-  const [compressing,  setCompressing]  = useState(false);
-  const [progress,     setProgress]     = useState(0);
-  const [localStats,   setLocalStats]   = useState(null);
-  const [err,          setErr]          = useState('');
+// ── Image picker — stores raw File object, shows preview via object URL ──────
+const ImagePicker = ({ label, file: fileProp, onChange }) => {
+  const inputRef = useRef(null);
+  const [preview, setPreview] = useState(null);
 
-  // Revoke old preview when file changes
   useEffect(() => {
-    if (!fileProp) { setPreview(null); setLocalStats(null); return; }
+    if (!fileProp) { setPreview(null); return; }
     const url = URL.createObjectURL(fileProp);
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [fileProp]);
 
-  const handleFile = async (raw) => {
-    if (!raw) return;
-    setErr('');
-    setCompressing(true);
-    setProgress(0);
-
-    // Show original preview immediately for responsiveness
-    const tempUrl = URL.createObjectURL(raw);
-    setPreview(tempUrl);
-
-    try {
-      const { file: compressed, stats } = await compressImage(raw, 'gallery', (p) => setProgress(p));
-      setLocalStats(stats);
-      URL.revokeObjectURL(tempUrl);
-      setPreview(URL.createObjectURL(compressed));
-      onChange(compressed, stats);
-    } catch (e) {
-      setErr(e.message);
-      URL.revokeObjectURL(tempUrl);
-      setPreview(null);
-    } finally {
-      setCompressing(false);
-    }
+  const handleFile = (file) => {
+    if (!file) return;
+    onChange(file); // pass raw File — FormData will handle it
   };
-
-  const displayStats = localStats || statsProp;
 
   return (
     <div>
-      <p className="text-xs font-bold uppercase tracking-widest mb-2"
-        style={{ color: 'rgba(201,168,76,0.8)' }}>
-        {label}{required && <span style={{ color: '#ef4444' }}> *</span>}
-      </p>
-
+      <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'rgba(0,168,204,0.8)' }}>{label}</p>
       <div
         className="relative rounded-xl overflow-hidden cursor-pointer group"
-        style={{
-          height:     '130px',
-          background: 'rgba(255,255,255,0.04)',
-          border:     `2px dashed ${err ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.15)'}`,
-        }}
-        onClick={() => !compressing && inputRef.current?.click()}
-      >
-        {/* Preview */}
-        {preview && (
-          <img src={preview} alt={label} className="w-full h-full object-cover"
-            style={{ filter: compressing ? 'brightness(0.4)' : 'none', transition: 'filter 0.2s' }} />
-        )}
-
-        {/* Empty state */}
-        {!preview && !compressing && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <Upload className="w-6 h-6" style={{ color: 'rgba(255,255,255,0.22)' }} />
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Click to upload</p>
-          </div>
-        )}
-
-        {/* Compressing overlay */}
-        {compressing && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-            style={{ background: 'rgba(0,0,0,0.65)' }}>
-            {/* Progress bar */}
-            <div className="w-3/4 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }}>
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width:      `${progress}%`,
-                  background: GOLD,
-                  transition: 'width 0.15s ease',
-                }}
-              />
+        style={{ height: '120px', background: 'rgba(255,255,255,0.04)', border: '2px dashed rgba(255,255,255,0.15)' }}
+        onClick={() => inputRef.current?.click()}>
+        {preview
+          ? <img src={preview} alt={label} className="w-full h-full object-cover" />
+          : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <Upload className="w-6 h-6" style={{ color: 'rgba(255,255,255,0.25)' }} />
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>Click to upload</p>
             </div>
-            <p className="text-xs font-medium" style={{ color: GOLD_S }}>
-              Optimizing… {progress}%
-            </p>
+          )}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+          <p className="text-xs font-semibold text-white">Change image</p>
+        </div>
+        {fileProp && (
+          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded text-xs"
+            style={{ background: 'rgba(0,0,0,0.6)', color: 'rgba(255,255,255,0.6)' }}>
+            {(fileProp.size / 1024 / 1024).toFixed(1)}MB
           </div>
         )}
-
-        {/* Hover overlay */}
-        {!compressing && fileProp && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/55
-                          opacity-0 group-hover:opacity-100 transition-opacity">
-            <p className="text-xs font-semibold text-white">Change image</p>
-          </div>
-        )}
-
-        {/* Stats badge */}
-        {displayStats && !compressing && (
-          <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-md"
-            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
-            <Zap className="w-2.5 h-2.5" style={{ color: GOLD_S }} />
-            <span style={{ color: '#f5d376', fontSize: '10px', fontWeight: 700 }}>
-              −{displayStats.savingPercent}% · {displayStats.compressedSizeFormatted}
-            </span>
-          </div>
-        )}
-
-        {/* Error badge */}
-        {err && !compressing && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-2 gap-1"
-            style={{ background: 'rgba(0,0,0,0.8)' }}>
-            <AlertCircle className="w-5 h-5 text-red-400" />
-            <p className="text-red-400 text-center leading-tight" style={{ fontSize: '10px' }}>{err}</p>
-          </div>
-        )}
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={e => handleFile(e.target.files[0])}
-        />
+        <input ref={inputRef} type="file" accept="image/*" className="hidden"
+          onChange={e => handleFile(e.target.files[0])} />
       </div>
     </div>
   );
@@ -152,22 +61,13 @@ const ImagePicker = ({ label, file: fileProp, stats: statsProp, onChange, requir
 
 // ── Upload modal ──────────────────────────────────────────────────────────────
 const UploadModal = ({ onClose, onUploaded, adminToken }) => {
-  const [form, setForm] = useState({
-    vehicle:     'Sedan',
-    serviceType: 'Full Detail',
-    caption:     '',
-    beforeFile:  null,
-    afterFile:   null,
-    beforeStats: null,
-    afterStats:  null,
-  });
+  const [form, setForm] = useState({ vehicle: 'Sedan', serviceType: 'Full Detail', caption: '', beforeFile: null, afterFile: null });
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState('');
 
   const handleUpload = async () => {
     if (!form.beforeFile) { setError('Before image is required'); return; }
     setSaving(true); setError('');
-
     try {
       const fd = new FormData();
       fd.append('beforeImage', form.beforeFile);
@@ -185,34 +85,18 @@ const UploadModal = ({ onClose, onUploaded, adminToken }) => {
       const data = await res.json();
       if (data.success) { onUploaded(data.photo); onClose(); }
       else setError(data.message || 'Upload failed');
-    } catch {
-      setError('Network error');
-    } finally {
-      setSaving(false);
-    }
+    } catch { setError('Network error'); }
+    finally { setSaving(false); }
   };
 
-  const totalSaved =
-    (form.beforeStats?.savingBytes || 0) + (form.afterStats?.savingBytes || 0);
-
-  const iStyle = {
-    width: '100%', background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
-    color: '#fff', padding: '9px 12px', fontSize: '13px', outline: 'none', cursor: 'pointer',
-  };
-  const lStyle = {
-    display: 'block', fontSize: '11px', fontWeight: '600',
-    letterSpacing: '0.07em', textTransform: 'uppercase',
-    color: 'rgba(201,168,76,0.8)', marginBottom: '6px',
-  };
+  const iStyle = { width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', padding: '9px 12px', fontSize: '13px', outline: 'none', cursor: 'pointer' };
+  const lStyle = { display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(0,168,204,0.8)', marginBottom: '6px' };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
       <div className="w-full max-w-lg rounded-2xl overflow-hidden"
         style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
-
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 flex-shrink-0"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center gap-2">
@@ -223,7 +107,6 @@ const UploadModal = ({ onClose, onUploaded, adminToken }) => {
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto">
-          {/* Vehicle / Service */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label style={lStyle}>Vehicle</label>
@@ -241,46 +124,19 @@ const UploadModal = ({ onClose, onUploaded, adminToken }) => {
             </div>
           </div>
 
-          {/* Caption */}
           <div>
             <label style={lStyle}>Caption (optional)</label>
-            <input style={iStyle} value={form.caption}
-              placeholder="e.g. 2022 BMW 3 Series — Full Detail"
+            <input style={iStyle} value={form.caption} placeholder="e.g. 2022 BMW 3 Series — Full Detail"
               onChange={e => setForm(p => ({ ...p, caption: e.target.value }))} />
           </div>
 
-          {/* Image pickers */}
           <div className="grid grid-cols-2 gap-3">
-            <ImagePicker
-              label="Before" required
-              file={form.beforeFile}
-              stats={form.beforeStats}
-              onChange={(f, s) => setForm(p => ({ ...p, beforeFile: f, beforeStats: s }))}
-            />
-            <ImagePicker
-              label="After"
-              file={form.afterFile}
-              stats={form.afterStats}
-              onChange={(f, s) => setForm(p => ({ ...p, afterFile: f, afterStats: s }))}
-            />
+            <ImagePicker label="Before *" file={form.beforeFile}
+              onChange={v => setForm(p => ({ ...p, beforeFile: v }))} />
+            <ImagePicker label="After" file={form.afterFile}
+              onChange={v => setForm(p => ({ ...p, afterFile: v }))} />
           </div>
 
-          {/* Compression summary */}
-          {totalSaved > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
-              style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.15)' }}>
-              <Zap className="w-3.5 h-3.5 flex-shrink-0" style={{ color: GOLD_S }} />
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                Images optimized — <span style={{ color: GOLD_S, fontWeight: 600 }}>
-                  {formatBytes(totalSaved)} saved
-                </span>
-                {(form.beforeStats?.didConvertToWebP || form.afterStats?.didConvertToWebP) &&
-                  <span style={{ color: 'rgba(255,255,255,0.4)' }}> · converted to WebP</span>}
-              </span>
-            </div>
-          )}
-
-          {/* Error */}
           {error && (
             <div className="flex items-center gap-2 p-3 rounded-xl text-sm"
               style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5' }}>
@@ -289,23 +145,16 @@ const UploadModal = ({ onClose, onUploaded, adminToken }) => {
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex gap-3 px-6 py-4 flex-shrink-0"
           style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <button onClick={onClose}
-            className="flex-1 py-3 rounded-xl text-sm font-medium text-gray-400"
+          <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm font-medium text-gray-400"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
             Cancel
           </button>
-          <button
-            onClick={handleUpload}
-            disabled={saving || !form.beforeFile}
+          <button onClick={handleUpload} disabled={saving || !form.beforeFile}
             className="flex-1 py-3 rounded-xl text-sm font-bold text-black flex items-center justify-center gap-2 disabled:opacity-50"
-            style={{ background: GOLD }}
-          >
-            {saving
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
-              : <><Upload className="w-4 h-4" /> Upload</>}
+            style={{ background: GOLD }}>
+            {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload</>}
           </button>
         </div>
       </div>
@@ -313,7 +162,7 @@ const UploadModal = ({ onClose, onUploaded, adminToken }) => {
   );
 };
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────────────
 const GalleryManagement = ({ adminToken }) => {
   const [photos, setPhotos]         = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -327,7 +176,9 @@ const GalleryManagement = ({ adminToken }) => {
   const load = async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`${import.meta.env.VITE_API_URL}/photos?limit=100`, { headers: authHeaders });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/photos?limit=100`, {
+        headers: authHeaders,
+      });
       const data = await res.json();
       if (data.success) setPhotos(data.photos);
     } catch { notifyErr('Failed to load gallery photos'); }
@@ -340,7 +191,10 @@ const GalleryManagement = ({ adminToken }) => {
     if (!confirm('Delete this photo permanently?')) return;
     setDeletingId(id);
     try {
-      const res  = await fetch(`${import.meta.env.VITE_API_URL}/photos/${id}`, { method: 'DELETE', headers: authHeaders });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/photos/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders,
+      });
       const data = await res.json();
       if (data.success) { setPhotos(p => p.filter(x => x.id !== id)); success('Photo deleted'); }
       else notifyErr(data.message);
@@ -351,7 +205,7 @@ const GalleryManagement = ({ adminToken }) => {
   const handleToggleFeatured = async (photo) => {
     setTogglingId(photo.id);
     try {
-      const res  = await fetch(`${import.meta.env.VITE_API_URL}/photos/${photo.id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/photos/${photo.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ featured: !photo.featured }),
@@ -404,8 +258,7 @@ const GalleryManagement = ({ adminToken }) => {
         style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}>
         <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          Photos are automatically compressed and converted to WebP before upload.
-          Images appear on <span className="text-white font-medium">/gallery</span> instantly. Star to feature at the top.
+          Photos uploaded here appear automatically on the public <span className="text-white font-medium">/gallery</span> page — no code changes needed. Star a photo to feature it at the top.
         </p>
       </div>
 
@@ -413,11 +266,9 @@ const GalleryManagement = ({ adminToken }) => {
       {photos.length === 0 && (
         <div className="text-center py-16 rounded-2xl"
           style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <Camera className="w-10 h-10 mx-auto mb-3 text-gray-700" />
+          <Camera className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <p className="text-white font-bold mb-1">No photos yet</p>
-          <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Upload your first before & after to get started.
-          </p>
+          <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.35)' }}>Upload your first before & after to get started.</p>
           <button onClick={() => setShowUpload(true)}
             className="px-5 py-2.5 rounded-xl text-sm font-bold text-black"
             style={{ background: GOLD }}>
@@ -430,32 +281,15 @@ const GalleryManagement = ({ adminToken }) => {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {photos.map(photo => (
           <div key={photo.id} className="rounded-2xl overflow-hidden relative group"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: `1px solid ${photo.featured ? 'rgba(201,168,76,0.35)' : 'rgba(255,255,255,0.07)'}`,
-            }}>
+            style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${photo.featured ? 'rgba(0,168,204,0.35)' : 'rgba(255,255,255,0.07)'}` }}>
 
-            {/* Before / after */}
+            {/* Before/after preview */}
             <div className="flex h-32">
-              <img
-                src={photo.beforeUrl}
-                alt="Before"
-                className="flex-1 object-cover"
-                loading="lazy"
-                decoding="async"
-                style={{ minWidth: 0 }}
-              />
+              <img src={photo.beforeUrl} alt="Before" className="flex-1 object-cover" style={{ minWidth: 0 }} />
               {photo.afterUrl && (
                 <>
                   <div className="w-0.5 flex-shrink-0" style={{ background: GOLD }} />
-                  <img
-                    src={photo.afterUrl}
-                    alt="After"
-                    className="flex-1 object-cover"
-                    loading="lazy"
-                    decoding="async"
-                    style={{ minWidth: 0 }}
-                  />
+                  <img src={photo.afterUrl} alt="After" className="flex-1 object-cover" style={{ minWidth: 0 }} />
                 </>
               )}
             </div>
@@ -464,45 +298,34 @@ const GalleryManagement = ({ adminToken }) => {
             <div className="px-3 py-2.5">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-xs px-1.5 py-0.5 rounded-md font-medium"
-                  style={{ background: 'rgba(201,168,76,0.1)', color: GOLD_S }}>
-                  {photo.serviceType}
-                </span>
+                  style={{ background: 'rgba(0,168,204,0.1)', color: GOLD_S }}>{photo.serviceType}</span>
                 {photo.featured && <Star className="w-3 h-3" style={{ color: GOLD_S }} />}
               </div>
               <p className="text-xs text-white truncate">{photo.vehicle}</p>
-              {photo.caption && (
-                <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  {photo.caption}
-                </p>
-              )}
+              {photo.caption && <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>{photo.caption}</p>}
             </div>
 
             {/* Actions overlay */}
-            <div className="absolute inset-0 flex items-center justify-center gap-2
-                            opacity-0 group-hover:opacity-100 transition-opacity"
+            <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
               style={{ background: 'rgba(0,0,0,0.7)' }}>
-              <button
-                onClick={() => handleToggleFeatured(photo)}
-                disabled={togglingId === photo.id}
+              <button onClick={() => handleToggleFeatured(photo)} disabled={togglingId === photo.id}
                 className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
-                style={{ background: photo.featured ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.1)' }}
-                title={photo.featured ? 'Remove from featured' : 'Add to featured'}
-              >
+                style={{ background: photo.featured ? 'rgba(0,168,204,0.3)' : 'rgba(255,255,255,0.1)' }}
+                title={photo.featured ? 'Remove from featured' : 'Add to featured'}>
                 {togglingId === photo.id
                   ? <Loader2 className="w-4 h-4 animate-spin text-white" />
                   : photo.featured
                     ? <StarOff className="w-4 h-4" style={{ color: GOLD_S }} />
-                    : <Star className="w-4 h-4 text-white" />}
+                    : <Star className="w-4 h-4 text-white" />
+                }
               </button>
-              <button
-                onClick={() => handleDelete(photo.id)}
-                disabled={deletingId === photo.id}
+              <button onClick={() => handleDelete(photo.id)} disabled={deletingId === photo.id}
                 className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: 'rgba(239,68,68,0.2)' }}
-              >
+                style={{ background: 'rgba(239,68,68,0.2)' }}>
                 {deletingId === photo.id
                   ? <Loader2 className="w-4 h-4 animate-spin text-red-400" />
-                  : <Trash2 className="w-4 h-4 text-red-400" />}
+                  : <Trash2 className="w-4 h-4 text-red-400" />
+                }
               </button>
             </div>
           </div>

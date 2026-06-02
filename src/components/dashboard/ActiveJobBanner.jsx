@@ -6,7 +6,7 @@ const ActiveJobBanner = ({ activeJob, calculateWorkTime, onCompleteJob }) => {
   if (!activeJob) return null;
 
   return (
-    <div className="bg-blue-600 text-white">
+    <div className="bg-cyan-500 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center">

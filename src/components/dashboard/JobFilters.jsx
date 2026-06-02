@@ -2,7 +2,7 @@
 import React from 'react';
 import { List, CalendarDays, RefreshCw } from 'lucide-react';
 
-const GOLD_S = '#c9a84c';
+const GOLD_S = '#00a8cc';
 
 const JobFilters = ({ filter, setFilter, viewMode, setViewMode, statusCounts, onRefresh, isLoading }) => {
   const filters = [
@@ -22,12 +22,12 @@ const JobFilters = ({ filter, setFilter, viewMode, setViewMode, statusCounts, on
             <button key={key} onClick={() => setFilter(key)}
               className="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all"
               style={active
-                ? { background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.35)', color: '#f5d376' }
+                ? { background: 'rgba(0,168,204,0.15)', border: '1px solid rgba(0,168,204,0.35)', color: '#00d4ff' }
                 : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}>
               {label}
               {count > 0 && (
                 <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]"
-                  style={{ background: active ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.08)' }}>
+                  style={{ background: active ? 'rgba(0,168,204,0.25)' : 'rgba(255,255,255,0.08)' }}>
                   {count}
                 </span>
               )}
@@ -50,7 +50,7 @@ const JobFilters = ({ filter, setFilter, viewMode, setViewMode, statusCounts, on
               <button key={mode} onClick={() => setViewMode(mode)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                 style={active
-                  ? { background: 'rgba(201,168,76,0.15)', color: '#f5d376' }
+                  ? { background: 'rgba(0,168,204,0.15)', color: '#00d4ff' }
                   : { color: 'rgba(255,255,255,0.4)' }}>
                 <Icon className="w-3.5 h-3.5" />{label}
               </button>

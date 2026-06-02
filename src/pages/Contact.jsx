@@ -7,8 +7,8 @@ import {
 import useInView from '../hooks/useInView';
 import ServiceAreaMap from '../components/ServiceAreaMap';
 
-const GOLD  = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD  = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 
 /* ── Quick-contact channel cards ─────────────────────────────────────── */
 const CHANNELS = [
@@ -36,11 +36,11 @@ const CHANNELS = [
     label: 'Email',
     sub: 'Reply within 24 h',
     icon: Mail,
-    color: '#f5d376',
-    bg: 'rgba(245,211,118,0.08)',
-    border: 'rgba(245,211,118,0.2)',
-    href: 'mailto:info@prestigeplusdetailing.ca',
-    cta: 'info@prestigeplusdetailing.ca',
+    color: '#00d4ff',
+    bg: 'rgba(0,212,255,0.08)',
+    border: 'rgba(0,212,255,0.2)',
+    href: 'mailto:info@prestigeplus.services',
+    cta: 'info@prestigeplus.services',
   },
 ];
 
@@ -95,7 +95,7 @@ const labelStyle = {
   fontWeight: '600',
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
-  color: 'rgba(201,168,76,0.8)',
+  color: 'rgba(0,168,204,0.8)',
   marginBottom: '8px',
 };
 
@@ -145,22 +145,22 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen" style={{ background: '#0b0f1a' }}>
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section ref={heroRef} className="relative pt-32 pb-16 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 inset-x-0 h-px"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent)' }} />
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(0,168,204,0.3), transparent)' }} />
           <div className="absolute top-1/3 left-1/4 w-72 h-72 rounded-full blur-3xl"
-            style={{ background: 'rgba(201,168,76,0.04)' }} />
+            style={{ background: 'rgba(0,168,204,0.04)' }} />
           <div className="absolute bottom-0 right-1/4 w-56 h-56 rounded-full blur-3xl"
-            style={{ background: 'rgba(201,168,76,0.03)' }} />
+            style={{ background: 'rgba(0,168,204,0.03)' }} />
         </div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10"
           style={{ transition: 'opacity .7s, transform .7s', opacity: heroVis ? 1 : 0, transform: heroVis ? 'none' : 'translateY(20px)' }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-semibold uppercase tracking-widest"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)', color: GOLD_S }}>
             <MessageSquare className="w-3.5 h-3.5" /> Get in Touch
           </div>
           <h1 className="text-5xl sm:text-6xl font-black mb-5 leading-[1.02]" style={{ letterSpacing: '-0.02em' }}>
@@ -206,7 +206,7 @@ const ContactPage = () => {
               {submitted ? (
                 <div className="text-center py-12">
                   <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-                    style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)' }}>
+                    style={{ background: 'rgba(0,168,204,0.1)', border: '1px solid rgba(0,168,204,0.3)' }}>
                     <CheckCircle className="w-10 h-10" style={{ color: GOLD_S }} />
                   </div>
                   <h2 className="text-2xl font-black text-white mb-3">Message Received</h2>
@@ -214,7 +214,7 @@ const ContactPage = () => {
                     We'll get back to you within 24 hours.
                   </p>
                   {refId && (
-                    <p className="text-sm mb-8" style={{ color: 'rgba(201,168,76,0.5)' }}>
+                    <p className="text-sm mb-8" style={{ color: 'rgba(0,168,204,0.5)' }}>
                       Reference: #{refId}
                     </p>
                   )}
@@ -292,7 +292,7 @@ const ContactPage = () => {
                       className="w-full py-4 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 transition-all"
                       style={loading
                         ? { background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.3)', cursor:'not-allowed' }
-                        : { background: GOLD, color:'#0a0a0a', boxShadow:'0 0 30px rgba(201,168,76,0.25)' }}>
+                        : { background: GOLD, color:'#0b0f1a', boxShadow:'0 0 30px rgba(0,168,204,0.25)' }}>
                       {loading
                         ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>
                         : <><Send className="w-4 h-4" /> Send Message</>}
@@ -314,7 +314,7 @@ const ContactPage = () => {
 
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                  style={{ background: 'rgba(0,168,204,0.1)', border: '1px solid rgba(0,168,204,0.2)' }}>
                   <Clock className="w-4 h-4" style={{ color: GOLD_S }} />
                 </div>
                 <div className="space-y-1.5 flex-1">
@@ -329,7 +329,7 @@ const ContactPage = () => {
 
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                  style={{ background: 'rgba(0,168,204,0.1)', border: '1px solid rgba(0,168,204,0.2)' }}>
                   <MapPin className="w-4 h-4" style={{ color: GOLD_S }} />
                 </div>
                 <div>
@@ -341,8 +341,8 @@ const ContactPage = () => {
 
             {/* Why us */}
             <div className="rounded-2xl p-6"
-              style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)' }}>
-              <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: GOLD_S }}>Why Prime Detailing</p>
+              style={{ background: 'rgba(0,168,204,0.04)', border: '1px solid rgba(0,168,204,0.15)' }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: GOLD_S }}>Why Prestige Plus Services</p>
               <div className="space-y-2.5">
                 {[
                   'Professional, certified technicians',
@@ -362,7 +362,7 @@ const ContactPage = () => {
             {/* Book CTA */}
             <Link to="/booking"
               className="flex items-center justify-between p-5 rounded-2xl transition-all hover:scale-[1.01] active:scale-[0.99]"
-              style={{ background: GOLD, color: '#0a0a0a' }}>
+              style={{ background: GOLD, color: '#0b0f1a' }}>
               <div>
                 <p className="font-black text-base">Ready to book?</p>
                 <p className="text-xs font-medium opacity-60 mt-0.5">Schedule your detail in 3 minutes</p>

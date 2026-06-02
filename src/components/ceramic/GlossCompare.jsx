@@ -24,17 +24,17 @@ const GlossCompare = ({
   }, []);
 
   return (
-    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#0a0a0a' }}>
+    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#0b0f1a' }}>
       <div className="divider-gold absolute top-0 inset-x-0" />
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-12" style={{ transition: 'opacity .6s, transform .6s', opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(14px)' }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
-            <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Depth & Gloss</span>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
+            <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">Depth & Gloss</span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-black text-white mb-3">
             See the{' '}
-            <span style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>wet-look</span>
+            <span style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>wet-look</span>
           </h2>
           <p className="text-gray-400 text-base max-w-md mx-auto">Drag to compare untreated paint against a freshly coated finish.</p>
         </div>
@@ -55,8 +55,8 @@ const GlossCompare = ({
           <div className="absolute inset-0">
             <img src={afterUrl} alt="After ceramic coating" className="w-full h-full object-cover" draggable={false} />
             <div className="cer-sheen absolute inset-0 pointer-events-none gpu-accelerated"
-              style={{ background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 48%, rgba(245,211,118,0.10) 52%, transparent 70%)' }} />
-            <div className="absolute bottom-4 right-4 px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(201,168,76,0.9)', color: '#0a0a0a' }}>COATED</div>
+              style={{ background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 48%, rgba(0,212,255,0.10) 52%, transparent 70%)' }} />
+            <div className="absolute bottom-4 right-4 px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(0,168,204,0.9)', color: '#0b0f1a' }}>COATED</div>
           </div>
 
           {/* BEFORE (clipped) */}
@@ -72,7 +72,7 @@ const GlossCompare = ({
             <div className="comparison-btn"><span style={{ fontSize: 11, letterSpacing: 1 }}>⟨ ⟩</span></div>
           </div>
         </div>
-        <p className="text-center text-gray-600 text-xs mt-4">Real results from Prestige Plus Detailing clients in Montreal</p>
+        <p className="text-center text-gray-600 text-xs mt-4">Real results from Prestige Plus Services clients in Montreal</p>
       </div>
     </section>
   );

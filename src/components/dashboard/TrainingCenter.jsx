@@ -4,7 +4,7 @@ import { BookOpen, CheckCircle, Clock, Star, Lock, ChevronRight, Award, Loader2 
 import TrainingModuleViewer from './TrainingModuleViewer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const GOLD_S  = '#c9a84c';
+const GOLD_S  = '#00a8cc';
 
 const CATEGORY_LABELS = {
   GENERAL:               'General',
@@ -19,7 +19,7 @@ const CATEGORY_LABELS = {
 
 const LEVEL_COLORS = {
   BEGINNER:     '#34d399',
-  INTERMEDIATE: '#c9a84c',
+  INTERMEDIATE: '#00a8cc',
   ADVANCED:     '#f97316',
 };
 
@@ -102,7 +102,7 @@ const TrainingCenter = ({ token }) => {
       {/* Required modules banner */}
       {reqDone < required && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-2xl mb-6"
-          style={{ background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.2)' }}>
+          style={{ background:'rgba(0,168,204,0.08)', border:'1px solid rgba(0,168,204,0.2)' }}>
           <Star className="w-4 h-4 flex-shrink-0" style={{ color: GOLD_S }} />
           <p className="text-sm" style={{ color:'rgba(255,255,255,0.8)' }}>
             <span className="font-bold text-white">{required - reqDone} required module{required-reqDone > 1 ? 's' : ''}</span> left to complete before taking jobs.
@@ -144,7 +144,7 @@ const TrainingCenter = ({ token }) => {
                     <span className="text-white font-bold text-sm truncate">{module.title}</span>
                     {module.isRequired && !isDone && (
                       <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                        style={{ background:'rgba(201,168,76,0.15)', color: GOLD_S }}>Required</span>
+                        style={{ background:'rgba(0,168,204,0.15)', color: GOLD_S }}>Required</span>
                     )}
                   </div>
                   <div className="flex items-center gap-3">

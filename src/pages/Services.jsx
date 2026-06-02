@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from '../hooks/useTranslation';
 import useServicesCache from '../hooks/useServicesCache';
 import {
   CheckCircle, ChevronRight, Loader2, Package, Star,
@@ -12,25 +13,25 @@ const VEHICLE_ICONS = { Sedan: Car, SUV: Users, Truck: Truck, Coupe: Zap };
 const VEHICLE_DESCS = { Sedan: 'Standard', SUV: 'SUV / CUV', Truck: 'Truck', Coupe: 'Sports' };
 
 const CATEGORY_CONFIG = {
-  PROTECTION:  { icon: Shield,   color: '#c9a84c', label: 'Protection' },
-  RESTORATION: { icon: Star,     color: '#a78bfa', label: 'Restoration' },
-  DETAILING:   { icon: Sparkles, color: '#60a5fa', label: 'Detailing' },
-  SPECIALTY:   { icon: Wrench,   color: '#f97316', label: 'Specialty' },
-  MAINTENANCE: { icon: Zap,      color: '#34d399', label: 'Maintenance' },
-  DEFAULT:     { icon: Package,  color: '#94a3b8', label: 'Service' },
+  PROTECTION:  { icon: Shield,   color: '#00a8cc', labelKey: 'services.catProtection' },
+  RESTORATION: { icon: Star,     color: '#a78bfa', labelKey: 'services.catRestoration' },
+  DETAILING:   { icon: Sparkles, color: '#60a5fa', labelKey: 'services.catDetailing' },
+  SPECIALTY:   { icon: Wrench,   color: '#f97316', labelKey: 'services.catSpecialty' },
+  MAINTENANCE: { icon: Zap,      color: '#34d399', labelKey: 'services.catMaintenance' },
+  DEFAULT:     { icon: Package,  color: '#94a3b8', labelKey: 'services.catService' },
 };
 const CATEGORY_ORDER = ['PROTECTION', 'RESTORATION', 'DETAILING', 'MAINTENANCE', 'SPECIALTY'];
 
 const ADDON_LABELS = {
-  ENHANCEMENT: 'Enhancement', PROTECTION: 'Protection',
-  CLEANING: 'Cleaning',       RESTORATION: 'Restoration',
+  ENHANCEMENT: 'services.addonEnhancement', PROTECTION: 'services.addonProtection',
+  CLEANING: 'services.addonCleaning',       RESTORATION: 'services.addonRestoration',
 };
 
 const CONTACT_QUICK = [
-  { icon: Phone,         label: 'Call',     href: 'tel:+14387968001',              color: '#34d399' },
-  { icon: MessageSquare, label: 'WhatsApp', href: 'https://wa.me/14387968001',     color: '#25D366' },
-  { icon: MessageSquare, label: 'SMS',      href: 'sms:+14387968001',              color: '#60a5fa' },
-  { icon: Mail,          label: 'Email',    href: 'mailto:info@Prestigeplusdetailing.ca', color: '#f97316' },
+  { icon: Phone,         id: 'call',     labelKey: 'services.contactCall',  href: 'tel:+14387968001',              color: '#34d399' },
+  { icon: MessageSquare, id: 'whatsapp', label: 'WhatsApp', href: 'https://wa.me/14387968001',     color: '#25D366' },
+  { icon: MessageSquare, id: 'sms',      label: 'SMS',      href: 'sms:+14387968001',              color: '#60a5fa' },
+  { icon: Mail,          id: 'email',    labelKey: 'services.contactEmail', href: 'mailto:info@prestigeplus.services', color: '#f97316' },
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -46,13 +47,14 @@ const getPriceForVehicle = (pricing, vehicle) => {
 
 const getPriceLabel = (pricing, vehicle) => {
   const p = getPriceForVehicle(pricing, vehicle);
-  if (!p) return { text: 'Call for price', isExact: false };
+  if (!p) return { text: null, isExact: false };
   const exact = pricing?.[vehicle] > 0;
   return { text: `$${p}`, isExact: exact };
 };
 
 // ── Service Card ──────────────────────────────────────────────────────────
 const ServiceCard = ({ service, vehicleType, index, visible }) => {
+  const { t } = useTranslation();
   const cfg = CATEGORY_CONFIG[service.category] || CATEGORY_CONFIG.DEFAULT;
   const Icon = cfg.icon;
   const { text: priceText, isExact } = getPriceLabel(service.pricing, vehicleType);
@@ -67,11 +69,11 @@ const ServiceCard = ({ service, vehicleType, index, visible }) => {
         transitionDelay: `${index * 80}ms`,
       }}
     >
-      {/* Popular badge (first 2 by sortOrder) */}
-      {service.sortOrder <= 2 && (
+      {/* Popular badge — driven by real data flag, not list position */}
+      {service.isFeatured && (
         <div className="absolute -top-3 left-5 px-3 py-1 rounded-full text-xs font-bold"
-          style={{ background: 'linear-gradient(135deg, #c9a84c, #f5d376)', color: '#0a0a0a' }}>
-          Popular
+          style={{ background: 'linear-gradient(135deg, #00a8cc, #00d4ff)', color: '#0b0f1a' }}>
+          {t('services.popularBadge')}
         </div>
       )}
 
@@ -87,12 +89,12 @@ const ServiceCard = ({ service, vehicleType, index, visible }) => {
         </span>
       </div>
 
-      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-yellow-300 transition-colors">
+      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">
         {service.name}
       </h3>
 
       <p className="text-gray-400 text-sm leading-relaxed mb-5 flex-1">
-        {service.description || 'Professional detailing service tailored to your needs.'}
+        {service.description || t('services.defaultDesc')}
       </p>
 
       {/* Price block */}
@@ -100,20 +102,20 @@ const ServiceCard = ({ service, vehicleType, index, visible }) => {
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
         <div>
           <div className="text-xs text-gray-500 mb-0.5">
-            {isExact ? `${vehicleType} price` : 'Starting from'}
+            {isExact ? `${vehicleType} ${t('services.vehiclePriceSuffix')}` : t('services.startingFrom')}
           </div>
           <div className="text-xl font-black" style={{
-            background: minPrice ? 'linear-gradient(135deg, #c9a84c, #f5d376)' : 'none',
+            background: minPrice ? 'linear-gradient(135deg, #00a8cc, #00d4ff)' : 'none',
             WebkitBackgroundClip: minPrice ? 'text' : 'unset',
             WebkitTextFillColor: minPrice ? 'transparent' : 'unset',
             backgroundClip: minPrice ? 'text' : 'unset',
             color: minPrice ? 'unset' : '#6b7280',
           }}>
-            {priceText}
+            {priceText || t('services.callForPrice')}
           </div>
         </div>
         {!isExact && minPrice && (
-          <span className="text-xs text-gray-600 text-right max-w-[90px]">varies by vehicle</span>
+          <span className="text-xs text-gray-600 text-right max-w-[90px]">{t('services.variesByVehicle')}</span>
         )}
       </div>
 
@@ -121,7 +123,7 @@ const ServiceCard = ({ service, vehicleType, index, visible }) => {
         to={`/booking?service=${service.id}&vehicle=${vehicleType}`}
         className="btn-luxury w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide group"
       >
-        Book This Service
+        {t('services.bookThis')}
         <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </Link>
     </div>
@@ -139,7 +141,7 @@ const AddOnCard = ({ addOn, index, visible }) => (
     }}
   >
     <div className="flex items-center gap-3">
-      <CheckCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+      <CheckCircle className="w-4 h-4 text-cyan-500 flex-shrink-0" />
       <div>
         <div className="text-white font-semibold text-sm">{addOn.name}</div>
         {addOn.description && <div className="text-gray-500 text-xs mt-0.5">{addOn.description}</div>}
@@ -156,6 +158,7 @@ const AddOnCard = ({ addOn, index, visible }) => (
 
 // ── Main Page ─────────────────────────────────────────────────────────────
 const Services = () => {
+  const { t } = useTranslation();
   const { services, addOns, loading, error, refresh: load } = useServicesCache();
   const [vehicleType, setVehicleType] = useState(null);
   const [visible, setVisible]         = useState(false);
@@ -202,30 +205,30 @@ const Services = () => {
   }, {});
 
   return (
-    <div ref={ref} style={{ background: '#0a0a0a', minHeight: '100vh' }}>
+    <div ref={ref} style={{ background: '#0b0f1a', minHeight: '100vh' }}>
 
       {/* Hero banner */}
       <div className="relative pt-32 pb-20 px-4 text-center overflow-hidden"
-        style={{ background: 'linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%)' }}>
+        style={{ background: 'linear-gradient(180deg, #111827 0%, #0b0f1a 100%)' }}>
         <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 60%)' }} />
+          style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(0,168,204,0.08) 0%, transparent 60%)' }} />
         <div className="absolute top-0 left-0 right-0 h-px"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent)' }} />
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(0,168,204,0.3), transparent)' }} />
         <div className="relative z-10 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
-            <Sparkles className="w-3 h-3 text-yellow-400" />
-            <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Our Services</span>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
+            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">{t('services.badge')}</span>
           </div>
           <h1 className="text-5xl sm:text-6xl font-black text-white mb-4 leading-tight">
-            Premium{' '}
+            {t('services.title')}{' '}
             <span style={{
-              background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+              background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            }}>Packages</span>
+            }}>{t('services.pageTitleAccent')}</span>
           </h1>
           <p className="text-gray-400 text-lg">
-            Professional-grade detailing with premium products. We come to you anywhere in Montreal.
+            {t('services.pageSubtitle')}
           </p>
         </div>
       </div>
@@ -239,7 +242,7 @@ const Services = () => {
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             <p className="text-white font-semibold text-xs mb-4 uppercase tracking-widest">
-              Select your vehicle for exact pricing
+              {t('services.vehiclePrompt')}
             </p>
             <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(vehicleTypes.length, 4)}, 1fr)` }}>
               {vehicleTypes.map(v => {
@@ -249,13 +252,13 @@ const Services = () => {
                   <button key={v} onClick={() => setVehicleType(v)}
                     className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 active:scale-95"
                     style={{
-                      background: isSelected ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.02)',
-                      border: isSelected ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                      background: isSelected ? 'rgba(0,168,204,0.12)' : 'rgba(255,255,255,0.02)',
+                      border: isSelected ? '1px solid rgba(0,168,204,0.4)' : '1px solid rgba(255,255,255,0.07)',
                       transform: isSelected ? 'translateY(-2px)' : 'none',
                     }}
                   >
-                    <Icon className="w-6 h-6" style={{ color: isSelected ? '#f5d376' : '#6b7280' }} />
-                    <span className="text-sm font-bold" style={{ color: isSelected ? '#f5d376' : '#9ca3af' }}>{v}</span>
+                    <Icon className="w-6 h-6" style={{ color: isSelected ? '#00d4ff' : '#6b7280' }} />
+                    <span className="text-sm font-bold" style={{ color: isSelected ? '#00d4ff' : '#9ca3af' }}>{v}</span>
                     <span className="text-xs text-gray-600">{VEHICLE_DESCS[v] || v}</span>
                   </button>
                 );
@@ -267,8 +270,8 @@ const Services = () => {
         {/* Loading */}
         {loading && (
           <div className="flex flex-col items-center gap-3 py-20">
-            <Loader2 className="w-7 h-7 animate-spin text-yellow-500" />
-            <span className="text-gray-500 text-sm">Loading services...</span>
+            <Loader2 className="w-7 h-7 animate-spin text-cyan-500" />
+            <span className="text-gray-500 text-sm">{t('services.loading')}</span>
           </div>
         )}
 
@@ -277,8 +280,8 @@ const Services = () => {
           <div className="rounded-2xl p-6 text-center mb-8"
             style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
             <p className="text-red-400 mb-3">{error}</p>
-            <button onClick={load} className="inline-flex items-center gap-2 text-yellow-400 text-sm hover:text-yellow-300">
-              <RefreshCw className="w-4 h-4" /> Try again
+            <button onClick={load} className="inline-flex items-center gap-2 text-cyan-400 text-sm hover:text-cyan-300">
+              <RefreshCw className="w-4 h-4" /> {t('services.retry')}
             </button>
           </div>
         )}
@@ -294,7 +297,7 @@ const Services = () => {
                   style={{ background: `${cfg.color}18` }}>
                   <cfg.icon className="w-4 h-4" style={{ color: cfg.color }} />
                 </div>
-                <h2 className="text-xl font-bold text-white">{cfg.label} Services</h2>
+                <h2 className="text-xl font-bold text-white">{t(cfg.labelKey)} {t('services.categorySuffix')}</h2>
                 <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -310,8 +313,8 @@ const Services = () => {
         {!loading && !error && sortedCategories.length === 0 && (
           <div className="text-center py-20">
             <Package className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">Services Coming Soon</h3>
-            <p className="text-gray-500">Contact us directly for pricing and availability.</p>
+            <h3 className="text-xl font-bold text-white mb-2">{t('services.comingSoonTitle')}</h3>
+            <p className="text-gray-500">{t('services.comingSoonDesc')}</p>
           </div>
         )}
 
@@ -325,15 +328,15 @@ const Services = () => {
                   style={{ background: 'rgba(52,211,153,0.15)' }}>
                   <CheckCircle className="w-4 h-4 text-green-400" />
                 </div>
-                <h2 className="text-xl font-bold text-white">Add-On Services</h2>
-                <span className="text-gray-500 text-sm">— add to any package</span>
+                <h2 className="text-xl font-bold text-white">{t('services.addOnTitle')}</h2>
+                <span className="text-gray-500 text-sm">{t('services.addOnSuffix')}</span>
               </div>
               {Object.entries(groupedAddOns)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([cat, items]) => (
                   <div key={cat} className="mb-6 last:mb-0">
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
-                      {ADDON_LABELS[cat] || cat}
+                      {ADDON_LABELS[cat] ? t(ADDON_LABELS[cat]) : cat}
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {items.sort((a, b) => a.sortOrder - b.sortOrder).map((addon, i) => (
@@ -349,22 +352,22 @@ const Services = () => {
         {/* Bottom CTA */}
         <div
           className={`rounded-2xl p-8 text-center transition-all duration-700 delay-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-          style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)' }}
+          style={{ background: 'rgba(0,168,204,0.05)', border: '1px solid rgba(0,168,204,0.15)' }}
         >
-          <h3 className="text-2xl font-black text-white mb-2">Not sure which package?</h3>
+          <h3 className="text-2xl font-black text-white mb-2">{t('services.ctaTitle')}</h3>
           <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-            Contact us — we'll recommend the best service for your vehicle and budget.
+            {t('services.ctaDesc')}
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto mb-6">
-            {CONTACT_QUICK.map(({ icon: Icon, label, href, color }) => (
+            {CONTACT_QUICK.map(({ icon: Icon, id, label, labelKey, href, color }) => (
               <a key={label} href={href}
-                target={label === 'WhatsApp' ? '_blank' : undefined}
+                target={id === 'whatsapp' ? '_blank' : undefined}
                 rel="noopener noreferrer"
                 className="flex flex-col items-center gap-2 py-3 px-2 rounded-xl transition-all duration-200 hover:-translate-y-1 active:scale-95"
                 style={{ background: `${color}10`, border: `1px solid ${color}25` }}
               >
                 <Icon className="w-5 h-5" style={{ color }} />
-                <span className="text-white text-xs font-bold">{label}</span>
+                <span className="text-white text-xs font-bold">{labelKey ? t(labelKey) : label}</span>
               </a>
             ))}
           </div>
@@ -372,7 +375,7 @@ const Services = () => {
             to={`/booking${activeVehicle ? `?vehicle=${activeVehicle}` : ''}`}
             className="btn-luxury inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-bold tracking-wide group"
           >
-            Book Your {activeVehicle} Now
+            {t('services.bookYourNow', { v: activeVehicle })}
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>

@@ -5,8 +5,8 @@ import { Building2, Car, Wrench, Calendar, MapPin, ChevronRight, CheckCircle, Lo
 import useInView from '../hooks/useInView';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const GOLD    = 'linear-gradient(135deg,#c9a84c,#f5d376)';
-const GOLD_S  = '#c9a84c';
+const GOLD    = 'linear-gradient(135deg,#00a8cc,#00d4ff)';
+const GOLD_S  = '#00a8cc';
 
 const FREQ_OPTIONS = [
   { value: 'ONE_TIME',   label: 'One-time',    labelFr: 'Unique' },
@@ -105,7 +105,7 @@ const FleetQuote = () => {
 
   // ── Success state ─────────────────────────────────────────────────────────
   if (done) return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0b0f1a' }}>
       <div className="text-center max-w-md">
         <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center"
           style={{ background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.3)' }}>
@@ -114,7 +114,7 @@ const FleetQuote = () => {
         <h2 className="text-3xl font-black text-white mb-3">Quote Request Submitted!</h2>
         <p className="text-gray-400 mb-2">We'll contact you within 24 hours to discuss your fleet needs.</p>
         <div className="inline-block px-4 py-2 rounded-full mb-6"
-          style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)' }}>
+          style={{ background: 'rgba(0,168,204,0.1)', border: '1px solid rgba(0,168,204,0.2)' }}>
           <span className="text-xs font-bold uppercase tracking-widest" style={{ color: GOLD_S }}>
             Reference: {done}
           </span>
@@ -128,16 +128,16 @@ const FleetQuote = () => {
   );
 
   return (
-    <div style={{ background: '#0a0a0a', minHeight: '100vh' }}>
+    <div style={{ background: '#0b0f1a', minHeight: '100vh' }}>
 
       {/* Hero */}
       <section ref={ref} className="relative pt-24 pb-16 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.07),transparent 60%)' }} />
+          style={{ background: 'radial-gradient(ellipse at 50% 0%,rgba(0,168,204,0.07),transparent 60%)' }} />
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center relative z-10"
           style={{ transition:'opacity .7s,transform .7s', opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(20px)' }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5"
-            style={{ background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.2)' }}>
+            style={{ background:'rgba(0,168,204,0.08)', border:'1px solid rgba(0,168,204,0.2)' }}>
             <Building2 className="w-3.5 h-3.5" style={{ color: GOLD_S }} />
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: GOLD_S }}>Fleet & B2B</span>
           </div>
@@ -182,7 +182,7 @@ const FleetQuote = () => {
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                     style={{
                       background: step >= s ? GOLD : 'rgba(255,255,255,0.08)',
-                      color: step >= s ? '#0a0a0a' : 'rgba(255,255,255,0.4)',
+                      color: step >= s ? '#0b0f1a' : 'rgba(255,255,255,0.4)',
                     }}>{s}</div>
                   {s < 3 && <div className="flex-1 h-px" style={{ background: step > s ? GOLD_S : 'rgba(255,255,255,0.1)' }} />}
                 </React.Fragment>
@@ -215,7 +215,7 @@ const FleetQuote = () => {
                       setError(''); setStep(2);
                     }}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold"
-                    style={{ background: GOLD, color: '#0a0a0a' }}>
+                    style={{ background: GOLD, color: '#0b0f1a' }}>
                     Next <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -237,9 +237,9 @@ const FleetQuote = () => {
                       <button key={v} onClick={() => toggleArr('vehicleTypes', v)}
                         className="px-3 py-1.5 rounded-xl text-sm font-medium transition-all"
                         style={{
-                          background: form.vehicleTypes.includes(v) ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.04)',
-                          border: `1px solid ${form.vehicleTypes.includes(v) ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                          color: form.vehicleTypes.includes(v) ? '#f5d376' : 'rgba(255,255,255,0.6)',
+                          background: form.vehicleTypes.includes(v) ? 'rgba(0,168,204,0.15)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${form.vehicleTypes.includes(v) ? 'rgba(0,168,204,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                          color: form.vehicleTypes.includes(v) ? '#00d4ff' : 'rgba(255,255,255,0.6)',
                         }}>
                         {v}
                       </button>
@@ -253,9 +253,9 @@ const FleetQuote = () => {
                       <button key={f.value} onClick={() => set('frequency', f.value)}
                         className="py-2.5 rounded-xl text-sm font-medium transition-all"
                         style={{
-                          background: form.frequency === f.value ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${form.frequency === f.value ? 'rgba(201,168,76,0.35)' : 'rgba(255,255,255,0.08)'}`,
-                          color: form.frequency === f.value ? '#f5d376' : 'rgba(255,255,255,0.6)',
+                          background: form.frequency === f.value ? 'rgba(0,168,204,0.12)' : 'rgba(255,255,255,0.03)',
+                          border: `1px solid ${form.frequency === f.value ? 'rgba(0,168,204,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                          color: form.frequency === f.value ? '#00d4ff' : 'rgba(255,255,255,0.6)',
                         }}>
                         {f.label}
                       </button>
@@ -271,7 +271,7 @@ const FleetQuote = () => {
                   <button
                     onClick={() => { if (!form.vehicleCount) return setError('Enter vehicle count.'); setError(''); setStep(3); }}
                     className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold"
-                    style={{ background: GOLD, color: '#0a0a0a' }}>
+                    style={{ background: GOLD, color: '#0b0f1a' }}>
                     Next <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -289,9 +289,9 @@ const FleetQuote = () => {
                       <button key={s} onClick={() => toggleArr('servicesRequested', s)}
                         className="px-3 py-1.5 rounded-xl text-sm font-medium transition-all"
                         style={{
-                          background: form.servicesRequested.includes(s) ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.04)',
-                          border: `1px solid ${form.servicesRequested.includes(s) ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                          color: form.servicesRequested.includes(s) ? '#f5d376' : 'rgba(255,255,255,0.6)',
+                          background: form.servicesRequested.includes(s) ? 'rgba(0,168,204,0.15)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${form.servicesRequested.includes(s) ? 'rgba(0,168,204,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                          color: form.servicesRequested.includes(s) ? '#00d4ff' : 'rgba(255,255,255,0.6)',
                         }}>
                         {s}
                       </button>
@@ -326,7 +326,7 @@ const FleetQuote = () => {
                   </button>
                   <button onClick={submit} disabled={loading}
                     className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all hover:scale-105 disabled:opacity-60"
-                    style={{ background: GOLD, color: '#0a0a0a' }}>
+                    style={{ background: GOLD, color: '#0b0f1a' }}>
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     {loading ? 'Submitting...' : 'Request Fleet Quote'}
                   </button>

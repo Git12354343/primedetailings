@@ -14,9 +14,9 @@ datasource db {
 
 model Booking {
   id                  Int           @id @default(autoincrement())
-  make                String        @db.VarChar(50)
-  model               String        @db.VarChar(50)
-  year                Int
+  make                String?       @db.VarChar(50)
+  model               String?       @db.VarChar(50)
+  year                Int?
   services            String
   extras              String?
   date                DateTime      @db.Date
@@ -44,6 +44,9 @@ model Booking {
   totalPrice          Decimal?      @db.Decimal(8, 2)
   updatedAt           DateTime      @updatedAt
   vehicleType         String        @db.VarChar(50)
+  vehicleCondition    String        @default("") @db.VarChar(20)
+  propertyType        String        @default("") @db.VarChar(50)
+  hasWaterPower       Boolean       @default(true)
   packageId           Int?
   detailer            Detailer?     @relation(fields: [detailerId], references: [id])
   package             Package?      @relation(fields: [packageId], references: [id])
@@ -88,8 +91,12 @@ model Contact {
 model Service {
   id                Int              @id @default(autoincrement())
   name              String           @db.VarChar(100)
+  nameFr            String?          @db.VarChar(100)
   description       String?
+  descriptionFr     String?
   includes          String?          @db.Text
+  includesFr        String?          @db.Text
+  pricingMode       String           @default("FIXED") @db.VarChar(20)
   category          ServiceCategory  @default(DETAILING)
   createdAt         DateTime         @default(now())
   isActive          Boolean          @default(true)
@@ -119,7 +126,9 @@ model ServicePricing {
 model AddOn {
   id          Int           @id @default(autoincrement())
   name          String        @unique @db.VarChar(100)
+  nameFr        String?       @db.VarChar(100)
   description   String?
+  descriptionFr String?
   category      AddOnCategory @default(ENHANCEMENT)
   price       Decimal       @db.Decimal(8, 2)
   createdAt   DateTime      @default(now())
@@ -133,8 +142,11 @@ model AddOn {
 model Package {
   id                Int       @id @default(autoincrement())
   name              String    @db.VarChar(100)
+  nameFr            String?   @db.VarChar(100)
   description       String?
+  descriptionFr     String?
   tagline           String?   @db.VarChar(200)
+  taglineFr         String?   @db.VarChar(200)
   imageUrl          String?   @db.VarChar(500)
   includedServices  Json      @default("[]")
   includedAddOns    Json      @default("[]")
@@ -332,7 +344,45 @@ model BookingImage {
   @@map("booking_images")
 }
 
-// ── Fleet / B2B Quotes ────────────────────────────────────────────────────────
+// ── Retail Quotes ─────────────────────────────────────────────────────────────
+
+model Quote {
+  id               Int         @id @default(autoincrement())
+  referenceId      String      @unique @db.VarChar(20)
+  status           QuoteStatus @default(NEW)
+  customerName     String      @db.VarChar(100)
+  phoneNumber      String      @db.VarChar(20)
+  email            String?     @db.VarChar(255)
+  address          String      @db.VarChar(255)
+  city             String      @db.VarChar(100)
+  postalCode       String      @db.VarChar(10)
+  vehicleType      String      @db.VarChar(50)
+  vehicleCondition String      @db.VarChar(20)
+  make             String?     @db.VarChar(50)
+  model            String?     @db.VarChar(50)
+  year             Int?
+  packageId        Int?
+  packageName      String?     @db.VarChar(100)
+  services         String      @default("[]")
+  addOns           String      @default("[]")
+  notes            String?
+  quotedPrice      Decimal?    @db.Decimal(8, 2)
+  adminNotes       String?
+  bookingId        Int?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  NEW
+  REVIEWING
+  QUOTED
+  ACCEPTED
+  DECLINED
+  CONVERTED
+}
 
 model FleetQuote {
   id                String           @id @default(cuid())

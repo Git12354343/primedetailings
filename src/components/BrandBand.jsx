@@ -167,7 +167,7 @@ const BrandBand = () => {
       <style>{`
         .brand-band {
           background:
-            radial-gradient(circle at top center, rgba(201,168,76,0.13), transparent 38%),
+            radial-gradient(circle at top center, rgba(0,168,204,0.13), transparent 38%),
             linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
           border-top: 1px solid rgba(255,255,255,0.07);
           border-bottom: 1px solid rgba(255,255,255,0.07);
@@ -189,7 +189,7 @@ const BrandBand = () => {
         }
 
         .brand-eyebrow {
-          color: rgba(201,168,76,0.88);
+          color: rgba(0,168,204,0.88);
           font-size: 12px;
           font-weight: 800;
           text-transform: uppercase;
@@ -203,7 +203,7 @@ const BrandBand = () => {
           background: linear-gradient(
             to right,
             transparent,
-            rgba(201,168,76,0.85),
+            rgba(0,168,204,0.85),
             transparent
           );
         }
@@ -221,7 +221,7 @@ const BrandBand = () => {
           left: 0;
           background: linear-gradient(
             to right,
-            #080808 0%,
+            #0b0f1a 0%,
             rgba(8,8,8,0.92) 34%,
             transparent 100%
           );
@@ -231,7 +231,7 @@ const BrandBand = () => {
           right: 0;
           background: linear-gradient(
             to left,
-            #080808 0%,
+            #0b0f1a 0%,
             rgba(8,8,8,0.92) 34%,
             transparent 100%
           );
@@ -307,11 +307,11 @@ const BrandBand = () => {
               rgba(226,226,226,0.88)
             );
 
-          border-color: rgba(201,168,76,0.7);
+          border-color: rgba(0,168,204,0.7);
 
           box-shadow:
             0 28px 74px rgba(0,0,0,0.54),
-            0 0 34px rgba(201,168,76,0.2),
+            0 0 34px rgba(0,168,204,0.2),
             inset 0 1px 0 rgba(255,255,255,1);
         }
 

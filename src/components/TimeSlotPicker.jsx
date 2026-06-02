@@ -76,7 +76,7 @@ const TimeSlotPicker = ({ selectedDate, selectedTime, onTimeSelect, businessConf
     return (
       <div className={`rounded-2xl p-6 text-center ${className}`}
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-        <Loader2 className="w-6 h-6 animate-spin text-yellow-500 mx-auto mb-2" />
+        <Loader2 className="w-6 h-6 animate-spin text-cyan-500 mx-auto mb-2" />
         <p className="text-gray-500 text-sm">Loading available times...</p>
       </div>
     );
@@ -95,24 +95,18 @@ const TimeSlotPicker = ({ selectedDate, selectedTime, onTimeSelect, businessConf
     );
   }
 
-  // Support both id-based and label-based selection for backwards compat
-  const getIsSelected = (slot) => {
-    if (!selectedTime || selectedTime === '') return false;
-    return selectedTime === slot.id || selectedTime === slot.label;
-  };
-
   return (
     <div className={`space-y-2 ${className}`}>
       {availableSlots.map(slot => {
-        const isSelected = getIsSelected(slot);
+        const isSelected = selectedTime === slot.label;
         return (
           <button
             key={slot.id}
-            onClick={() => onTimeSelect?.(slot.id)}
+            onClick={() => onTimeSelect?.(slot.label)}
             className="w-full flex items-center justify-between p-4 rounded-2xl text-left transition-all duration-200 active:scale-98"
             style={{
-              background: isSelected ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
-              border: isSelected ? '2px solid rgba(201,168,76,0.45)' : '2px solid rgba(255,255,255,0.08)',
+              background: isSelected ? 'rgba(0,168,204,0.1)' : 'rgba(255,255,255,0.03)',
+              border: isSelected ? '2px solid rgba(0,168,204,0.45)' : '2px solid rgba(255,255,255,0.08)',
             }}
           >
             <div className="flex items-center gap-3">
@@ -120,7 +114,7 @@ const TimeSlotPicker = ({ selectedDate, selectedTime, onTimeSelect, businessConf
               <div
                 className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
                 style={{
-                  background: isSelected ? 'linear-gradient(135deg,#c9a84c,#f5d376)' : 'transparent',
+                  background: isSelected ? 'linear-gradient(135deg,#00a8cc,#00d4ff)' : 'transparent',
                   border: isSelected ? 'none' : '2px solid rgba(255,255,255,0.2)',
                 }}
               >
@@ -139,8 +133,8 @@ const TimeSlotPicker = ({ selectedDate, selectedTime, onTimeSelect, businessConf
             <span
               className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0"
               style={{
-                background: isSelected ? 'rgba(201,168,76,0.15)' : 'rgba(52,211,153,0.1)',
-                color:      isSelected ? '#f5d376' : '#34d399',
+                background: isSelected ? 'rgba(0,168,204,0.15)' : 'rgba(52,211,153,0.1)',
+                color:      isSelected ? '#00d4ff' : '#34d399',
               }}
             >
               {isSelected ? 'Selected' : 'Available'}
@@ -166,7 +160,7 @@ const TimeSlotPicker = ({ selectedDate, selectedTime, onTimeSelect, businessConf
             ? <Loader2 className="w-4 h-4 animate-spin text-green-400 flex-shrink-0" />
             : validMsg === 'confirmed'
               ? <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-              : <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0" />}
+              : <AlertTriangle className="w-4 h-4 text-cyan-400 flex-shrink-0" />}
           <span style={{ color: validating || validMsg === 'confirmed' ? '#34d399' : '#fbbf24' }}>
             {validating ? 'Confirming availability...' : validMsg === 'confirmed' ? 'Time slot confirmed' : validMsg}
           </span>

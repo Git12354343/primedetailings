@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 import { ShieldCheck, ArrowRight, Play } from 'lucide-react';
 import { prefersReducedMotion } from '../../hooks/useInView';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
 
 const STATS = [
   { value: '5yr',  label: 'Protection' },
@@ -65,10 +65,10 @@ const WaterBeadCanvas = () => {
         // droplet body
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(245,211,118,${0.10 * b.a})`;
+        ctx.fillStyle = `rgba(0,212,255,${0.10 * b.a})`;
         ctx.fill();
         ctx.lineWidth = 0.6;
-        ctx.strokeStyle = `rgba(245,211,118,${0.38 * b.a})`;
+        ctx.strokeStyle = `rgba(0,212,255,${0.38 * b.a})`;
         ctx.stroke();
         // highlight
         ctx.beginPath();
@@ -114,7 +114,7 @@ const WaterBeadHero = ({
   videoUrl = null,
 }) => {
   return (
-    <section className="relative overflow-hidden" style={{ background: '#0a0a0a', minHeight: '88vh' }}>
+    <section className="relative overflow-hidden" style={{ background: '#0b0f1a', minHeight: '88vh' }}>
       {/* Background layer: video > image > gradient panel */}
       {videoUrl ? (
         <video
@@ -125,7 +125,7 @@ const WaterBeadHero = ({
       ) : imageUrl ? (
         <img src={imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
       ) : (
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(120% 100% at 70% 0%, #15130c 0%, #0a0a0a 55%)' }} />
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(120% 100% at 70% 0%, #15130c 0%, #0b0f1a 55%)' }} />
       )}
 
       {/* Animated water beads (canvas) */}
@@ -133,7 +133,7 @@ const WaterBeadHero = ({
 
       {/* Slow gold light-sweep (pure CSS, GPU) */}
       <div className="cer-sweep absolute inset-y-0 w-1/2 pointer-events-none gpu-accelerated"
-        style={{ background: 'linear-gradient(105deg, transparent 0%, rgba(245,211,118,0.07) 45%, rgba(245,211,118,0.14) 50%, rgba(245,211,118,0.07) 55%, transparent 100%)' }} />
+        style={{ background: 'linear-gradient(105deg, transparent 0%, rgba(0,212,255,0.07) 45%, rgba(0,212,255,0.14) 50%, rgba(0,212,255,0.07) 55%, transparent 100%)' }} />
 
       {/* Readability gradient */}
       <div className="absolute inset-0 pointer-events-none"
@@ -143,9 +143,9 @@ const WaterBeadHero = ({
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 flex items-center" style={{ minHeight: '88vh' }}>
         <div className="max-w-xl py-24">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full mb-6 animate-fade-up"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)' }}>
-            <ShieldCheck className="w-3.5 h-3.5 text-yellow-400" />
-            <span className="text-yellow-400 text-[11px] font-semibold tracking-[0.2em] uppercase">{badge}</span>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.25)' }}>
+            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-cyan-400 text-[11px] font-semibold tracking-[0.2em] uppercase">{badge}</span>
           </div>
 
           <h1 className="text-5xl sm:text-6xl font-black text-white leading-[1.02] mb-5 animate-fade-up delay-100" style={{ letterSpacing: '-0.02em' }}>

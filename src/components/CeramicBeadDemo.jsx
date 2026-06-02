@@ -4,8 +4,8 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 
 // ── Water drop physics ────────────────────────────────────────────────────────
 const createDrop = (x, y, ceramic) => ({
@@ -131,7 +131,7 @@ const CeramicBeadDemo = () => {
       {/* Header */}
       <div className="px-6 pt-6 pb-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3 text-xs font-bold uppercase tracking-widest"
-          style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
+          style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)', color: GOLD_S }}>
           Interactive Demo
         </div>
         <h3 className="text-xl font-black text-white mb-1">See the Difference</h3>
@@ -157,7 +157,7 @@ const CeramicBeadDemo = () => {
         </span>
         {ceramic && (
           <span className="ml-1 text-xs px-2 py-0.5 rounded-full font-bold"
-            style={{ background: 'rgba(201,168,76,0.15)', color: GOLD_S }}>
+            style={{ background: 'rgba(0,168,204,0.15)', color: GOLD_S }}>
             Hydrophobic ✓
           </span>
         )}

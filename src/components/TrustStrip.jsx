@@ -10,11 +10,11 @@ const BADGES = [
   { icon: Award,       label: 'Certified Detailers',    sub: 'Professional grade' },
 ];
 
-const GOLD = '#c9a84c';
+const GOLD = '#00a8cc';
 
 const TrustStrip = () => (
   <section className="py-6 relative"
-    style={{ background: 'rgba(201,168,76,0.03)', borderTop: '1px solid rgba(201,168,76,0.12)', borderBottom: '1px solid rgba(201,168,76,0.12)' }}>
+    style={{ background: 'rgba(0,168,204,0.03)', borderTop: '1px solid rgba(0,168,204,0.12)', borderBottom: '1px solid rgba(0,168,204,0.12)' }}>
     <div className="max-w-6xl mx-auto px-4">
       <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
         {BADGES.map(({ icon: Icon, label, sub }, i) => (

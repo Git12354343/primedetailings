@@ -33,7 +33,7 @@ const TRUST = [
 const FaqRow = ({ q, a, open, onClick }) => (
   <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
     <button onClick={onClick} className="w-full flex items-center justify-between px-5 py-4 text-left group">
-      <span className="text-white font-semibold text-sm pr-4 group-hover:text-yellow-300 transition-colors">{q}</span>
+      <span className="text-white font-semibold text-sm pr-4 group-hover:text-cyan-300 transition-colors">{q}</span>
       <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-300" style={{ transform: open ? 'rotate(180deg)' : 'none' }} />
     </button>
     <div style={{ maxHeight: open ? 320 : 0, overflow: 'hidden', transition: 'max-height .4s cubic-bezier(0.4,0,0.2,1)' }}>
@@ -48,16 +48,16 @@ const CeramicCoating = () => {
   const [faqRef, faqVisible] = useInView({ threshold: 0.1 });
 
   return (
-    <div style={{ background: '#0a0a0a' }}>
+    <div style={{ background: '#0b0f1a' }}>
       {/* 1. Cinematic hero (swap imageUrl/videoUrl for real assets when ready) */}
       <WaterBeadHero />
 
       {/* 2. Trust band */}
-      <section ref={trustRef} className="relative py-10" style={{ background: '#0a0a0a', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <section ref={trustRef} className="relative py-10" style={{ background: '#0b0f1a', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 grid grid-cols-2 sm:grid-cols-4 gap-6">
           {TRUST.map((t, i) => (
             <div key={t.label} className="text-center" style={{ transition: 'opacity .5s, transform .5s', transitionDelay: `${i * 0.08}s`, opacity: trustVisible ? 1 : 0, transform: trustVisible ? 'none' : 'translateY(10px)' }}>
-              <div className="text-2xl sm:text-3xl font-black" style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{t.value}</div>
+              <div className="text-2xl sm:text-3xl font-black" style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{t.value}</div>
               <div className="text-[11px] text-gray-500 tracking-widest uppercase mt-1">{t.label}</div>
             </div>
           ))}
@@ -77,12 +77,12 @@ const CeramicCoating = () => {
       <CeramicTiers />
 
       {/* 7. Warranty band */}
-      <section className="relative py-16" style={{ background: '#0d0d0d' }}>
+      <section className="relative py-16" style={{ background: '#111827' }}>
         <div className="divider-gold absolute top-0 inset-x-0" />
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="rounded-2xl p-8 flex flex-col sm:flex-row items-center gap-6 glass-card">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)' }}>
-              <Award className="w-8 h-8 text-yellow-400" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,168,204,0.12)', border: '1px solid rgba(0,168,204,0.3)' }}>
+              <Award className="w-8 h-8 text-cyan-400" />
             </div>
             <div className="text-center sm:text-left flex-1">
               <h3 className="text-xl font-black text-white mb-1">Backed by a written warranty</h3>
@@ -96,15 +96,15 @@ const CeramicCoating = () => {
       </section>
 
       {/* 8. FAQ */}
-      <section ref={faqRef} className="relative py-24" style={{ background: '#0a0a0a' }}>
+      <section ref={faqRef} className="relative py-24" style={{ background: '#0b0f1a' }}>
         <div className="max-w-2xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12" style={{ transition: 'opacity .6s', opacity: faqVisible ? 1 : 0 }}>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4" style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
-              <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Ceramic FAQ</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4" style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
+              <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">Ceramic FAQ</span>
             </div>
             <h2 className="text-4xl sm:text-5xl font-black text-white">
               Good{' '}
-              <span style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>questions</span>
+              <span style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>questions</span>
             </h2>
           </div>
           <div className="space-y-2">
@@ -116,11 +116,11 @@ const CeramicCoating = () => {
       </section>
 
       {/* 9. Final CTA */}
-      <section className="relative py-20" style={{ background: '#080808' }}>
+      <section className="relative py-20" style={{ background: '#0b0f1a' }}>
         <div className="divider-gold absolute top-0 inset-x-0" />
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(201,168,76,0.08), transparent 60%)' }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 100%, rgba(0,168,204,0.08), transparent 60%)' }} />
         <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 text-center">
-          <ShieldCheck className="w-10 h-10 text-yellow-400 mx-auto mb-5" />
+          <ShieldCheck className="w-10 h-10 text-cyan-400 mx-auto mb-5" />
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Lock in years of protection</h2>
           <p className="text-gray-400 mb-8 max-w-md mx-auto">Tell us your vehicle and we'll recommend the right ceramic package. Free, no-pressure quote.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

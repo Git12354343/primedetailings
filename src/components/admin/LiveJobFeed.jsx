@@ -26,6 +26,7 @@ const LiveJobFeed = ({
   statusCounts: externalCounts,
   onAssignDetailer,
   detailers = [],
+  unassignedBookings = [],
 }) => {
   const allJobs = jobs ?? bookings;
 
@@ -52,7 +53,8 @@ const LiveJobFeed = ({
   // Filtered jobs — memoized to avoid recompute on unrelated renders
   const filteredJobs = useMemo(() => {
     let result = allJobs;
-    if (statusFilter !== 'ALL') result = result.filter(j => j.status === statusFilter);
+    if (statusFilter === 'UNASSIGNED') result = result.filter(j => !j.detailerId);
+    else if (statusFilter !== 'ALL') result = result.filter(j => j.status === statusFilter);
     if (searchTerm) {
       const t = searchTerm.toLowerCase();
       result = result.filter(j =>
@@ -145,6 +147,26 @@ const LiveJobFeed = ({
 
         {/* Status filter pills */}
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+          {(() => {
+            const unassignedCount = unassignedBookings.length || allJobs.filter(j => !j.detailerId).length;
+            const isActive = statusFilter === 'UNASSIGNED';
+            if (unassignedCount === 0 && !isActive) return null;
+            return (
+              <button onClick={() => setStatusFilter(isActive ? 'ALL' : 'UNASSIGNED')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0"
+                style={{
+                  background: isActive ? 'rgba(245,158,11,0.18)' : 'rgba(245,158,11,0.1)',
+                  border: '1px solid rgba(245,158,11,0.4)',
+                  color: '#fbbf24',
+                }}>
+                Unassigned
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  style={{ background: 'rgba(245,158,11,0.25)', color: '#fcd34d' }}>
+                  {unassignedCount}
+                </span>
+              </button>
+            );
+          })()}
           {STATUS_FILTERS.map(s => {
             const cfg = s === 'ALL' ? null : getStatusCfg(s);
             const isActive = statusFilter === s;
@@ -154,9 +176,9 @@ const LiveJobFeed = ({
               <button key={s} onClick={() => setStatusFilter(s)}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0"
                 style={{
-                  background: isActive ? (cfg?.bg ?? 'rgba(201,168,76,0.15)') : 'rgba(255,255,255,0.04)',
-                  border: isActive ? `1px solid ${cfg?.color ?? '#f5d376'}40` : '1px solid rgba(255,255,255,0.07)',
-                  color: isActive ? (cfg?.color ?? '#f5d376') : '#6b7280',
+                  background: isActive ? (cfg?.bg ?? 'rgba(0,168,204,0.15)') : 'rgba(255,255,255,0.04)',
+                  border: isActive ? `1px solid ${cfg?.color ?? '#00d4ff'}40` : '1px solid rgba(255,255,255,0.07)',
+                  color: isActive ? (cfg?.color ?? '#00d4ff') : '#6b7280',
                 }}>
                 {s === 'ALL' ? `All (${count})` : `${cfg.label} (${count})`}
               </button>
@@ -169,7 +191,7 @@ const LiveJobFeed = ({
       <div className="divide-y overflow-y-auto custom-scrollbar" style={{ maxHeight: '60vh', borderColor: 'rgba(255,255,255,0.06)' }}>
         {filteredJobs.length === 0 ? (
           <div className="py-16 text-center">
-            <Activity className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+            <Activity className="w-10 h-10 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 text-sm">
               {searchTerm || statusFilter !== 'ALL' ? 'No jobs match your filters.' : 'No jobs yet.'}
             </p>
@@ -271,7 +293,7 @@ const LiveJobFeed = ({
                           </div>
                           {job.totalPrice && (
                             <div className="text-xs font-bold mb-1" style={{
-                              background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+                              background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
                               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                             }}>
                               ${parseFloat(job.totalPrice).toFixed(0)}
@@ -285,7 +307,7 @@ const LiveJobFeed = ({
                               <button
                                 onClick={e => { e.stopPropagation(); setAssignDropdown(assignDropdown === job.id ? null : job.id); }}
                                 className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all"
-                                style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c' }}>
+                                style={{ background: 'rgba(0,168,204,0.1)', border: '1px solid rgba(0,168,204,0.25)', color: '#00a8cc' }}>
                                 <UserCheck className="w-3 h-3" /> Assign
                                 <ChevronDown className="w-3 h-3" />
                               </button>
@@ -309,7 +331,7 @@ const LiveJobFeed = ({
                                       }}
                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-white/[0.06] transition-colors">
                                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                                        style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
+                                        style={{ background: 'rgba(0,168,204,0.15)', color: '#00a8cc' }}>
                                         {d.name?.[0]?.toUpperCase()}
                                       </div>
                                       <span className="text-white truncate">{d.name}</span>
@@ -318,7 +340,7 @@ const LiveJobFeed = ({
                                 </div>
                               )}
                               {assigningId === job.id && (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin absolute right-0 top-1" style={{ color: '#c9a84c' }} />
+                                <Loader2 className="w-3.5 h-3.5 animate-spin absolute right-0 top-1" style={{ color: '#00a8cc' }} />
                               )}
                             </div>
                           )}

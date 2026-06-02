@@ -20,6 +20,7 @@ const trainingRoutes     = require('./routes/training');
 const checklistRoutes    = require('./routes/checklists');
 const imageRoutes        = require('./routes/images');
 const fleetRoutes        = require('./routes/fleet');
+const quoteRoutes        = require('./routes/quotes');
 
 const { createManualBooking } = require('./controllers/manualBookingController');
 const photoRoutes = require('./routes/photos');
@@ -51,7 +52,6 @@ app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Secret'],
 }));
 app.use(express.json({ limit: '20mb' })); // increased for base64 image uploads
 
@@ -80,12 +80,6 @@ const imageUploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, max: 20, // 20 uploads per hour per IP
   message: { success: false, message: 'Too many image uploads, please try again later.' }
 });
-const adminLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, max: 5,
-  message: { success: false, message: 'Too many admin login attempts. Try again in 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 const fleetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, max: 5,
   message: { success: false, message: 'Too many fleet quote requests.' }
@@ -103,7 +97,7 @@ app.use('/api/bookings/initiate',      smsLimiter);
 app.use('/api/contact',                contactLimiter);
 app.use('/api/images/upload/quote',    imageUploadLimiter);
 app.use('/api/fleet/quote',            fleetLimiter);
-app.use('/api/admin/login',            adminLoginLimiter);
+app.use('/api/quotes',                 generalLimiter);
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',         authRoutes);
@@ -117,6 +111,7 @@ app.use('/api/training',     trainingRoutes);
 app.use('/api/checklists',   checklistRoutes);
 app.use('/api/images',       imageRoutes);
 app.use('/api/fleet',        fleetRoutes);
+app.use('/api/quotes',       quoteRoutes);
 app.use('/api/photos',       photoRoutes);
 
 app.post('/api/admin/manual-booking', createManualBooking);
@@ -185,7 +180,7 @@ app.post('/api/bookings/initiate', async (req, res) => {
     if (hasTwilio) {
       try {
         await twilioClient.messages.create({
-          body: `Your Prime Detailing verification code is: ${code}. Valid for 10 minutes.`,
+          body: `Your Prestige Plus Services verification code is: ${code}. Valid for 10 minutes.`,
           from: process.env.TWILIO_PHONE_NUMBER,
           to:   formattedPhone,
         });
@@ -272,9 +267,12 @@ app.post('/api/bookings/verify', async (req, res) => {
         city:                finalBookingData.city || '',
         postalCode:          finalBookingData.postalCode || '',
         vehicleType:         finalBookingData.vehicleType,
-        make:                finalBookingData.make,
-        model:               finalBookingData.model,
-        year:                parseInt(finalBookingData.year),
+        make:                finalBookingData.make || null,
+        model:               finalBookingData.model || null,
+        year:                finalBookingData.year ? parseInt(finalBookingData.year) : null,
+        vehicleCondition:    finalBookingData.vehicleCondition || '',
+        propertyType:        finalBookingData.propertyType || '',
+        hasWaterPower:       finalBookingData.hasWaterPower === false ? false : true,
         services:            JSON.stringify(finalBookingData.services || []),
         extras:              JSON.stringify(finalBookingData.extras || []),
         date:                new Date(finalBookingData.date),
@@ -301,6 +299,7 @@ app.post('/api/bookings/verify', async (req, res) => {
     } catch {}
 
     // Confirmation email (non-blocking)
+    const vehicleInfo = [booking.year, booking.make, booking.model].filter(Boolean).join(' ') || booking.vehicleType;
     if (booking.email) {
       emailService.sendBookingConfirmation({
         firstName:           booking.firstName,
@@ -314,10 +313,35 @@ app.post('/api/bookings/verify', async (req, res) => {
         postalCode:          booking.postalCode,
         services:            finalBookingData.services || [],
         addOns:              finalBookingData.extras || [],
-        vehicleInfo:         `${booking.year} ${booking.make} ${booking.model}`,
+        vehicleInfo,
         totalPrice:          booking.totalPrice,
         specialInstructions: booking.specialInstructions,
       }).catch(err => console.error('Email error:', err));
+    }
+
+    // Owner notification email (non-blocking)
+    if (typeof emailService.sendNewBookingNotification === 'function') {
+      emailService.sendNewBookingNotification({
+        firstName:           booking.firstName,
+        lastName:            booking.lastName,
+        email:               booking.email,
+        phoneNumber:         booking.phoneNumber,
+        confirmationCode:    booking.confirmationCode,
+        date:                booking.date,
+        time:                booking.time,
+        address:             booking.address,
+        city:                booking.city,
+        postalCode:          booking.postalCode,
+        services:            finalBookingData.services || [],
+        addOns:              finalBookingData.extras || [],
+        vehicleInfo,
+        vehicleType:         booking.vehicleType,
+        vehicleCondition:    booking.vehicleCondition,
+        propertyType:        booking.propertyType,
+        hasWaterPower:       booking.hasWaterPower,
+        totalPrice:          booking.totalPrice,
+        specialInstructions: booking.specialInstructions,
+      }).catch(err => console.error('Owner email error:', err));
     }
 
     res.json({

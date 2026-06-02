@@ -14,7 +14,7 @@ const LoadingScreen = ({ onDone }) => {
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-500"
       style={{
-        background: '#0a0a0a',
+        background: '#0b0f1a',
         opacity: phase === 'out' ? 0 : 1,
         pointerEvents: phase === 'out' ? 'none' : 'all',
       }}
@@ -22,37 +22,31 @@ const LoadingScreen = ({ onDone }) => {
       {/* Radial glow */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.08) 0%, transparent 60%)' }}
+        style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(0,168,204,0.08) 0%, transparent 60%)' }}
       />
 
       <div className="flex flex-col items-center gap-5">
-        {/* Logo */}
+        {/* Logo mark */}
         <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center animate-pulse-gold"
           style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '20px',
-            overflow: 'hidden',
-            boxShadow: '0 0 40px rgba(201,168,76,0.35)',
+            background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
+            boxShadow: '0 0 40px rgba(0,168,204,0.4)',
             animation: 'pulseGold 1.5s ease-in-out infinite',
           }}
         >
-          <img
-            src="/logo.png"
-            alt="Prestige Plus"
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
+          <span className="text-black font-black text-2xl tracking-tight">PP</span>
         </div>
 
         {/* Brand name */}
         <div className="text-center">
           <div className="text-white font-black text-xl tracking-wide">
-            Prestige{' '}
+            Prestige Plus{' '}
             <span style={{
-              background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+              background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>
-              Plus
+              Services
             </span>
           </div>
           <div className="text-gray-600 text-xs tracking-widest uppercase mt-1">Montreal</div>
@@ -66,7 +60,7 @@ const LoadingScreen = ({ onDone }) => {
           <div
             className="h-full rounded-full"
             style={{
-              background: 'linear-gradient(90deg, #c9a84c, #f5d376)',
+              background: 'linear-gradient(90deg, #00a8cc, #00d4ff)',
               animation: 'loadBar 1.1s ease-out forwards',
             }}
           />

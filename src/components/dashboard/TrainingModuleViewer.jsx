@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle, XCircle, ChevronRight, Loader2 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const GOLD_S  = '#c9a84c';
+const GOLD_S  = '#00a8cc';
 
 // Minimal markdown renderer (bold, italic, headings, lists, code)
 const renderMarkdown = (text) => {
@@ -14,7 +14,7 @@ const renderMarkdown = (text) => {
     .replace(/^# (.*$)/gm,    '<h1 style="color:#fff;font-size:24px;font-weight:900;margin:0 0 16px">$1</h1>')
     .replace(/\*\*(.*?)\*\*/g,'<strong style="color:#fff;font-weight:700">$1</strong>')
     .replace(/\*(.*?)\*/g,    '<em style="color:rgba(255,255,255,0.8)">$1</em>')
-    .replace(/`(.*?)`/g,      '<code style="background:rgba(255,255,255,0.08);color:#f5d376;padding:2px 6px;border-radius:4px;font-size:13px">$1</code>')
+    .replace(/`(.*?)`/g,      '<code style="background:rgba(255,255,255,0.08);color:#00d4ff;padding:2px 6px;border-radius:4px;font-size:13px">$1</code>')
     .replace(/^- (.*$)/gm,    '<li style="color:rgba(255,255,255,0.75);margin:4px 0;padding-left:4px">$1</li>')
     .replace(/(<li.*<\/li>\n?)+/g, '<ul style="margin:8px 0 8px 16px;list-style:disc">$&</ul>')
     .replace(/\n\n/g,          '<br/><br/>')
@@ -98,7 +98,7 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
   if (!module) return (
     <div className="p-6 text-center">
       <p className="text-gray-500">Module not found.</p>
-      <button onClick={onBack} className="mt-4 text-yellow-400 text-sm">← Back</button>
+      <button onClick={onBack} className="mt-4 text-cyan-400 text-sm">← Back</button>
     </div>
   );
 
@@ -108,7 +108,7 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
       {/* Back */}
       <button onClick={onBack} className="flex items-center gap-2 text-sm mb-6 transition-colors"
         style={{ color:'rgba(255,255,255,0.5)' }}
-        onMouseEnter={e => e.currentTarget.style.color='#f5d376'}
+        onMouseEnter={e => e.currentTarget.style.color='#00d4ff'}
         onMouseLeave={e => e.currentTarget.style.color='rgba(255,255,255,0.5)'}>
         <ArrowLeft className="w-4 h-4" /> Back to Training
       </button>
@@ -133,13 +133,13 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
             {module.quizzes?.length > 0 ? (
               <button onClick={() => setPhase('quiz')}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold"
-                style={{ background:`linear-gradient(135deg,#c9a84c,#f5d376)`, color:'#0a0a0a' }}>
+                style={{ background:`linear-gradient(135deg,#00a8cc,#00d4ff)`, color:'#0b0f1a' }}>
                 Take Quiz <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
               <button onClick={markCompleteNoQuiz} disabled={submitting}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold disabled:opacity-60"
-                style={{ background:`linear-gradient(135deg,#c9a84c,#f5d376)`, color:'#0a0a0a' }}>
+                style={{ background:`linear-gradient(135deg,#00a8cc,#00d4ff)`, color:'#0b0f1a' }}>
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 Mark Complete
               </button>
@@ -164,9 +164,9 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
                     <button key={oi} onClick={() => setAnswers(a => ({ ...a, [q.id]: oi }))}
                       className="w-full text-left px-4 py-3 rounded-xl text-sm transition-all"
                       style={{
-                        background: answers[q.id] === oi ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)',
-                        border: `1px solid ${answers[q.id] === oi ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.07)'}`,
-                        color: answers[q.id] === oi ? '#f5d376' : 'rgba(255,255,255,0.7)',
+                        background: answers[q.id] === oi ? 'rgba(0,168,204,0.12)' : 'rgba(255,255,255,0.03)',
+                        border: `1px solid ${answers[q.id] === oi ? 'rgba(0,168,204,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                        color: answers[q.id] === oi ? '#00d4ff' : 'rgba(255,255,255,0.7)',
                       }}>
                       <span className="font-bold mr-2">{String.fromCharCode(65+oi)}.</span> {opt}
                     </button>
@@ -178,7 +178,7 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
 
           <button onClick={submitQuiz} disabled={submitting || Object.keys(answers).length < (module.quizzes?.length || 0)}
             className="w-full py-3 rounded-xl text-sm font-bold disabled:opacity-50 transition-all"
-            style={{ background:`linear-gradient(135deg,#c9a84c,#f5d376)`, color:'#0a0a0a' }}>
+            style={{ background:`linear-gradient(135deg,#00a8cc,#00d4ff)`, color:'#0b0f1a' }}>
             {submitting ? 'Submitting...' : 'Submit Quiz'}
           </button>
         </>
@@ -232,7 +232,7 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
           {result.passed ? (
             <button onClick={() => onComplete?.(moduleId, { status:'COMPLETED', score: result.score })}
               className="px-8 py-3 rounded-xl text-sm font-bold"
-              style={{ background:`linear-gradient(135deg,#c9a84c,#f5d376)`, color:'#0a0a0a' }}>
+              style={{ background:`linear-gradient(135deg,#00a8cc,#00d4ff)`, color:'#0b0f1a' }}>
               Back to Training
             </button>
           ) : (
@@ -244,7 +244,7 @@ const TrainingModuleViewer = ({ moduleId, token, progress, onBack, onComplete })
               </button>
               <button onClick={() => { setPhase('quiz'); setAnswers({}); setResult(null); }}
                 className="px-6 py-3 rounded-xl text-sm font-bold"
-                style={{ background:`linear-gradient(135deg,#c9a84c,#f5d376)`, color:'#0a0a0a' }}>
+                style={{ background:`linear-gradient(135deg,#00a8cc,#00d4ff)`, color:'#0b0f1a' }}>
                 Try Again
               </button>
             </div>

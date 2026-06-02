@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Save, Plus, Trash2, AlertTriangle, CheckCircle, Settings, Loader2 } from 'lucide-react';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -47,15 +47,15 @@ const safeInt = (val, fallback) => {
 
 // ── Shared input styles ────────────────────────────────────────────────────────
 const iBase = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', padding: '8px 12px', fontSize: '13px', outline: 'none' };
-const iNum  = { ...iBase, width: '100%', fontSize: '1.5rem', fontWeight: '900', textAlign: 'center', color: '#f5d376', borderRadius: '12px', padding: '12px' };
+const iNum  = { ...iBase, width: '100%', fontSize: '1.5rem', fontWeight: '900', textAlign: 'center', color: '#00d4ff', borderRadius: '12px', padding: '12px' };
 const iSlot = { ...iBase, width: '7rem' };
 const iHour = { ...iBase, width: '4rem', textAlign: 'center' };
 const iDate = { ...iBase, flex: 1 };
 const selStyle = { ...iBase, cursor: 'pointer', width: '100%' };
-const lGold = { display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', marginBottom: '6px' };
+const lGold = { display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(0,168,204,0.7)', marginBottom: '6px' };
 const cardD = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' };
 
-const ScheduleManager = ({ adminToken }) => {
+const ScheduleManager = () => {
   const [config, setConfig]         = useState(sanitizeConfig(null));
   const [blockedDates, setBlockedDates] = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -89,7 +89,7 @@ const ScheduleManager = ({ adminToken }) => {
     setSaving(true); setError('');
     try {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/config`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminToken || '', 'Authorization': `Bearer ${adminToken || ''}` }, body: JSON.stringify(config),
+        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminToken || '' }, body: JSON.stringify(config),
       });
       const data = await res.json();
       if (data.success) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
@@ -145,7 +145,7 @@ const ScheduleManager = ({ adminToken }) => {
 
   if (loading) return (
     <div className="flex items-center justify-center py-20">
-      <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '2px solid rgba(201,168,76,0.2)', borderTopColor: GOLD_S }} />
+      <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '2px solid rgba(0,168,204,0.2)', borderTopColor: GOLD_S }} />
     </div>
   );
 
@@ -192,7 +192,7 @@ const ScheduleManager = ({ adminToken }) => {
                 style={{
                   borderBottom: active ? `2px solid ${GOLD_S}` : '2px solid transparent',
                   color: active ? GOLD_S : 'rgba(255,255,255,0.4)',
-                  background: active ? 'rgba(201,168,76,0.06)' : 'transparent',
+                  background: active ? 'rgba(0,168,204,0.06)' : 'transparent',
                 }}>
                 <Icon className="w-4 h-4" /> {s.label}
               </button>
@@ -216,7 +216,7 @@ const ScheduleManager = ({ adminToken }) => {
                       <button key={idx} onClick={() => toggleWorkingDay(idx)}
                         className="py-2 px-1 text-xs font-semibold rounded-xl transition-all"
                         style={active
-                          ? { background: GOLD, color: '#0a0a0a' }
+                          ? { background: GOLD, color: '#0b0f1a' }
                           : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}>
                         {day.slice(0, 3)}
                       </button>
@@ -283,7 +283,7 @@ const ScheduleManager = ({ adminToken }) => {
                   ))}
                   <button onClick={addTimeSlot}
                     className="flex items-center gap-2 text-sm font-semibold px-3 py-2 rounded-xl transition-colors mt-1"
-                    style={{ color: GOLD_S, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                    style={{ color: GOLD_S, background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
                     <Plus className="w-4 h-4" /> Add Time Slot
                   </button>
                 </div>

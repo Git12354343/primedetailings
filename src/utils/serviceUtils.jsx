@@ -134,7 +134,7 @@ export const ServiceDisplay = ({ services, availableServices = [], lang = 'en', 
       {names.slice(0, 3).map((name, i) => (
         <span key={i}
           className="inline-block text-xs px-2 py-0.5 rounded-full"
-          style={{ background: 'rgba(201,168,76,0.12)', color: '#f5d376', border: '1px solid rgba(201,168,76,0.2)' }}>
+          style={{ background: 'rgba(0,168,204,0.12)', color: '#00d4ff', border: '1px solid rgba(0,168,204,0.2)' }}>
           {name}
         </span>
       ))}

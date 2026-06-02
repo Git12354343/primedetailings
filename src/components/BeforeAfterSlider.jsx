@@ -9,8 +9,8 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import useInView from '../hooks/useInView';
 
-const GOLD   = 'linear-gradient(135deg,#c9a84c,#f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD   = 'linear-gradient(135deg,#00a8cc,#00d4ff)';
+const GOLD_S = '#00a8cc';
 
 /* ── Demo cards shown when no real photos exist yet ──────────────────── */
 const DEMO = [
@@ -103,13 +103,15 @@ const CompareCard = ({ photo, isActive }) => {
         src={photo.afterUrl || photo.beforeUrl}
         alt="After"
         className="absolute inset-0 w-full h-full object-cover"
+        loading="lazy"
+        decoding="async"
         draggable="false"
       />
 
       {/* Subtle shimmer on after side */}
       <div className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'linear-gradient(120deg,transparent 30%,rgba(201,168,76,0.06) 50%,transparent 70%)',
+          background: 'linear-gradient(120deg,transparent 30%,rgba(0,168,204,0.06) 50%,transparent 70%)',
           animation: 'shimmerShift 4s ease-in-out infinite',
         }} />
 
@@ -121,6 +123,8 @@ const CompareCard = ({ photo, isActive }) => {
             src={photo.beforeUrl}
             alt="Before"
             className="absolute inset-0 h-full object-cover"
+            loading="lazy"
+            decoding="async"
             style={{ width: `${10000 / pos}%`, maxWidth: 'none' }}
             draggable="false"
           />
@@ -135,22 +139,22 @@ const CompareCard = ({ photo, isActive }) => {
           style={{
             left: `${pos}%`,
             width: '2px',
-            background: 'linear-gradient(180deg,transparent,#f5d376,#c9a84c,#f5d376,transparent)',
-            boxShadow: '0 0 12px rgba(201,168,76,0.8), 0 0 32px rgba(201,168,76,0.3)',
+            background: 'linear-gradient(180deg,transparent,#00d4ff,#00a8cc,#00d4ff,transparent)',
+            boxShadow: '0 0 12px rgba(0,168,204,0.8), 0 0 32px rgba(0,168,204,0.3)',
             transition: drag ? 'none' : 'left 0.35s cubic-bezier(.4,0,.2,1)',
           }}>
           {/* Handle */}
           <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
             style={{
               width: '40px', height: '40px', borderRadius: '50%',
-              background: 'linear-gradient(135deg,#c9a84c,#f5d376)',
-              boxShadow: '0 0 0 3px rgba(0,0,0,0.4), 0 0 20px rgba(201,168,76,0.6)',
+              background: 'linear-gradient(135deg,#00a8cc,#00d4ff)',
+              boxShadow: '0 0 0 3px rgba(0,0,0,0.4), 0 0 20px rgba(0,168,204,0.6)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'col-resize',
               pointerEvents: 'all',
             }}>
             <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
-              <path d="M4 1L1 5l3 4M12 1l3 4-3 4" stroke="#0a0a0a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 1L1 5l3 4M12 1l3 4-3 4" stroke="#0b0f1a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
         </div>
@@ -183,7 +187,7 @@ const CompareCard = ({ photo, isActive }) => {
         style={{ background: 'linear-gradient(to top,rgba(0,0,0,0.85) 0%,transparent 100%)' }}>
         <p className="text-white font-bold text-sm leading-tight">{photo.caption || photo.vehicle}</p>
         <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-          style={{ background: 'rgba(201,168,76,0.2)', color: GOLD_S, border: '1px solid rgba(201,168,76,0.3)' }}>
+          style={{ background: 'rgba(0,168,204,0.2)', color: GOLD_S, border: '1px solid rgba(0,168,204,0.3)' }}>
           {photo.serviceType}
         </span>
       </div>
@@ -236,15 +240,15 @@ const BeforeAfterSlider = () => {
 
   return (
     <section ref={sectionRef} className="relative py-24 overflow-hidden"
-      style={{ background: '#080808' }}
+      style={{ background: '#0b0f1a' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}>
 
       {/* Ambient glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent)' }} />
+        <div className="absolute top-0 inset-x-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(0,168,204,0.3),transparent)' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(ellipse,rgba(201,168,76,0.05) 0%,transparent 70%)' }} />
+          style={{ background: 'radial-gradient(ellipse,rgba(0,168,204,0.05) 0%,transparent 70%)' }} />
       </div>
 
       <style>{`
@@ -260,13 +264,13 @@ const BeforeAfterSlider = () => {
         <div className="text-center mb-14"
           style={{ transition: 'opacity .7s, transform .7s', opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(20px)' }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5 text-xs font-semibold uppercase tracking-widest"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)', color: GOLD_S }}>
             <Sparkles className="w-3.5 h-3.5" /> Real Results
           </div>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.02] mb-4"
             style={{ letterSpacing: '-0.025em' }}>
             See the{' '}
-            <span style={{ background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <span style={{ color: '#fff' }}>
               Difference
             </span>
           </h2>
@@ -294,12 +298,12 @@ const BeforeAfterSlider = () => {
                       alignSelf: 'center',
                       transition: 'all 0.5s cubic-bezier(.4,0,.2,1)',
                       boxShadow: isCenter
-                        ? '0 32px 80px rgba(0,0,0,0.7), 0 0 40px rgba(201,168,76,0.12)'
+                        ? '0 32px 80px rgba(0,0,0,0.7), 0 0 40px rgba(0,168,204,0.12)'
                         : '0 16px 40px rgba(0,0,0,0.5)',
                       opacity: isCenter ? 1 : 0.6,
                       transform: isCenter ? 'scale(1)' : 'scale(0.95)',
                       border: isCenter
-                        ? '1px solid rgba(201,168,76,0.25)'
+                        ? '1px solid rgba(0,168,204,0.25)'
                         : '1px solid rgba(255,255,255,0.06)',
                       cursor: !isCenter ? 'pointer' : 'default',
                     }}
@@ -360,7 +364,7 @@ const BeforeAfterSlider = () => {
           style={{ transition: 'opacity .7s .4s', opacity: visible ? 1 : 0 }}>
           <a href="/gallery"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm transition-all hover:scale-105"
-            style={{ background: GOLD, color: '#0a0a0a', boxShadow: '0 0 30px rgba(201,168,76,0.2)' }}>
+            style={{ background: GOLD, color: '#0b0f1a', boxShadow: '0 0 30px rgba(0,168,204,0.2)' }}>
             View Full Gallery
             <ChevronRight className="w-4 h-4" />
           </a>

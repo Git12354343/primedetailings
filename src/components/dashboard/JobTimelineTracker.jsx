@@ -25,8 +25,8 @@ const JobTimelineTracker = ({
       icon: User,
       status: 'CONFIRMED',
       color: 'bg-gray-500',
-      textColor: 'text-gray-700',
-      bgColor: 'bg-gray-50',
+      textColor: 'text-gray-300',
+      bgColor: 'bg-white/5',
       timestamp: booking?.createdAt
     },
     {
@@ -35,7 +35,7 @@ const JobTimelineTracker = ({
       icon: Navigation,
       status: 'EN_ROUTE',
       color: 'bg-blue-500',
-      textColor: 'text-blue-700',
+      textColor: 'text-cyan-400',
       bgColor: 'bg-blue-50',
       timestamp: booking?.enRouteAt
     },
@@ -44,7 +44,7 @@ const JobTimelineTracker = ({
       label: 'Started',
       icon: Play,
       status: 'STARTED',
-      color: 'bg-yellow-500',
+      color: 'bg-cyan-500',
       textColor: 'text-yellow-700',
       bgColor: 'bg-yellow-50',
       timestamp: booking?.startedAt
@@ -137,12 +137,12 @@ const JobTimelineTracker = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+    <div className="bg-[#111827] rounded-lg shadow-sm border border-white/10 p-4 mb-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <Timer className="w-5 h-5 text-blue-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Job Progress</h3>
+          <Timer className="w-5 h-5 text-cyan-400 mr-2" />
+          <h3 className="text-lg font-semibold text-white">Job Progress</h3>
         </div>
         <div className="text-sm text-gray-500">
           {booking?.customer?.firstName} {booking?.customer?.lastName}
@@ -179,8 +179,8 @@ const JobTimelineTracker = ({
                       completed 
                         ? `${stage.color} text-white border-transparent` 
                         : current
-                        ? `bg-white ${stage.textColor} border-current shadow-lg scale-110`
-                        : 'bg-gray-100 text-gray-400 border-gray-300'
+                        ? `bg-[#111827] ${stage.textColor} border-current shadow-lg scale-110`
+                        : 'bg-white/5 text-gray-400 border-white/15'
                     } ${
                       current && !future ? 'cursor-pointer hover:scale-125' : ''
                     } ${
@@ -197,7 +197,7 @@ const JobTimelineTracker = ({
                   {/* Stage Label and Timestamp */}
                   <div className="mt-3 text-center">
                     <div className={`text-sm font-medium ${
-                      completed || current ? 'text-gray-900' : 'text-gray-400'
+                      completed || current ? 'text-white' : 'text-gray-400'
                     }`}>
                       {stage.label}
                     </div>
@@ -207,7 +207,7 @@ const JobTimelineTracker = ({
                       </div>
                     )}
                     {current && !timestamp && (
-                      <div className="text-xs text-blue-600 mt-1 font-medium">
+                      <div className="text-xs text-cyan-400 mt-1 font-medium">
                         Current
                       </div>
                     )}
@@ -236,7 +236,7 @@ const JobTimelineTracker = ({
                   ? `${stage.bgColor} border-transparent` 
                   : current
                   ? `${stage.bgColor} border-current shadow-md`
-                  : 'bg-gray-50 border-gray-200'
+                  : 'bg-white/5 border-white/10'
               }`}
             >
               {/* Stage Icon */}
@@ -247,8 +247,8 @@ const JobTimelineTracker = ({
                   completed 
                     ? `${stage.color} text-white border-transparent` 
                     : current
-                    ? `bg-white ${stage.textColor} border-current`
-                    : 'bg-gray-200 text-gray-400 border-gray-300'
+                    ? `bg-[#111827] ${stage.textColor} border-current`
+                    : 'bg-gray-200 text-gray-400 border-white/15'
                 } ${
                   current && !future ? 'cursor-pointer' : ''
                 } ${
@@ -265,7 +265,7 @@ const JobTimelineTracker = ({
               {/* Stage Info */}
               <div className="flex-1">
                 <div className={`font-medium ${
-                  completed || current ? 'text-gray-900' : 'text-gray-400'
+                  completed || current ? 'text-white' : 'text-gray-400'
                 }`}>
                   {stage.label}
                 </div>
@@ -275,7 +275,7 @@ const JobTimelineTracker = ({
                   </div>
                 )}
                 {current && !timestamp && (
-                  <div className="text-sm text-blue-600 font-medium">
+                  <div className="text-sm text-cyan-400 font-medium">
                     Current Stage
                   </div>
                 )}
@@ -283,7 +283,7 @@ const JobTimelineTracker = ({
 
               {/* Action Indicator */}
               {current && !future && (
-                <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                <div className="text-xs bg-blue-100 text-cyan-400 px-2 py-1 rounded-full">
                   Tap to advance
                 </div>
               )}
@@ -294,7 +294,7 @@ const JobTimelineTracker = ({
 
       {/* Quick Actions */}
       {booking?.status === 'CONFIRMED' && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-white/10">
           <button
             onClick={() => {
               if (onStartNavigation) {
@@ -304,7 +304,7 @@ const JobTimelineTracker = ({
                 onStatusUpdate(booking.id, 'EN_ROUTE');
               }
             }}
-            className="w-full md:w-auto flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="w-full md:w-auto flex items-center justify-center px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-400 transition-colors font-medium"
           >
             <Navigation className="w-4 h-4 mr-2" />
             Start Navigation & Go En Route
@@ -314,10 +314,10 @@ const JobTimelineTracker = ({
 
       {/* Time Tracking Display */}
       {timeTracking?.isActive && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-white/10">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Active work time:</span>
-            <span className="font-mono font-bold text-blue-600">
+            <span className="font-mono font-bold text-cyan-400">
               {/* You can pass calculateWorkTime function here */}
               {timeTracking?.workTime || '0h 0m'}
             </span>

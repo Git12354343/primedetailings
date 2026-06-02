@@ -122,12 +122,12 @@ const ContactManagement = () => {
           <button key={f.key} onClick={() => setFilter(f.key)}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
             style={filter === f.key
-              ? { background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.35)', color: '#f5d376' }
+              ? { background: 'rgba(0,168,204,0.15)', border: '1px solid rgba(0,168,204,0.35)', color: '#00d4ff' }
               : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)' }}>
             {f.label}
             {counts[f.key] > 0 && (
               <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px]"
-                style={{ background: filter === f.key ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.1)' }}>
+                style={{ background: filter === f.key ? 'rgba(0,168,204,0.3)' : 'rgba(255,255,255,0.1)' }}>
                 {counts[f.key]}
               </span>
             )}
@@ -143,11 +143,11 @@ const ContactManagement = () => {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-yellow-500" /></div>
+        <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-cyan-500" /></div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 rounded-2xl"
           style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <MessageSquare className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+          <MessageSquare className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-400">No messages{filter !== 'ALL' ? ` with status "${filter}"` : ''}.</p>
         </div>
       ) : (
@@ -168,7 +168,7 @@ const ContactManagement = () => {
                   {/* Unread dot */}
                   <div className="mt-1 flex-shrink-0">
                     {isNew
-                      ? <Circle className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+                      ? <Circle className="w-2.5 h-2.5 fill-cyan-400 text-cyan-400" />
                       : <Circle className="w-2.5 h-2.5 text-transparent" />}
                   </div>
 
@@ -222,7 +222,7 @@ const ContactManagement = () => {
                     <button title="Archive" onClick={() => setStatus(c.id, c.status === 'ARCHIVED' ? 'NEW' : 'ARCHIVED')}
                       disabled={acting === c.id}
                       className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
-                      style={{ background: 'rgba(255,255,255,0.04)', color: c.status === 'ARCHIVED' ? '#f5d376' : '#6b7280' }}>
+                      style={{ background: 'rgba(255,255,255,0.04)', color: c.status === 'ARCHIVED' ? '#00d4ff' : '#6b7280' }}>
                       <Archive className="w-3.5 h-3.5" />
                     </button>
                     <button title="Delete" onClick={() => remove(c.id)} disabled={acting === c.id}
@@ -241,7 +241,7 @@ const ContactManagement = () => {
                     style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
                     <a href={`mailto:${c.email}?subject=Re: ${c.subject || 'Your inquiry'}`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:opacity-90"
-                      style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.25)', color: '#f5d376' }}>
+                      style={{ background: 'rgba(0,168,204,0.12)', border: '1px solid rgba(0,168,204,0.25)', color: '#00d4ff' }}>
                       <Mail className="w-3 h-3" /> Reply by email
                     </a>
                     {c.phone && (

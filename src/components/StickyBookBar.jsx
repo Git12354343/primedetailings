@@ -44,7 +44,7 @@ const StickyBookBar = () => {
 
       <div style={{
         background: 'rgba(8,8,8,0.98)',
-        borderTop: '1px solid rgba(201,168,76,0.3)',
+        borderTop: '1px solid rgba(0,168,204,0.3)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -80,7 +80,7 @@ const StickyBookBar = () => {
             style={{
               flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:'8px',
               padding:'12px', borderRadius:'12px', fontSize:'14px', fontWeight:700,
-              background:'linear-gradient(135deg,#c9a84c,#f5d376)', color:'#0a0a0a',
+              background:'linear-gradient(135deg,#00a8cc,#00d4ff)', color:'#0b0f1a',
               textDecoration:'none',
             }}
           >

@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Bell, CheckCircle, AlertTriangle, X, Settings, Volume2, VolumeX, Navigation } from 'lucide-react';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 
 const TYPE_CONFIG = {
   success:    { color: '#34d399', bg: 'rgba(52,211,153,0.08)',    border: 'rgba(52,211,153,0.2)' },
   warning:    { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',    border: 'rgba(245,158,11,0.2)' },
   error:      { color: '#f87171', bg: 'rgba(248,113,113,0.08)',   border: 'rgba(248,113,113,0.2)' },
   info:       { color: '#60a5fa', bg: 'rgba(96,165,250,0.08)',    border: 'rgba(96,165,250,0.2)' },
-  assignment: { color: GOLD_S,   bg: 'rgba(201,168,76,0.08)',    border: 'rgba(201,168,76,0.25)' },
+  assignment: { color: GOLD_S,   bg: 'rgba(0,168,204,0.08)',    border: 'rgba(0,168,204,0.25)' },
 };
 
 let _id = 0;
@@ -66,7 +66,7 @@ const Toast = ({ notification, onDismiss, onAction }) => {
                     onClick={() => { onAction(notification.id, action); if (!notification.persistent) dismiss(); }}
                     className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95"
                     style={action.style === 'primary'
-                      ? { background: GOLD, color: '#0a0a0a' }
+                      ? { background: GOLD, color: '#0b0f1a' }
                       : { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)' }}>
                     {action.label}
                   </button>
@@ -170,7 +170,7 @@ const SmartNotificationsSystem = ({ jobs = [], onJobAction, userRole = 'detailer
       {/* Bell button */}
       <button onClick={() => setShowSettings(s => !s)}
         className="fixed bottom-20 right-4 z-50 w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-xl"
-        style={{ background: 'rgba(18,18,18,0.95)', border: '1px solid rgba(201,168,76,0.25)', backdropFilter: 'blur(12px)' }}
+        style={{ background: 'rgba(18,18,18,0.95)', border: '1px solid rgba(0,168,204,0.25)', backdropFilter: 'blur(12px)' }}
         aria-label="Notification settings">
         <Bell className="w-4 h-4" style={{ color: GOLD_S }} />
         {notifications.length > 0 && (

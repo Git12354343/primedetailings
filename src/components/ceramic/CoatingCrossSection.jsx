@@ -9,7 +9,7 @@ import useInView from '../../hooks/useInView';
 
 const LAYERS = [
   { icon: Layers,      title: 'Bare clearcoat',  desc: 'Factory paint is porous and oxidizes over time.', color: '#94a3b8' },
-  { icon: ShieldCheck, title: 'Ceramic bond',    desc: 'SiO₂ chemically bonds to the clearcoat — permanent, not a wax.', color: '#c9a84c' },
+  { icon: ShieldCheck, title: 'Ceramic bond',    desc: 'SiO₂ chemically bonds to the clearcoat — permanent, not a wax.', color: '#00a8cc' },
   { icon: Sparkles,    title: 'Glass-hard shell', desc: '9H surface resists swirls, chemicals and UV fade.', color: '#a78bfa' },
   { icon: Droplets,    title: 'Hydrophobic top',  desc: 'Water beads at 110°+ and drags dirt off as it rolls.', color: '#60a5fa' },
 ];
@@ -25,20 +25,20 @@ const CoatingCrossSection = () => {
   });
 
   return (
-    <section id="ceramic-science" ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#080808' }}>
+    <section id="ceramic-science" ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#0b0f1a' }}>
       <div className="divider-gold absolute top-0 inset-x-0" />
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 30% 20%, rgba(201,168,76,0.06), transparent 60%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 30% 20%, rgba(0,168,204,0.06), transparent 60%)' }} />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-14" style={layerStyle(0)}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
-            <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">The Science</span>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
+            <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">The Science</span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-black text-white mb-3">
             What actually happens to your{' '}
-            <span style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>paint</span>
+            <span style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>paint</span>
           </h2>
           <p className="text-gray-400 text-base max-w-xl mx-auto">A microscopic cross-section, built layer by layer.</p>
         </div>
@@ -68,8 +68,8 @@ const CoatingCrossSection = () => {
               </g>
               {/* ceramic bonding layer */}
               <g style={{ transition: 'opacity .6s, transform .6s', transitionDelay: '.45s', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(-10px)' }}>
-                <rect x="20" y="146" width="360" height="26" rx="3" fill="rgba(201,168,76,0.22)" stroke="rgba(201,168,76,0.6)" strokeWidth="1" />
-                <text x="200" y="163" textAnchor="middle" fill="#f5d376" fontSize="10.5" fontWeight="700" letterSpacing="1.5">CERAMIC LAYER · 9H</text>
+                <rect x="20" y="146" width="360" height="26" rx="3" fill="rgba(0,168,204,0.22)" stroke="rgba(0,168,204,0.6)" strokeWidth="1" />
+                <text x="200" y="163" textAnchor="middle" fill="#00d4ff" fontSize="10.5" fontWeight="700" letterSpacing="1.5">CERAMIC LAYER · 9H</text>
               </g>
               {/* hydrophobic beads */}
               <g style={{ transition: 'opacity .7s', transitionDelay: '.7s', opacity: visible ? 1 : 0 }}>

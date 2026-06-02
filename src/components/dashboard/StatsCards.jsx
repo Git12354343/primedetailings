@@ -7,7 +7,7 @@ const ACCENT = {
   yellow: { bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.2)',  color: '#f59e0b' },
   orange: { bg: 'rgba(251,146,60,0.1)',  border: 'rgba(251,146,60,0.2)',  color: '#fb923c' },
   green:  { bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.2)',  color: '#34d399' },
-  gold:   { bg: 'rgba(201,168,76,0.1)',  border: 'rgba(201,168,76,0.25)', color: '#f5d376' },
+  gold:   { bg: 'rgba(0,168,204,0.1)',  border: 'rgba(0,168,204,0.25)', color: '#00d4ff' },
 };
 
 const StatsCards = ({ statusCounts, todaysEarnings }) => {

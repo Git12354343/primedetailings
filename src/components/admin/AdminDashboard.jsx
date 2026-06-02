@@ -10,7 +10,7 @@ import ActiveDetailersSidebar from './ActiveDetailersSidebar';
 import LiveJobFeed            from './LiveJobFeed';
 import UnassignedBookings     from './UnassignedBookings';
 import ServiceManagement      from './ServiceManagement';
-import PackageManagement      from './PackageManagement';
+import AdminQuoteManager      from './AdminQuoteManager';
 import ReviewManagement       from './ReviewManagement';
 import ManualBookingForm      from './ManualBookingForm';
 import ScheduleManager        from './ScheduleManager';
@@ -43,9 +43,9 @@ const ContactManagement = ({ adminToken }) => {
     setContacts(prev => prev.map(c => c.id === id ? { ...c, status } : c));
   };
 
-  const GOLD_S = '#c9a84c';
+  const GOLD_S = '#00a8cc';
   const STATUS_COLORS = {
-    NEW:         { bg: 'rgba(201,168,76,0.12)',  color: '#f5d376'  },
+    NEW:         { bg: 'rgba(0,168,204,0.12)',  color: '#00d4ff'  },
     IN_PROGRESS: { bg: 'rgba(96,165,250,0.12)',  color: '#60a5fa'  },
     RESOLVED:    { bg: 'rgba(52,211,153,0.12)',  color: '#34d399'  },
     ARCHIVED:    { bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)' },
@@ -91,7 +91,7 @@ const ContactManagement = ({ adminToken }) => {
               ))}
               <a href={`mailto:${c.email}`}
                 className="text-xs px-2 py-1 rounded-lg text-center transition-colors"
-                style={{ background: 'rgba(201,168,76,0.1)', color: '#f5d376', border: '1px solid rgba(201,168,76,0.2)' }}>
+                style={{ background: 'rgba(0,168,204,0.1)', color: '#00d4ff', border: '1px solid rgba(0,168,204,0.2)' }}>
                 Reply
               </a>
             </div>
@@ -106,8 +106,8 @@ const ContactManagement = ({ adminToken }) => {
 const TITLES = {
   'live-feed':      { t: 'Live Feed',     s: 'Real-time job activity' },
   'unassigned':     { t: 'Unassigned',    s: 'Bookings waiting for a detailer' },
-  'packages':       { t: 'Packages',      s: 'Bundle services into sellable packages' },
-  'services':       { t: 'Services',      s: 'Manage services, pricing and add-ons' },
+  'quotes':         { t: 'Quotes',        s: 'Retail custom quote requests' },
+  'catalog':        { t: 'Catalog',       s: 'Packages, services, pricing and add-ons' },
   'reviews':        { t: 'Reviews',       s: 'Curate the reviews shown on your site' },
   'manual-booking': { t: 'Add Booking',   s: 'Create a booking on behalf of a customer' },
   'schedule':       { t: 'Schedule',      s: 'Availability and working hours' },
@@ -153,20 +153,20 @@ const AdminDashboard = ({ onLogout, adminToken }) => {
   const title = TITLES[activeTab] || { t: activeTab, s: '' };
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0b0f1a' }}>
       <div className="flex flex-col items-center gap-4">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg,#c9a84c,#f5d376)' }}>
-          <span className="text-black font-black text-sm">PD</span>
+          style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)' }}>
+          <span className="text-black font-black text-sm">PP</span>
         </div>
-        <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#c9a84c' }} />
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#00a8cc' }} />
         <p className="text-sm text-gray-500">Loading dashboard…</p>
       </div>
     </div>
   );
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#0a0a0a' }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: '#0b0f1a' }}>
 
       {/* Sidebar */}
       <AdminSidebar
@@ -213,10 +213,10 @@ const AdminDashboard = ({ onLogout, adminToken }) => {
         <div className="flex-1 overflow-y-auto">
           <div className="flex gap-6 items-start p-6">
             <div className="flex-1 min-w-0">
-              {activeTab === 'live-feed'      && <LiveJobFeed bookings={allBookings} statusCounts={statusCounts} onRefresh={handleRefresh} onJobClick={() => {}} />}
+              {activeTab === 'live-feed'      && <LiveJobFeed bookings={allBookings} unassignedBookings={unassignedBookings} detailers={activeDetailers} statusCounts={statusCounts} onRefresh={handleRefresh} onJobClick={() => {}} />}
               {activeTab === 'unassigned'     && <UnassignedBookings bookings={unassignedBookings} detailers={activeDetailers} onRefresh={handleRefresh} />}
-              {activeTab === 'packages'       && <PackageManagement packages={packages} services={services} addOns={addOns} onRefresh={handleRefresh} adminToken={adminToken} />}
-              {activeTab === 'services'       && <ServiceManagement services={services} addOns={addOns} onRefresh={handleRefresh} adminToken={adminToken} />}
+              {activeTab === 'quotes'         && <AdminQuoteManager adminToken={adminToken} />}
+              {activeTab === 'catalog'        && <ServiceManagement services={services} addOns={addOns} packages={packages} onRefresh={handleRefresh} adminToken={adminToken} />}
               {activeTab === 'reviews'        && <ReviewManagement adminToken={adminToken} />}
               {activeTab === 'manual-booking' && <ManualBookingForm adminToken={adminToken} detailers={activeDetailers} services={services} onSuccess={handleRefresh} />}
               {activeTab === 'schedule'       && <ScheduleManager adminToken={adminToken} />}

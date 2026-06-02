@@ -1,0 +1,460 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXISTING MODELS (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Booking {
+  id                  Int           @id @default(autoincrement())
+  make                String?       @db.VarChar(50)
+  model               String?       @db.VarChar(50)
+  year                Int?
+  services            String
+  extras              String?
+  date                DateTime      @db.Date
+  time                String        @db.VarChar(20)
+  status              BookingStatus @default(PENDING)
+  address             String        @db.VarChar(255)
+  city                String        @db.VarChar(100)
+  email               String        @db.VarChar(255)
+  notes               String?
+  arrivedAt           DateTime?
+  completedAt         DateTime?
+  confirmationCode    String        @unique @db.VarChar(10)
+  createdAt           DateTime      @default(now())
+  detailerId          Int?
+  emailSent           Boolean       @default(false)
+  enRouteAt           DateTime?
+  estimatedDuration   Int?
+  firstName           String        @db.VarChar(100)
+  lastName            String        @db.VarChar(100)
+  phoneNumber         String        @db.VarChar(20)
+  postalCode          String        @db.VarChar(10)
+  reminderSent        Boolean       @default(false)
+  specialInstructions String?
+  startedAt           DateTime?
+  totalPrice          Decimal?      @db.Decimal(8, 2)
+  updatedAt           DateTime      @updatedAt
+  vehicleType         String        @db.VarChar(50)
+  vehicleCondition    String        @default("") @db.VarChar(20)
+  propertyType        String        @default("") @db.VarChar(50)
+  hasWaterPower       Boolean       @default(true)
+  packageId           Int?
+  detailer            Detailer?     @relation(fields: [detailerId], references: [id])
+  package             Package?      @relation(fields: [packageId], references: [id])
+  checklist           JobChecklist?
+  images              BookingImage[]
+
+  @@index([detailerId])
+  @@map("bookings")
+}
+
+model Detailer {
+  id             Int                @id @default(autoincrement())
+  name           String             @db.VarChar(100)
+  phone          String             @unique @db.VarChar(20)
+  email          String             @unique @db.VarChar(255)
+  createdAt      DateTime           @default(now())
+  isActive       Boolean            @default(true)
+  supabaseUserId String?            @unique @db.VarChar(255)
+  updatedAt      DateTime           @updatedAt
+  bookings       Booking[]
+  trainingProgress TrainingProgress[]
+
+  @@map("detailers")
+}
+
+model Contact {
+  id          Int           @id @default(autoincrement())
+  referenceId String        @unique @default(cuid()) @db.VarChar(30)
+  name        String        @db.VarChar(100)
+  email       String        @db.VarChar(255)
+  phone       String?       @db.VarChar(20)
+  subject     String?       @db.VarChar(200)
+  message     String
+  status      ContactStatus @default(NEW)
+  emailSent   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("contacts")
+}
+
+model Service {
+  id                Int              @id @default(autoincrement())
+  name              String           @db.VarChar(100)
+  description       String?
+  includes          String?          @db.Text
+  category          ServiceCategory  @default(DETAILING)
+  createdAt         DateTime         @default(now())
+  isActive          Boolean          @default(true)
+  isFeatured        Boolean          @default(false)
+  sortOrder         Int              @default(0)
+  estimatedDuration Int?
+  promoPrice        Decimal?         @db.Decimal(8, 2)
+  updatedAt         DateTime         @updatedAt
+  pricing           ServicePricing[]
+
+  @@map("services")
+}
+
+model ServicePricing {
+  id          Int      @id @default(autoincrement())
+  price       Decimal  @db.Decimal(8, 2)
+  createdAt   DateTime @default(now())
+  serviceId   Int
+  updatedAt   DateTime @updatedAt
+  vehicleType String   @db.VarChar(50)
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, vehicleType])
+  @@map("service_pricing")
+}
+
+model AddOn {
+  id          Int           @id @default(autoincrement())
+  name          String        @unique @db.VarChar(100)
+  description   String?
+  category      AddOnCategory @default(ENHANCEMENT)
+  price       Decimal       @db.Decimal(8, 2)
+  createdAt   DateTime      @default(now())
+  isActive    Boolean       @default(true)
+  sortOrder   Int           @default(0)
+  updatedAt   DateTime      @updatedAt
+
+  @@map("add_ons")
+}
+
+model Package {
+  id                Int       @id @default(autoincrement())
+  name              String    @db.VarChar(100)
+  description       String?
+  tagline           String?   @db.VarChar(200)
+  imageUrl          String?   @db.VarChar(500)
+  includedServices  Json      @default("[]")
+  includedAddOns    Json      @default("[]")
+  pricing           Json      @default("{}")
+  estimatedDuration Int?
+  isActive          Boolean   @default(true)
+  isFeatured        Boolean   @default(false)
+  isMostPopular     Boolean   @default(false)
+  requiresQuote     Boolean   @default(false)
+  sortOrder         Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  bookings          Booking[]
+
+  @@map("packages")
+}
+
+model JobPhoto {
+  id          Int      @id @default(autoincrement())
+  beforeUrl   String   @db.VarChar(500)
+  afterUrl    String?  @db.VarChar(500)
+  vehicle     String   @db.VarChar(100)
+  serviceType String   @db.VarChar(100)
+  caption     String?  @db.VarChar(200)
+  featured    Boolean  @default(false)
+  bookingId   Int?
+  uploadedBy  String?  @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("job_photos")
+}
+
+model VerificationCode {
+  id          Int      @id @default(autoincrement())
+  phoneNumber String   @unique @db.VarChar(20)
+  code        String   @db.VarChar(6)
+  expiresAt   DateTime
+  attempts    Int      @default(0)
+  bookingData String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  @@map("verification_codes")
+}
+
+model AppConfig {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique @db.VarChar(100)
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("app_config")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW MODELS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Training Center ──────────────────────────────────────────────────────────
+
+model TrainingModule {
+  id               Int                @id @default(autoincrement())
+  title            String             @db.VarChar(150)
+  titleFr          String?            @db.VarChar(150)
+  description      String?
+  content          String             @db.Text
+  contentFr        String?            @db.Text
+  category         TrainingCategory   @default(GENERAL)
+  level            TrainingLevel      @default(BEGINNER)
+  isPublished      Boolean            @default(false)
+  isRequired       Boolean            @default(false)
+  sortOrder        Int                @default(0)
+  estimatedMinutes Int?
+  thumbnailUrl     String?            @db.VarChar(500)
+  createdBy        String?            @db.VarChar(100)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  quizzes          TrainingQuiz[]
+  progress         TrainingProgress[]
+
+  @@map("training_modules")
+}
+
+model TrainingQuiz {
+  id            Int            @id @default(autoincrement())
+  moduleId      Int
+  question      String         @db.VarChar(500)
+  questionFr    String?        @db.VarChar(500)
+  options       Json           // string[]
+  optionsFr     Json?          // string[]
+  correctIdx    Int
+  explanation   String?
+  explanationFr String?
+  sortOrder     Int            @default(0)
+  module        TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@map("training_quizzes")
+}
+
+model TrainingProgress {
+  id          Int            @id @default(autoincrement())
+  detailerId  Int
+  moduleId    Int
+  status      ProgressStatus @default(NOT_STARTED)
+  score       Int?
+  attempts    Int            @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  detailer    Detailer       @relation(fields: [detailerId], references: [id])
+  module      TrainingModule @relation(fields: [moduleId], references: [id])
+
+  @@unique([detailerId, moduleId])
+  @@map("training_progress")
+}
+
+// ── Job Checklists ───────────────────────────────────────────────────────────
+
+model ChecklistTemplate {
+  id          Int                    @id @default(autoincrement())
+  name        String                 @db.VarChar(100)
+  serviceType ChecklistServiceType   @default(STANDARD)
+  isDefault   Boolean                @default(false)
+  isActive    Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  items       ChecklistTemplateItem[]
+
+  @@map("checklist_templates")
+}
+
+model ChecklistTemplateItem {
+  id            Int               @id @default(autoincrement())
+  templateId    Int
+  label         String            @db.VarChar(200)
+  labelFr       String?           @db.VarChar(200)
+  isRequired    Boolean           @default(true)
+  requiresPhoto Boolean           @default(false)
+  sortOrder     Int               @default(0)
+  template      ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@map("checklist_template_items")
+}
+
+model JobChecklist {
+  id         Int                @id @default(autoincrement())
+  bookingId  Int                @unique
+  templateId Int?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  booking    Booking            @relation(fields: [bookingId], references: [id])
+  items      JobChecklistItem[]
+
+  @@map("job_checklists")
+}
+
+model JobChecklistItem {
+  id            Int          @id @default(autoincrement())
+  checklistId   Int
+  label         String       @db.VarChar(200)
+  labelFr       String?      @db.VarChar(200)
+  isRequired    Boolean      @default(true)
+  isCompleted   Boolean      @default(false)
+  completedAt   DateTime?
+  completedBy   String?      @db.VarChar(100)
+  notes         String?
+  requiresPhoto Boolean      @default(false)
+  photoUrl      String?      @db.VarChar(500)
+  sortOrder     Int          @default(0)
+  checklist     JobChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@map("job_checklist_items")
+}
+
+// ── Booking Images ────────────────────────────────────────────────────────────
+
+model BookingImage {
+  id          Int       @id @default(autoincrement())
+  bookingId   Int?
+  storagePath String    @db.VarChar(500)
+  publicUrl   String    @db.VarChar(500)
+  imageType   ImageType @default(CUSTOMER_QUOTE)
+  uploadedBy  String?   @db.VarChar(100)
+  isTemporary Boolean   @default(true)
+  isApproved  Boolean   @default(false)
+  deleteAfter DateTime?
+  caption     String?   @db.VarChar(200)
+  fileSize    Int?
+  mimeType    String?   @db.VarChar(50)
+  createdAt   DateTime  @default(now())
+  booking     Booking?  @relation(fields: [bookingId], references: [id])
+
+  @@index([isTemporary, deleteAfter])
+  @@map("booking_images")
+}
+
+// ── Fleet / B2B Quotes ────────────────────────────────────────────────────────
+
+model FleetQuote {
+  id                String           @id @default(cuid())
+  referenceId       String           @unique @default(cuid()) @db.VarChar(30)
+  companyName       String           @db.VarChar(150)
+  contactName       String           @db.VarChar(100)
+  email             String           @db.VarChar(255)
+  phone             String           @db.VarChar(20)
+  vehicleCount      Int
+  vehicleTypes      Json
+  servicesRequested String
+  frequency         FleetFrequency   @default(ONE_TIME)
+  preferredDays     String?          @db.VarChar(100)
+  locationAddress   String?
+  additionalNotes   String?
+  status            FleetQuoteStatus @default(NEW)
+  adminNotes        String?
+  estimatedValue    Decimal?         @db.Decimal(10, 2)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@map("fleet_quotes")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS — existing
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  EN_ROUTE
+  STARTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum ContactStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  ARCHIVED
+}
+
+enum ServiceCategory {
+  DETAILING
+  PROTECTION
+  RESTORATION
+  MAINTENANCE
+  SPECIALTY
+}
+
+enum AddOnCategory {
+  ENHANCEMENT
+  PROTECTION
+  CLEANING
+  RESTORATION
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS — new
+// ─────────────────────────────────────────────────────────────────────────────
+
+
+enum TrainingCategory {
+  GENERAL
+  SERVICE_PROCEDURE
+  PRODUCT_USAGE
+  SAFETY
+  CERAMIC_COATING
+  CUSTOMER_COMMUNICATION
+  PHOTO_STANDARDS
+  JOB_WORKFLOW
+}
+
+enum TrainingLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum ChecklistServiceType {
+  STANDARD
+  CERAMIC_COATING
+  INTERIOR_ONLY
+  EXTERIOR_ONLY
+  PAINT_CORRECTION
+}
+
+enum ImageType {
+  CUSTOMER_QUOTE
+  BEFORE_JOB
+  AFTER_JOB
+  DAMAGE_REPORT
+  GALLERY
+}
+
+enum FleetFrequency {
+  ONE_TIME
+  WEEKLY
+  BI_WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum FleetQuoteStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  ACCEPTED
+  DECLINED
+  ARCHIVED
+}

@@ -8,8 +8,8 @@ import {
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import TimeSlotPicker from '../components/TimeSlotPicker';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376, #c9a84c)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff, #00a8cc)';
+const GOLD_S = '#00a8cc';
 
 const STATUS_STEPS = [
   { key: 'PENDING',     label: 'Pending',     desc: 'Booking received, awaiting confirmation' },
@@ -110,7 +110,7 @@ const RescheduleModal = ({ booking, onClose, onSuccess }) => {
             className="flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
             style={(!newDate || !newTime || loading)
               ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed' }
-              : { background: GOLD, color: '#0a0a0a' }}>
+              : { background: GOLD, color: '#0b0f1a' }}>
             {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Rescheduling...</> : 'Confirm Reschedule'}
           </button>
         </div>
@@ -261,11 +261,11 @@ const BookingLookup = () => {
   };
   const labelStyle = {
     display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em',
-    textTransform: 'uppercase', color: 'rgba(201,168,76,0.8)', marginBottom: '8px'
+    textTransform: 'uppercase', color: 'rgba(0,168,204,0.8)', marginBottom: '8px'
   };
 
   if (cancelledOk) return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0b0f1a' }}>
       <div className="text-center max-w-sm">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
           style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)' }}>
@@ -276,7 +276,7 @@ const BookingLookup = () => {
           We've sent you an SMS confirmation. We hope to see you again soon.
         </p>
         <Link to="/booking" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
-          style={{ background: GOLD, color: '#0a0a0a' }}>
+          style={{ background: GOLD, color: '#0b0f1a' }}>
           Book Again <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
@@ -284,7 +284,7 @@ const BookingLookup = () => {
   );
 
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen" style={{ background: '#0b0f1a' }}>
       {/* Modals */}
       {showReschedule && booking && (
         <RescheduleModal booking={booking}
@@ -300,12 +300,12 @@ const BookingLookup = () => {
       {/* Hero */}
       <section className="relative pt-32 pb-16 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent)' }} />
-          <div className="absolute top-1/2 left-1/3 w-80 h-80 rounded-full blur-3xl" style={{ background: 'rgba(201,168,76,0.03)' }} />
+          <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(0,168,204,0.3),transparent)' }} />
+          <div className="absolute top-1/2 left-1/3 w-80 h-80 rounded-full blur-3xl" style={{ background: 'rgba(0,168,204,0.03)' }} />
         </div>
         <div className="max-w-2xl mx-auto px-4 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-semibold uppercase tracking-widest"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)', color: GOLD_S }}>
             <Search className="w-3.5 h-3.5" /> Track Your Booking
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4">
@@ -353,7 +353,7 @@ const BookingLookup = () => {
             className="w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2 transition-all"
             style={loading
               ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed' }
-              : { background: GOLD, color: '#0a0a0a', boxShadow: '0 0 25px rgba(201,168,76,0.25)' }}>
+              : { background: GOLD, color: '#0b0f1a', boxShadow: '0 0 25px rgba(0,168,204,0.25)' }}>
             {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Looking up...</> : <><Search className="w-4 h-4" /> Find My Booking</>}
           </button>
         </form>
@@ -385,15 +385,15 @@ const BookingLookup = () => {
                           <div className="relative z-10 w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300"
                             style={{
                               background: done || current ? GOLD : 'rgba(255,255,255,0.08)',
-                              border: current ? '2px solid rgba(201,168,76,0.8)' : done ? 'none' : '1px solid rgba(255,255,255,0.12)',
-                              boxShadow: current ? '0 0 16px rgba(201,168,76,0.5)' : 'none',
+                              border: current ? '2px solid rgba(0,168,204,0.8)' : done ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                              boxShadow: current ? '0 0 16px rgba(0,168,204,0.5)' : 'none',
                             }}>
                             {done ? <CheckCircle className="w-3.5 h-3.5 text-black" />
-                              : <div className="w-2 h-2 rounded-full" style={{ background: current ? '#0a0a0a' : 'rgba(255,255,255,0.3)' }} />}
+                              : <div className="w-2 h-2 rounded-full" style={{ background: current ? '#0b0f1a' : 'rgba(255,255,255,0.3)' }} />}
                           </div>
                           <div className="pt-0.5">
                             <p className="text-sm font-semibold" style={{ color: done || current ? '#fff' : 'rgba(255,255,255,0.35)' }}>{step.label}</p>
-                            {current && <p className="text-xs mt-0.5" style={{ color: 'rgba(201,168,76,0.7)' }}>{step.desc}</p>}
+                            {current && <p className="text-xs mt-0.5" style={{ color: 'rgba(0,168,204,0.7)' }}>{step.desc}</p>}
                           </div>
                         </div>
                       );
@@ -460,7 +460,7 @@ const BookingLookup = () => {
                     <div className="flex flex-wrap gap-2">
                       {svcNames.map((s, i) => (
                         <span key={i} className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                          style={{ background: 'rgba(201,168,76,0.1)', color: '#f5d376', border: '1px solid rgba(201,168,76,0.2)' }}>{s}</span>
+                          style={{ background: 'rgba(0,168,204,0.1)', color: '#00d4ff', border: '1px solid rgba(0,168,204,0.2)' }}>{s}</span>
                       ))}
                       {addNames.map((a, i) => (
                         <span key={i} className="text-xs px-3 py-1.5 rounded-lg font-medium"
@@ -486,7 +486,7 @@ const BookingLookup = () => {
                 <Phone className="w-4 h-4" /> Call Us
               </a>
               <Link to="/booking" className="flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold transition-all"
-                style={{ background: GOLD, color: '#0a0a0a' }}>
+                style={{ background: GOLD, color: '#0b0f1a' }}>
                 Book Again <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
@@ -500,7 +500,7 @@ const BookingLookup = () => {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button onClick={() => setShowReschedule(true)}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all"
-                    style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
+                    style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)', color: GOLD_S }}>
                     <Calendar className="w-4 h-4" /> Reschedule
                   </button>
                   <button onClick={() => setShowCancel(true)}

@@ -6,20 +6,20 @@ import { Link } from 'react-router-dom';
 import { MapPin, ChevronRight } from 'lucide-react';
 import useInView from '../hooks/useInView';
 
-const GOLD  = 'linear-gradient(135deg,#c9a84c,#f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD  = 'linear-gradient(135deg,#00a8cc,#00d4ff)';
+const GOLD_S = '#00a8cc';
 
 const ZONES = [
-  { id: 'montreal', label: 'Montréal Island', desc: 'Full coverage',                         color: '#c9a84c', badge: 'Included',   badgeStyle: { background:'rgba(52,211,153,0.12)', color:'#34d399', border:'1px solid rgba(52,211,153,0.25)' } },
+  { id: 'montreal', label: 'Montréal Island', desc: 'Full coverage',                         color: '#00a8cc', badge: 'Included',   badgeStyle: { background:'rgba(52,211,153,0.12)', color:'#34d399', border:'1px solid rgba(52,211,153,0.25)' } },
   { id: 'laval',    label: 'Laval',           desc: 'Full coverage',                         color: '#e8c46a', badge: 'Included',   badgeStyle: { background:'rgba(52,211,153,0.12)', color:'#34d399', border:'1px solid rgba(52,211,153,0.25)' } },
-  { id: 'south',    label: 'South Shore',     desc: 'Longueuil · Brossard · St-Bruno',       color: '#a07830', badge: 'Available',  badgeStyle: { background:'rgba(201,168,76,0.12)', color:'#c9a84c', border:'1px solid rgba(201,168,76,0.25)' } },
-  { id: 'north',    label: 'North Shore',     desc: 'Terrebonne · Repentigny · Mascouche',   color: '#7a5c24', badge: 'Available',  badgeStyle: { background:'rgba(201,168,76,0.12)', color:'#c9a84c', border:'1px solid rgba(201,168,76,0.25)' } },
+  { id: 'south',    label: 'South Shore',     desc: 'Longueuil · Brossard · St-Bruno',       color: '#a07830', badge: 'Available',  badgeStyle: { background:'rgba(0,168,204,0.12)', color:'#00a8cc', border:'1px solid rgba(0,168,204,0.25)' } },
+  { id: 'north',    label: 'North Shore',     desc: 'Terrebonne · Repentigny · Mascouche',   color: '#7a5c24', badge: 'Available',  badgeStyle: { background:'rgba(0,168,204,0.12)', color:'#00a8cc', border:'1px solid rgba(0,168,204,0.25)' } },
   { id: 'quebec',   label: 'Greater Québec',  desc: 'Available on request',                  color: 'rgba(255,255,255,0.3)', badge: 'On request', badgeStyle: { background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.4)', border:'1px solid rgba(255,255,255,0.1)' } },
 ];
 
 /* ── SVG map shapes ─────────────────────────────────────────────────── */
 const MAP_FILLS = {
-  montreal: '#c9a84c',
+  montreal: '#00a8cc',
   laval:    '#e8c46a',
   south:    '#a07830',
   north:    '#7a5c24',
@@ -79,8 +79,8 @@ const QMap = ({ active, onZone }) => {
       ))}
 
       {/* Pulse dot on Montréal */}
-      <circle cx="155" cy="300" r="4" fill="#f5d376"/>
-      <circle cx="155" cy="300" r="4" fill="none" stroke="#f5d376" strokeWidth="1.5">
+      <circle cx="155" cy="300" r="4" fill="#00d4ff"/>
+      <circle cx="155" cy="300" r="4" fill="none" stroke="#00d4ff" strokeWidth="1.5">
         <animate attributeName="r" from="4" to="16" dur="2s" repeatCount="indefinite"/>
         <animate attributeName="opacity" from="0.8" to="0" dur="2s" repeatCount="indefinite"/>
       </circle>
@@ -95,10 +95,10 @@ const ServiceAreaMap = () => {
 
   return (
     <section ref={ref} className="relative py-24 overflow-hidden"
-      style={{ background: '#0d0d0d' }}>
+      style={{ background: '#111827' }}>
 
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 40%,rgba(201,168,76,0.04) 0%,transparent 65%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 50% 40%,rgba(0,168,204,0.04) 0%,transparent 65%)' }} />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
 
@@ -106,12 +106,12 @@ const ServiceAreaMap = () => {
         <div className="text-center mb-12"
           style={{ transition:'opacity .7s, transform .7s', opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(20px)' }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5 text-xs font-semibold uppercase tracking-widest"
-            style={{ background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.2)', color: GOLD_S }}>
+            style={{ background:'rgba(0,168,204,0.08)', border:'1px solid rgba(0,168,204,0.2)', color: GOLD_S }}>
             <MapPin className="w-3.5 h-3.5" /> Service Area
           </div>
           <h2 className="text-4xl sm:text-5xl font-black text-white mb-4" style={{ letterSpacing:'-0.02em' }}>
             We Come to{' '}
-            <span style={{ background: GOLD, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
+            <span style={{ color: '#fff' }}>
               You
             </span>
           </h2>
@@ -135,8 +135,8 @@ const ServiceAreaMap = () => {
               <div key={id} onClick={() => setActive(id)}
                 className="flex items-center justify-between rounded-2xl px-4 py-3.5 cursor-pointer transition-all"
                 style={{
-                  background: active === id ? 'rgba(201,168,76,0.07)' : 'rgba(255,255,255,0.03)',
-                  border: active === id ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.07)',
+                  background: active === id ? 'rgba(0,168,204,0.07)' : 'rgba(255,255,255,0.03)',
+                  border: active === id ? '1px solid rgba(0,168,204,0.3)' : '1px solid rgba(255,255,255,0.07)',
                 }}>
                 <div className="flex items-center gap-3">
                   <div className="rounded-full flex-shrink-0"
@@ -155,7 +155,7 @@ const ServiceAreaMap = () => {
             {/* CTA */}
             <Link to="/booking"
               className="flex items-center justify-between px-5 py-4 rounded-2xl mt-1 transition-all hover:scale-[1.01]"
-              style={{ background: GOLD, color:'#0a0a0a' }}>
+              style={{ background: GOLD, color:'#0b0f1a' }}>
               <div>
                 <p className="font-black text-sm">Book in your area</p>
                 <p className="text-xs font-medium opacity-60 mt-0.5">We'll confirm availability by SMS</p>

@@ -136,7 +136,7 @@ const NotificationItem = ({ notification, onRemove }) => {
       case NOTIFICATION_TYPES.ERROR:
         return `${baseStyles} bg-red-50 border-red-400 text-red-800`;
       case NOTIFICATION_TYPES.WARNING:
-        return `${baseStyles} bg-yellow-50 border-yellow-400 text-yellow-800`;
+        return `${baseStyles} bg-yellow-50 border-cyan-400 text-yellow-800`;
       default:
         return `${baseStyles} bg-blue-50 border-blue-400 text-blue-800`;
     }
@@ -149,7 +149,7 @@ const NotificationItem = ({ notification, onRemove }) => {
       case NOTIFICATION_TYPES.ERROR:
         return "text-red-400";
       case NOTIFICATION_TYPES.WARNING:
-        return "text-yellow-400";
+        return "text-cyan-400";
       default:
         return "text-blue-400";
     }

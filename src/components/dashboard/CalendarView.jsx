@@ -71,29 +71,29 @@ const CalendarView = ({
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-[#111827] rounded-lg shadow">
       {/* Calendar Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-white/10">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-white">
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h2>
           <div className="flex space-x-2">
             <button
               onClick={() => navigateMonth(-1)}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              className="p-2 text-gray-600 hover:text-white hover:bg-white/5 rounded-md transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-3 py-2 text-sm bg-cyan-500 text-white rounded-md hover:bg-cyan-400 transition-colors"
             >
               Today
             </button>
             <button
               onClick={() => navigateMonth(1)}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              className="p-2 text-gray-600 hover:text-white hover:bg-white/5 rounded-md transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -124,14 +124,14 @@ const CalendarView = ({
             return (
               <div
                 key={index}
-                className={`min-h-[120px] p-2 border border-gray-200 rounded-lg transition-colors ${
-                  day ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
+                className={`min-h-[120px] p-2 border border-white/10 rounded-lg transition-colors ${
+                  day ? 'bg-[#111827] hover:bg-white/5' : 'bg-white/5'
                 } ${isToday ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
               >
                 {day && (
                   <>
                     <div className={`text-sm font-medium mb-2 ${
-                      isToday ? 'text-blue-600' : 'text-gray-900'
+                      isToday ? 'text-cyan-400' : 'text-white'
                     }`}>
                       {day}
                     </div>
@@ -155,7 +155,7 @@ const CalendarView = ({
                         </div>
                       ))}
                       {dayBookings.length > 3 && (
-                        <div className="text-xs text-gray-500 p-1 text-center bg-gray-100 rounded">
+                        <div className="text-xs text-gray-500 p-1 text-center bg-white/5 rounded">
                           +{dayBookings.length - 3} more
                         </div>
                       )}
@@ -196,15 +196,15 @@ const BookingDetailModal = ({
 }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-[#111827] rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div className="px-6 py-4 border-b border-white/10">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-white">
               Job Details - {booking.customer.firstName} {booking.customer.lastName}
             </h3>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2 rounded-md hover:bg-gray-100 transition-colors"
+              className="text-gray-400 hover:text-gray-600 p-2 rounded-md hover:bg-white/5 transition-colors"
             >
               ✕
             </button>

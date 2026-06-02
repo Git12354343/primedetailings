@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Calculator, Package, Wrench, AlertCircle, CheckCircle, Loader2, Clock, MapPin } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const GOLD = 'linear-gradient(135deg,#c9a84c,#f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg,#00a8cc,#00d4ff)';
+const GOLD_S = '#00a8cc';
 
 const PricingCalculator = ({
   vehicleType, selectedServices, selectedAddOns,
@@ -113,7 +113,7 @@ const PricingCalculator = ({
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)' }}>
+            style={{ background: 'rgba(0,168,204,0.12)', border: '1px solid rgba(0,168,204,0.2)' }}>
             <Calculator className="w-4 h-4" style={{ color: GOLD_S }} />
           </div>
           <span className="text-white font-bold text-sm">Pricing Summary</span>
@@ -179,7 +179,7 @@ const PricingCalculator = ({
 
       {/* Total */}
       <div className="rounded-2xl p-4 mb-4"
-        style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+        style={{ background: 'rgba(0,168,204,0.06)', border: '1px solid rgba(0,168,204,0.2)' }}>
         <div className="flex items-center justify-between mb-1">
           <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>Estimated Total</span>
           <div className="flex items-center gap-1.5">

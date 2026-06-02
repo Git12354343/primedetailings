@@ -5,8 +5,8 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Briefcase, Car, RefreshCw, Loader2 } from 'lucide-react';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 const GOLD_MID = '#e8c46a';
 
 const fmt = (n) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${Math.round(n)}`;
@@ -17,7 +17,7 @@ const GoldTooltip = ({ active, payload, label }) => {
   const d = payload[0].payload;
   return (
     <div className="rounded-xl px-4 py-3 shadow-2xl"
-      style={{ background: 'rgba(15,15,15,0.97)', border: '1px solid rgba(201,168,76,0.3)', backdropFilter: 'blur(12px)' }}>
+      style={{ background: 'rgba(15,15,15,0.97)', border: '1px solid rgba(0,168,204,0.3)', backdropFilter: 'blur(12px)' }}>
       <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: GOLD_S }}>
         Week of {new Date(d.weekStart + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
       </p>
@@ -33,7 +33,7 @@ const StatCard = ({ icon: Icon, label, value, sub, subUp }) => (
     style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
     <div className="flex items-center gap-2 mb-3">
       <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-        style={{ background: 'rgba(201,168,76,0.1)' }}>
+        style={{ background: 'rgba(0,168,204,0.1)' }}>
         <Icon className="w-4 h-4" style={{ color: GOLD_S }} />
       </div>
       <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>{label}</span>
@@ -153,7 +153,7 @@ const RevenueAnalytics = ({ adminToken }) => {
                 onMouseEnter={(_, i) => setActiveBar(i)}>
                 {data.weekly.map((_, i) => (
                   <Cell key={i}
-                    fill={activeBar === i ? '#f5d376' : i === data.weekly.length - 1 ? GOLD_MID : 'rgba(201,168,76,0.45)'}
+                    fill={activeBar === i ? '#00d4ff' : i === data.weekly.length - 1 ? GOLD_MID : 'rgba(0,168,204,0.45)'}
                     style={{ transition: 'fill 0.15s' }} />
                 ))}
               </Bar>
@@ -181,7 +181,7 @@ const RevenueAnalytics = ({ adminToken }) => {
                   </div>
                   <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
                     <div className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${pct}%`, background: i === 0 ? GOLD_MID : 'rgba(201,168,76,0.4)' }} />
+                      style={{ width: `${pct}%`, background: i === 0 ? GOLD_MID : 'rgba(0,168,204,0.4)' }} />
                   </div>
                 </div>
               );

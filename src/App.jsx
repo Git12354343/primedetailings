@@ -22,6 +22,9 @@ const Booking           = lazy(() => import('./pages/Booking'));
 const Contact           = lazy(() => import('./pages/Contact'));
 const Gallery           = lazy(() => import('./pages/Gallery'));
 const CeramicCoating    = lazy(() => import('./pages/CeramicCoating'));
+const HowItWorks        = lazy(() => import('./pages/HowItWorks'));
+const QuotePage         = lazy(() => import('./pages/QuotePage'));
+const QuoteLookup       = lazy(() => import('./pages/QuoteLookup'));
 const BookingLookup     = lazy(() => import('./pages/BookingLookup'));
 const FleetQuote        = lazy(() => import('./pages/FleetQuote'));
 const DetailerLogin     = lazy(() => import('./pages/DetailerLogin'));
@@ -30,13 +33,13 @@ const AdminPage         = lazy(() => import('./pages/AdminPage'));
 
 // ── Page loading fallback ─────────────────────────────────────────────────────
 const PageLoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}>
+  <div className="min-h-screen flex items-center justify-center" style={{ background: '#0b0f1a' }}>
     <div className="flex flex-col items-center gap-4">
       <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #c9a84c, #f5d376)' }}>
-        <span className="text-black font-black text-sm">PD</span>
+        style={{ background: 'linear-gradient(135deg, #00a8cc, #00d4ff)' }}>
+        <span className="text-black font-black text-sm">PP</span>
       </div>
-      <div className="w-6 h-6 rounded-full border-2 border-yellow-500 border-t-transparent animate-spin" />
+      <div className="w-6 h-6 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
     </div>
   </div>
 );
@@ -44,7 +47,7 @@ const PageLoadingFallback = () => (
 // ── Public layout ─────────────────────────────────────────────────────────────
 const PublicLayout = ({ children }) => (
   <ErrorBoundary>
-    <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#0b0f1a' }}>
       <Navbar />
       <main className="flex-1">
         <Suspense fallback={<PageLoadingFallback />}>
@@ -79,14 +82,15 @@ const AnimatedRoutes = () => {
           {/* Auth / dashboard — no layout */}
           <Route path="/detailer-login"     element={<ProtectedLayout><DetailerLogin /></ProtectedLayout>} />
           <Route path="/detailer-dashboard" element={<ProtectedLayout><DetailerDashboard /></ProtectedLayout>} />
-          {/* Admin panel — secret path from env, /admin returns 404 */}
-          <Route path={import.meta.env.VITE_ADMIN_PATH || '/xadmin-9f3k'} element={<ProtectedLayout><AdminPage /></ProtectedLayout>} />
-          <Route path="/admin" element={<PublicLayout><NotFoundPage /></PublicLayout>} />
+          <Route path="/admin"              element={<ProtectedLayout><AdminPage /></ProtectedLayout>} />
 
           {/* Public pages */}
           <Route path="/"              element={<PublicLayout><Home /></PublicLayout>} />
           <Route path="/services"      element={<PublicLayout><Services /></PublicLayout>} />
           <Route path="/ceramic-coating" element={<PublicLayout><CeramicCoating /></PublicLayout>} />
+          <Route path="/how-it-works"  element={<PublicLayout><HowItWorks /></PublicLayout>} />
+          <Route path="/quote"         element={<PublicLayout><QuotePage /></PublicLayout>} />
+          <Route path="/quote/lookup"  element={<PublicLayout><QuoteLookup /></PublicLayout>} />
           <Route path="/ceramic"       element={<Navigate to="/ceramic-coating" replace />} />
           <Route path="/booking"       element={<PublicLayout><Booking /></PublicLayout>} />
           <Route path="/contact"       element={<PublicLayout><Contact /></PublicLayout>} />
@@ -127,10 +131,10 @@ function EnhancedApp() {
 
 // ── 404 Page ──────────────────────────────────────────────────────────────────
 const NotFoundPage = () => (
-  <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0a0a0a' }}>
+  <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0b0f1a' }}>
     <div className="text-center max-w-md">
       <div className="text-8xl font-black mb-4 leading-none"
-        style={{ background:'linear-gradient(135deg,#c9a84c40,#c9a84c20)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
+        style={{ background:'linear-gradient(135deg,#00a8cc40,#00a8cc20)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
         404
       </div>
       <h2 className="text-2xl font-black text-white mb-3">Page Not Found</h2>
@@ -150,7 +154,7 @@ const NotFoundPage = () => (
           { label:'Track Booking', href:'/lookup' },
         ].map(({ label, href }) => (
           <a key={href} href={href}
-            className="py-2 px-3 rounded-lg text-sm text-gray-400 hover:text-yellow-400 transition-colors text-center"
+            className="py-2 px-3 rounded-lg text-sm text-gray-400 hover:text-cyan-400 transition-colors text-center"
             style={{ background:'rgba(255,255,255,0.03)' }}>
             {label}
           </a>

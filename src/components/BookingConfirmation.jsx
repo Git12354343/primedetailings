@@ -6,8 +6,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle, ChevronRight, Calendar, Clock, Car } from 'lucide-react';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376, #c9a84c)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff, #00a8cc)';
+const GOLD_S = '#00a8cc';
 
 // ── Gold particle canvas ──────────────────────────────────────────────────────
 const ParticleBurst = () => {
@@ -23,7 +23,7 @@ const ParticleBurst = () => {
     const cx = canvas.width  / 2;
     const cy = canvas.height / 2;
 
-    const COLORS = ['#f5d376', '#c9a84c', '#e8c46a', '#fff8e1', '#ffd700'];
+    const COLORS = ['#00d4ff', '#00a8cc', '#e8c46a', '#fff8e1', '#ffd700'];
     const particles = Array.from({ length: 80 }, () => {
       const angle = Math.random() * Math.PI * 2;
       const speed = 2 + Math.random() * 6;
@@ -104,7 +104,7 @@ const BookingConfirmation = ({ confirmed, pkg, vehicleType, total }) => {
 
       {/* Radial glow */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(201,168,76,0.12) 0%, transparent 65%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(0,168,204,0.12) 0%, transparent 65%)' }} />
 
       {/* Content */}
       <div className={`relative z-10 flex flex-col items-center text-center transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
@@ -113,9 +113,9 @@ const BookingConfirmation = ({ confirmed, pkg, vehicleType, total }) => {
         {/* Check icon with pulse ring */}
         <div className="relative mb-6">
           <div className="absolute inset-0 rounded-full animate-ping"
-            style={{ background: 'rgba(201,168,76,0.2)', animationDuration: '1.6s' }} />
+            style={{ background: 'rgba(0,168,204,0.2)', animationDuration: '1.6s' }} />
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center relative z-10"
-            style={{ background: GOLD, boxShadow: '0 0 50px rgba(201,168,76,0.5)' }}>
+            style={{ background: GOLD, boxShadow: '0 0 50px rgba(0,168,204,0.5)' }}>
             <CheckCircle className="w-10 h-10 text-black" strokeWidth={2.5} />
           </div>
         </div>
@@ -127,8 +127,8 @@ const BookingConfirmation = ({ confirmed, pkg, vehicleType, total }) => {
 
         {/* Confirmation code card */}
         <div className="w-full rounded-2xl p-6 mb-5"
-          style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)' }}>
-          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'rgba(201,168,76,0.7)' }}>
+          style={{ background: 'rgba(0,168,204,0.06)', border: '1px solid rgba(0,168,204,0.25)' }}>
+          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'rgba(0,168,204,0.7)' }}>
             Confirmation Code
           </p>
           <p className="text-4xl font-black tracking-[0.15em] mb-4"
@@ -175,7 +175,7 @@ const BookingConfirmation = ({ confirmed, pkg, vehicleType, total }) => {
         <div className="w-full flex flex-col sm:flex-row gap-3">
           <Link to={`/lookup?code=${confirmed.confirmationCode}`}
             className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all"
-            style={{ background: GOLD, color: '#0a0a0a', boxShadow: '0 0 25px rgba(201,168,76,0.3)' }}>
+            style={{ background: GOLD, color: '#0b0f1a', boxShadow: '0 0 25px rgba(0,168,204,0.3)' }}>
             Track My Appointment <ChevronRight className="w-4 h-4" />
           </Link>
           <Link to="/"

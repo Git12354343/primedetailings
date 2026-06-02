@@ -21,7 +21,7 @@ const StarPicker = ({ value, onChange }) => (
   <div className="flex gap-1">
     {[1, 2, 3, 4, 5].map((n) => (
       <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n} stars`}>
-        <Star className="w-5 h-5" style={{ color: n <= value ? '#f5d376' : '#3f3f46', fill: n <= value ? '#f5d376' : 'none' }} />
+        <Star className="w-5 h-5" style={{ color: n <= value ? '#00d4ff' : '#3f3f46', fill: n <= value ? '#00d4ff' : 'none' }} />
       </button>
     ))}
   </div>
@@ -42,7 +42,7 @@ const ReviewForm = ({ initial, onSave, onCancel, saving }) => {
   const set = (k, val) => setV((p) => ({ ...p, [k]: val }));
 
   return (
-    <div className="rounded-xl p-5 mb-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)' }}>
+    <div className="rounded-xl p-5 mb-4" style={{ background: 'rgba(0,168,204,0.04)', border: '1px solid rgba(0,168,204,0.2)' }}>
       <div className="grid sm:grid-cols-2 gap-4 mb-4">
         <Field label="Customer name"><input className={inputCls} style={inputStyle} value={v.name} onChange={(e) => set('name', e.target.value)} placeholder="Marc-André L." /></Field>
         <Field label="Vehicle (optional)"><input className={inputCls} style={inputStyle} value={v.vehicle} onChange={(e) => set('vehicle', e.target.value)} placeholder="BMW M4" /></Field>
@@ -151,10 +151,10 @@ const ReviewManagement = ({ adminToken }) => {
       {adding && <ReviewForm initial={EMPTY} onSave={create} onCancel={() => setAdding(false)} saving={saving} />}
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-yellow-500" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-cyan-500" /></div>
       ) : reviews.length === 0 && !adding ? (
         <div className="text-center py-12 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <Star className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+          <Star className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-400">No reviews yet. Add your first one.</p>
         </div>
       ) : (
@@ -164,12 +164,12 @@ const ReviewManagement = ({ adminToken }) => {
               <ReviewForm key={r.id} initial={r} onSave={(data) => update(r.id, data)} onCancel={() => setEditId(null)} saving={saving} />
             ) : (
               <div key={r.id} className="rounded-xl p-4 flex items-start gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', opacity: r.isActive === false ? 0.5 : 1 }}>
-                <GripVertical className="w-4 h-4 text-gray-700 mt-1 flex-shrink-0" />
+                <GripVertical className="w-4 h-4 text-gray-300 mt-1 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-white font-bold text-sm">{r.name}</span>
                     {r.vehicle && <span className="text-gray-500 text-xs">· {r.vehicle}</span>}
-                    <div className="flex gap-0.5">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className="w-3 h-3" style={{ color: i < r.rating ? '#f5d376' : '#3f3f46', fill: i < r.rating ? '#f5d376' : 'none' }} />)}</div>
+                    <div className="flex gap-0.5">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className="w-3 h-3" style={{ color: i < r.rating ? '#00d4ff' : '#3f3f46', fill: i < r.rating ? '#00d4ff' : 'none' }} />)}</div>
                     {r.source && <span className="text-gray-600 text-[10px] uppercase tracking-wider">via {r.source}</span>}
                   </div>
                   <p className="text-gray-400 text-sm leading-relaxed">"{r.text}"</p>
@@ -178,7 +178,7 @@ const ReviewManagement = ({ adminToken }) => {
                   <button onClick={() => toggleActive(r)} aria-label="Toggle visibility" className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.04)' }}>
                     {r.isActive === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
-                  <button onClick={() => setEditId(r.id)} aria-label="Edit" className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-yellow-400 transition-colors" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <button onClick={() => setEditId(r.id)} aria-label="Edit" className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-cyan-400 transition-colors" style={{ background: 'rgba(255,255,255,0.04)' }}>
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button onClick={() => remove(r.id)} aria-label="Delete" className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors" style={{ background: 'rgba(255,255,255,0.04)' }}>

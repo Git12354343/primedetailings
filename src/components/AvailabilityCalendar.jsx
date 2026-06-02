@@ -100,7 +100,7 @@ const AvailabilityCalendar = ({ selectedDate, onDateSelect, businessConfig, clas
     closed:    { color: '#374151', cursor: 'not-allowed' },
     blocked:   { color: '#4b5563', cursor: 'not-allowed' },
     full:      { color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', cursor: 'not-allowed' },
-    selected:  { background: 'linear-gradient(135deg,#c9a84c,#f5d376)', color: '#0a0a0a', fontWeight: 700, cursor: 'pointer', boxShadow: '0 0 14px rgba(201,168,76,0.4)' },
+    selected:  { background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', color: '#0b0f1a', fontWeight: 700, cursor: 'pointer', boxShadow: '0 0 14px rgba(0,168,204,0.4)' },
     available: { color: '#34d399', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', cursor: 'pointer' },
   };
 
@@ -116,7 +116,7 @@ const AvailabilityCalendar = ({ selectedDate, onDateSelect, businessConfig, clas
           <span className="text-white font-bold text-sm">
             {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </span>
-          {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-yellow-500" />}
+          {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-500" />}
           {error && (
             <button onClick={fetchAvailability} className="text-red-400 hover:text-red-300">
               <RefreshCw className="w-3.5 h-3.5" />
@@ -131,7 +131,7 @@ const AvailabilityCalendar = ({ selectedDate, onDateSelect, businessConfig, clas
           </button>
           <button onClick={() => setCurrentMonth(new Date())}
             className="px-2.5 py-1 rounded-lg text-xs font-semibold"
-            style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', color: '#f5d376' }}>
+            style={{ background: 'rgba(0,168,204,0.1)', border: '1px solid rgba(0,168,204,0.2)', color: '#00d4ff' }}>
             Today
           </button>
           <button onClick={() => navigate(1)} disabled={loading}
@@ -189,7 +189,7 @@ const AvailabilityCalendar = ({ selectedDate, onDateSelect, businessConfig, clas
               {day.isToday && day.isCurrentMonth && type !== 'selected' && (
                 <div style={{
                   position: 'absolute', inset: 0, borderRadius: '8px',
-                  border: '2px solid rgba(201,168,76,0.4)', pointerEvents: 'none',
+                  border: '2px solid rgba(0,168,204,0.4)', pointerEvents: 'none',
                 }} />
               )}
 
@@ -220,8 +220,8 @@ const AvailabilityCalendar = ({ selectedDate, onDateSelect, businessConfig, clas
       {/* Selected date chip */}
       {selectedDate && availability[selectedDate] && (
         <div className="mt-3 py-2 px-3 rounded-xl text-center"
-          style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.2)' }}>
-          <p className="text-yellow-400 text-xs font-semibold">
+          style={{ background: 'rgba(0,168,204,0.07)', border: '1px solid rgba(0,168,204,0.2)' }}>
+          <p className="text-cyan-400 text-xs font-semibold">
             {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-CA', {
               weekday: 'long', month: 'long', day: 'numeric'
             })}

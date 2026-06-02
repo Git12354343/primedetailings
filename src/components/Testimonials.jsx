@@ -9,7 +9,7 @@ const TESTIMONIALS = [
     rating: 5,
     service: "Ceramic Coating",
     initials: "SL",
-    color: '#c9a84c'
+    color: '#00a8cc'
   },
   {
     quote: "Had a full paint correction done on my BMW. The swirl marks are completely gone. Looks better than when I bought it. Worth every penny.",
@@ -50,7 +50,7 @@ const STATS = [
 const StarRow = ({ rating }) => (
   <div className="flex gap-0.5">
     {[...Array(5)].map((_, i) => (
-      <Star key={i} className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
+      <Star key={i} className={`w-4 h-4 ${i < rating ? 'text-cyan-400 fill-cyan-400' : 'text-gray-600'}`} />
     ))}
   </div>
 );
@@ -81,23 +81,23 @@ const Testimonials = () => {
   const next = () => setCurrent(c => (c + 1) % TESTIMONIALS.length);
 
   return (
-    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#080808' }}>
+    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#0b0f1a' }}>
       {/* Ambient glow */}
       <div className="absolute bottom-0 right-0 w-96 h-96 pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, rgba(0,168,204,0.05) 0%, transparent 70%)' }} />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
 
         {/* Header */}
         <div className={`text-center mb-16 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
-            <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-            <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Client Reviews</span>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
+            <Star className="w-3 h-3 text-cyan-400 fill-cyan-400" />
+            <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">Client Reviews</span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-black text-white mb-4">
             What Clients <span style={{
-              background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+              background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
             }}>Say</span>
           </h2>
@@ -115,7 +115,7 @@ const Testimonials = () => {
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
             >
               <div className="text-3xl font-black mb-1" style={{
-                background: 'linear-gradient(135deg, #c9a84c, #f5d376)',
+                background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
               }}>{value}</div>
               <div className="text-gray-400 text-xs font-medium uppercase tracking-wide">{label}</div>
@@ -207,7 +207,7 @@ const Testimonials = () => {
                   key={i}
                   onClick={() => setCurrent(i)}
                   className="w-1.5 h-1.5 rounded-full transition-all duration-300"
-                  style={{ background: i === current ? '#f5d376' : 'rgba(255,255,255,0.2)', width: i === current ? '20px' : '6px' }}
+                  style={{ background: i === current ? '#00d4ff' : 'rgba(255,255,255,0.2)', width: i === current ? '20px' : '6px' }}
                 />
               ))}
             </div>
@@ -221,7 +221,7 @@ const Testimonials = () => {
         {/* Bottom CTA */}
         <div className={`text-center transition-all duration-700 delay-400 ${visible ? 'opacity-100' : 'opacity-0'}`}>
           <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl"
-            style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+            style={{ background: 'rgba(0,168,204,0.06)', border: '1px solid rgba(0,168,204,0.2)' }}>
             <div className="text-center sm:text-left">
               <div className="text-white font-bold text-lg">Ready to join them?</div>
               <div className="text-gray-400 text-sm">Book your detail today. We come to you.</div>

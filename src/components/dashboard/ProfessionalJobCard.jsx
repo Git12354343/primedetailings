@@ -6,11 +6,11 @@ import {
   ChevronDown, ChevronUp, DollarSign
 } from 'lucide-react';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 
 const STATUS_CONFIG = {
-  CONFIRMED:   { label: 'Confirmed',   color: GOLD_S,      bg: 'rgba(201,168,76,0.1)',   border: 'rgba(201,168,76,0.25)' },
+  CONFIRMED:   { label: 'Confirmed',   color: GOLD_S,      bg: 'rgba(0,168,204,0.1)',   border: 'rgba(0,168,204,0.25)' },
   EN_ROUTE:    { label: 'En Route',    color: '#60a5fa',   bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.25)' },
   STARTED:     { label: 'Started',     color: '#f97316',   bg: 'rgba(249,115,22,0.1)',   border: 'rgba(249,115,22,0.25)' },
   IN_PROGRESS: { label: 'In Progress', color: '#f97316',   bg: 'rgba(249,115,22,0.1)',   border: 'rgba(249,115,22,0.25)' },
@@ -29,7 +29,7 @@ const ActionBtn = ({ onClick, disabled, gold, children, small }) => (
   <button onClick={onClick} disabled={disabled}
     className={`flex items-center justify-center gap-1.5 rounded-xl font-semibold transition-all active:scale-95 ${small ? 'text-xs py-2 px-3' : 'text-sm py-2.5 px-4'} ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
     style={gold
-      ? { background: GOLD, color: '#0a0a0a' }
+      ? { background: GOLD, color: '#0b0f1a' }
       : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.75)' }}>
     {children}
   </button>
@@ -71,9 +71,9 @@ const ProfessionalJobCard = ({ booking, onStatusUpdate, onEditNotes, timeTrackin
   return (
     <div className="rounded-2xl overflow-hidden transition-all"
       style={{
-        background: isActive ? 'rgba(201,168,76,0.06)' : 'rgba(255,255,255,0.03)',
-        border: isActive ? '1px solid rgba(201,168,76,0.3)' : '1px solid rgba(255,255,255,0.08)',
-        boxShadow: isActive ? '0 0 30px rgba(201,168,76,0.1)' : 'none',
+        background: isActive ? 'rgba(0,168,204,0.06)' : 'rgba(255,255,255,0.03)',
+        border: isActive ? '1px solid rgba(0,168,204,0.3)' : '1px solid rgba(255,255,255,0.08)',
+        boxShadow: isActive ? '0 0 30px rgba(0,168,204,0.1)' : 'none',
       }}>
 
       {/* Card header */}
@@ -94,7 +94,7 @@ const ProfessionalJobCard = ({ booking, onStatusUpdate, onEditNotes, timeTrackin
         {/* Customer */}
         <div className="flex items-center gap-3 mb-3">
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-            style={{ background: 'rgba(201,168,76,0.12)', color: GOLD_S }}>
+            style={{ background: 'rgba(0,168,204,0.12)', color: GOLD_S }}>
             {custName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -125,7 +125,7 @@ const ProfessionalJobCard = ({ booking, onStatusUpdate, onEditNotes, timeTrackin
         <div className="flex flex-wrap gap-1.5">
           {services.slice(0, 3).map((s, i) => (
             <span key={i} className="text-xs px-2 py-0.5 rounded-md"
-              style={{ background: 'rgba(201,168,76,0.08)', color: GOLD_S, border: '1px solid rgba(201,168,76,0.15)' }}>
+              style={{ background: 'rgba(0,168,204,0.08)', color: GOLD_S, border: '1px solid rgba(0,168,204,0.15)' }}>
               {typeof s === 'string' ? s : `Service #${s}`}
             </span>
           ))}
@@ -168,7 +168,7 @@ const ProfessionalJobCard = ({ booking, onStatusUpdate, onEditNotes, timeTrackin
           {/* Special instructions */}
           {booking.specialInstructions && (
             <div className="p-3 rounded-xl text-xs leading-relaxed"
-              style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', color: 'rgba(255,255,255,0.65)' }}>
+              style={{ background: 'rgba(0,168,204,0.06)', border: '1px solid rgba(0,168,204,0.15)', color: 'rgba(255,255,255,0.65)' }}>
               <span className="font-semibold" style={{ color: GOLD_S }}>Note: </span>
               {booking.specialInstructions}
             </div>
@@ -177,7 +177,7 @@ const ProfessionalJobCard = ({ booking, onStatusUpdate, onEditNotes, timeTrackin
           {/* Active timer */}
           {isActive && (
             <div className="flex items-center gap-2 p-3 rounded-xl"
-              style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+              style={{ background: 'rgba(0,168,204,0.06)', border: '1px solid rgba(0,168,204,0.2)' }}>
               <Activity className="w-3.5 h-3.5 animate-pulse" style={{ color: GOLD_S }} />
               <span className="text-xs font-semibold" style={{ color: GOLD_S }}>Active · {calculateWorkTime()}</span>
             </div>

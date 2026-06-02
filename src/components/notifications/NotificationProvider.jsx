@@ -47,7 +47,7 @@ export const NotificationProvider = ({ children }) => {
 
     // Show browser notification for important notifications
     if (Notification.permission === 'granted' && notification.persistent) {
-      new Notification(notification.title || 'Prestige Plus Detailing', {
+      new Notification(notification.title || 'Prestige Plus Services', {
         body: notification.message,
         icon: '/favicon.ico',
         tag: notification.type,

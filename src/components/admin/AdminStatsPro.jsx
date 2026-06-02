@@ -23,7 +23,7 @@ const AdminStatsPro = ({ unassignedCount = 0, detailersCount = 0, totalJobs = 0,
     <Card label="Total Jobs"  value={totalJobs}       Icon={Briefcase} color="#60a5fa" />
     <Card label="Active Now"  value={activeJobs}      Icon={Zap}       color="#34d399" />
     <Card label="Unassigned"  value={unassignedCount} Icon={AlertCircle} color="#f59e0b" alert={unassignedCount > 0} />
-    <Card label="Detailers"   value={detailersCount}  Icon={Users}     color="#f5d376" />
+    <Card label="Detailers"   value={detailersCount}  Icon={Users}     color="#00d4ff" />
     <Card label="Services"    value={servicesCount}   Icon={Settings}  color="#a78bfa" />
   </div>
 );

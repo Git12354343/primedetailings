@@ -12,7 +12,7 @@ import CalendarView from '../components/dashboard/CalendarView';
 import NotesModal from '../components/dashboard/NotesModal';
 import SmartNotificationsSystem from '../components/dashboard/SmartNotificationsSystem';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376, #c9a84c)';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff, #00a8cc)';
 
 const DetailerDashboard = () => {
   const [detailer, setDetailer]     = useState(null);
@@ -202,7 +202,7 @@ const DetailerDashboard = () => {
   // Loading screen
   if (isLoading && !detailer) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0a' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0b0f1a' }}>
         <div className="text-center">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
             style={{ background: GOLD }}>
@@ -220,7 +220,7 @@ const DetailerDashboard = () => {
   const todaysEarnings  = getTodaysEarnings();
 
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0a' }}>
+    <div className="min-h-screen" style={{ background: '#0b0f1a' }}>
       <SmartNotificationsSystem jobs={bookings} onJobAction={handleStatusUpdate} userRole="detailer" />
 
       <DashboardHeader
@@ -256,7 +256,7 @@ const DetailerDashboard = () => {
         {/* Jobs display */}
         {isLoading ? (
           <div className="flex flex-col items-center gap-3 py-20">
-            <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#c9a84c' }} />
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#00a8cc' }} />
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>Loading your jobs...</p>
           </div>
         ) : filteredBookings.length === 0 ? (

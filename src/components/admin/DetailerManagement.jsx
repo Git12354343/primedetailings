@@ -6,8 +6,8 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 
-const GOLD   = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD   = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 
 const iStyle = {
   width: '100%', background: 'rgba(255,255,255,0.05)',
@@ -18,7 +18,7 @@ const iStyle = {
 const lStyle = {
   display: 'block', fontSize: '11px', fontWeight: '600',
   letterSpacing: '0.07em', textTransform: 'uppercase',
-  color: 'rgba(201,168,76,0.8)', marginBottom: '6px',
+  color: 'rgba(0,168,204,0.8)', marginBottom: '6px',
 };
 const focus = e => e.target.style.borderColor = GOLD_S;
 const blur  = e => e.target.style.borderColor = 'rgba(255,255,255,0.1)';
@@ -61,7 +61,7 @@ const DetailerFormModal = ({ initial, onClose, onSubmit, saving }) => {
           </div>
           <div>
             <label style={lStyle}>Email *</label>
-            <input style={iStyle} type="email" value={form.email} placeholder="marcus@Prestigeplusdetailing.ca"
+            <input style={iStyle} type="email" value={form.email} placeholder="marcus@prestigeplus.services"
               disabled={isEdit} onChange={e => set('email', e.target.value)} onFocus={focus} onBlur={blur}
               title={isEdit ? 'Email cannot be changed after creation' : ''}
               className={isEdit ? 'opacity-50 cursor-not-allowed' : ''} />
@@ -88,7 +88,7 @@ const DetailerFormModal = ({ initial, onClose, onSubmit, saving }) => {
               <div onClick={() => set('isActive', !form.isActive)}
                 className="w-9 h-5 rounded-full relative transition-colors flex-shrink-0"
                 style={{ background: form.isActive ? GOLD_S : 'rgba(255,255,255,0.15)' }}>
-                <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform"
+                <span className="absolute top-0.5 w-4 h-4 rounded-full bg-[#111827] shadow transition-transform"
                   style={{ transform: form.isActive ? 'translateX(16px)' : 'translateX(2px)' }} />
               </div>
               <span className="text-sm text-white">Account active (can log in)</span>
@@ -238,7 +238,7 @@ const DetailerManagement = ({ adminToken, authFetch, onRefreshGlobal }) => {
       {detailers.length === 0 && (
         <div className="text-center py-16 rounded-2xl"
           style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <Users className="w-10 h-10 mx-auto mb-3 text-gray-700" />
+          <Users className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <p className="text-white font-bold mb-1">No detailers yet</p>
           <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.35)' }}>
             Create the first detailer account to start assigning jobs.
@@ -265,7 +265,7 @@ const DetailerManagement = ({ adminToken, authFetch, onRefreshGlobal }) => {
               }}>
               <div className="flex items-start gap-4">
                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-black flex-shrink-0"
-                  style={{ background: d.isActive ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.06)', color: d.isActive ? GOLD_S : '#6b7280' }}>
+                  style={{ background: d.isActive ? 'rgba(0,168,204,0.12)' : 'rgba(255,255,255,0.06)', color: d.isActive ? GOLD_S : '#6b7280' }}>
                   {initials}
                 </div>
 

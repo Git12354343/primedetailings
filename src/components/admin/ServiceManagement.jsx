@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Edit3, Trash2, Settings, Package, X, Check, Loader2 } from 'lucide-react';
+import { Plus, Edit3, Trash2, Settings, Package, Layers, X, Check, Loader2 } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
+import PackageManagement from './PackageManagement';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD_S = '#00a8cc';
 
 const inputCls = {
   width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
@@ -12,7 +13,7 @@ const inputCls = {
 };
 const labelCls = {
   display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.07em',
-  textTransform: 'uppercase', color: 'rgba(201,168,76,0.8)', marginBottom: '6px',
+  textTransform: 'uppercase', color: 'rgba(0,168,204,0.8)', marginBottom: '6px',
 };
 
 // ── Dark modal wrapper ─────────────────────────────────────────────────────────
@@ -113,7 +114,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, vehicleTypes, serviceCate
           <div onClick={() => setFormData(p => ({ ...p, isActive: !p.isActive }))}
             className="w-9 h-5 rounded-full relative transition-colors"
             style={{ background: formData.isActive ? GOLD_S : 'rgba(255,255,255,0.15)' }}>
-            <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform"
+            <span className="absolute top-0.5 w-4 h-4 rounded-full bg-[#111827] shadow transition-transform"
               style={{ transform: formData.isActive ? 'translateX(16px)' : 'translateX(2px)' }} />
           </div>
           <span className="text-sm text-white">Active (visible to customers)</span>
@@ -193,7 +194,7 @@ const AddOnFormModal = ({ isOpen, onClose, onSubmit, addOnCategories, title, ini
           <div onClick={() => setFormData(p => ({ ...p, isActive: !p.isActive }))}
             className="w-9 h-5 rounded-full relative transition-colors"
             style={{ background: formData.isActive ? GOLD_S : 'rgba(255,255,255,0.15)' }}>
-            <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform"
+            <span className="absolute top-0.5 w-4 h-4 rounded-full bg-[#111827] shadow transition-transform"
               style={{ transform: formData.isActive ? 'translateX(16px)' : 'translateX(2px)' }} />
           </div>
           <span className="text-sm text-white">Active (visible to customers)</span>
@@ -214,7 +215,7 @@ const AddOnFormModal = ({ isOpen, onClose, onSubmit, addOnCategories, title, ini
 };
 
 // ── Main ───────────────────────────────────────────────────────────────────────
-const ServiceManagement = ({ services = [], addOns = [], onRefresh, adminToken }) => {
+const ServiceManagement = ({ services = [], addOns = [], packages = [], onRefresh, adminToken }) => {
   const [activeSubTab, setActiveSubTab]   = useState('services');
   const [editingService, setEditingService] = useState(null);
   const [editingAddOn, setEditingAddOn]     = useState(null);
@@ -254,7 +255,7 @@ const ServiceManagement = ({ services = [], addOns = [], onRefresh, adminToken }
         : { borderColor: 'transparent', color: 'rgba(255,255,255,0.4)' }}>
       <Icon className="w-4 h-4" />{label}
       <span className="px-1.5 py-0.5 rounded-full text-xs"
-        style={{ background: activeSubTab === id ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.07)', color: activeSubTab === id ? GOLD_S : 'rgba(255,255,255,0.4)' }}>
+        style={{ background: activeSubTab === id ? 'rgba(0,168,204,0.15)' : 'rgba(255,255,255,0.07)', color: activeSubTab === id ? GOLD_S : 'rgba(255,255,255,0.4)' }}>
         {count}
       </span>
     </button>
@@ -269,14 +270,17 @@ const ServiceManagement = ({ services = [], addOns = [], onRefresh, adminToken }
           <h2 className="text-white font-bold text-lg">Service & Pricing</h2>
           <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Manage services and add-ons</p>
         </div>
-        {activeSubTab === 'services'
-          ? <button onClick={() => setShowCreateService(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-black" style={{ background: GOLD }}><Plus className="w-4 h-4" /> Add Service</button>
-          : <button onClick={() => setShowCreateAddOn(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold" style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}><Plus className="w-4 h-4" /> Add Add-on</button>
-        }
+        {activeSubTab === 'services' && (
+          <button onClick={() => setShowCreateService(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-black" style={{ background: GOLD }}><Plus className="w-4 h-4" /> Add Service</button>
+        )}
+        {activeSubTab === 'addons' && (
+          <button onClick={() => setShowCreateAddOn(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold" style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}><Plus className="w-4 h-4" /> Add Add-on</button>
+        )}
       </div>
 
       {/* Sub-tabs */}
       <div className="flex gap-6 px-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <TabBtn id="packages" icon={Layers}   label="Packages" count={packages.length} />
         <TabBtn id="services" icon={Settings} label="Services" count={services.length} />
         <TabBtn id="addons"   icon={Package}  label="Add-ons"  count={addOns.length} />
       </div>
@@ -286,7 +290,7 @@ const ServiceManagement = ({ services = [], addOns = [], onRefresh, adminToken }
         <div className="space-y-3">
           {services.length === 0 && (
             <div className="text-center py-14 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <Settings className="w-8 h-8 text-gray-700 mx-auto mb-2" />
+              <Settings className="w-8 h-8 text-gray-300 mx-auto mb-2" />
               <p className="text-gray-500 text-sm">No services yet.</p>
             </div>
           )}
@@ -302,7 +306,7 @@ const ServiceManagement = ({ services = [], addOns = [], onRefresh, adminToken }
                       {svc.isActive ? 'Active' : 'Inactive'}
                     </span>
                     <span className="text-xs px-2 py-0.5 rounded-full"
-                      style={{ background: 'rgba(201,168,76,0.1)', color: GOLD_S }}>
+                      style={{ background: 'rgba(0,168,204,0.1)', color: GOLD_S }}>
                       {svc.category}
                     </span>
                   </div>
@@ -340,7 +344,7 @@ const ServiceManagement = ({ services = [], addOns = [], onRefresh, adminToken }
         <div className="space-y-3">
           {addOns.length === 0 && (
             <div className="text-center py-14 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <Package className="w-8 h-8 text-gray-700 mx-auto mb-2" />
+              <Package className="w-8 h-8 text-gray-300 mx-auto mb-2" />
               <p className="text-gray-500 text-sm">No add-ons yet.</p>
             </div>
           )}
@@ -377,6 +381,11 @@ const ServiceManagement = ({ services = [], addOns = [], onRefresh, adminToken }
             </div>
           ))}
         </div>
+      )}
+
+      {/* Packages */}
+      {activeSubTab === 'packages' && (
+        <PackageManagement packages={packages} services={services} addOns={addOns} onRefresh={onRefresh} adminToken={adminToken} />
       )}
 
       {/* Modals */}

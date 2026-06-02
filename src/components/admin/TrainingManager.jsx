@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Plus, Eye, EyeOff, Trash2, Edit2, Loader2, ChevronDown, ChevronUp, Save } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const GOLD_S  = '#c9a84c';
+const GOLD_S  = '#00a8cc';
 
 const CATEGORIES = ['GENERAL','SERVICE_PROCEDURE','PRODUCT_USAGE','SAFETY','CERAMIC_COATING','CUSTOMER_COMMUNICATION','PHOTO_STANDARDS','JOB_WORKFLOW'];
 const LEVELS     = ['BEGINNER','INTERMEDIATE','ADVANCED'];
@@ -94,7 +94,7 @@ const TrainingManager = ({ adminToken }) => {
         {!creating && (
           <button onClick={() => { setForm(emptyForm); setEditing(null); setCreating(true); }}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
-            style={{ background:`linear-gradient(135deg,#c9a84c,#f5d376)`, color:'#0a0a0a' }}>
+            style={{ background:`linear-gradient(135deg,#00a8cc,#00d4ff)`, color:'#0b0f1a' }}>
             <Plus className="w-4 h-4" /> New Module
           </button>
         )}
@@ -103,7 +103,7 @@ const TrainingManager = ({ adminToken }) => {
       {/* Create/Edit form */}
       {creating && (
         <div className="rounded-2xl p-5 mb-6"
-          style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(201,168,76,0.2)' }}>
+          style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(0,168,204,0.2)' }}>
           <h3 className="text-white font-bold text-base mb-4">{editing ? 'Edit Module' : 'New Training Module'}</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -164,7 +164,7 @@ const TrainingManager = ({ adminToken }) => {
             </button>
             <button onClick={save} disabled={saving}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-60"
-              style={{ background:`linear-gradient(135deg,#c9a84c,#f5d376)`, color:'#0a0a0a' }}>
+              style={{ background:`linear-gradient(135deg,#00a8cc,#00d4ff)`, color:'#0b0f1a' }}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {editing ? 'Save Changes' : 'Create Module'}
             </button>

@@ -44,15 +44,15 @@ const AdminLogin = ({ onLogin }) => {
               <Shield className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Prestige Plus Detailing</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Prestige Plus Services</h1>
           <p className="text-gray-600">Admin Portal</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-[#111827] rounded-xl shadow-lg p-8">
           <div className="flex items-center justify-center mb-6">
-            <LogIn className="w-6 h-6 text-gray-800 mr-2" />
-            <h2 className="text-xl font-semibold text-gray-900">Admin Access</h2>
+            <LogIn className="w-6 h-6 text-gray-100 mr-2" />
+            <h2 className="text-xl font-semibold text-white">Admin Access</h2>
           </div>
 
           {error && (
@@ -63,7 +63,7 @@ const AdminLogin = ({ onLogin }) => {
 
           <div className="space-y-6">
             <div>
-              <label htmlFor="secret" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="secret" className="block text-sm font-medium text-gray-300 mb-2">
                 Admin Secret
               </label>
               <div className="relative">
@@ -76,7 +76,7 @@ const AdminLogin = ({ onLogin }) => {
                   value={secret}
                   onChange={(e) => { setSecret(e.target.value); setError(''); }}
                   onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                  className="block w-full pl-10 pr-10 py-3 border border-white/15 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   placeholder="Enter admin secret"
                   autoComplete="current-password"
                 />
@@ -104,7 +104,7 @@ const AdminLogin = ({ onLogin }) => {
           </div>
 
           <div className="mt-6 text-center">
-            <a href="/" className="text-gray-600 hover:text-gray-700 text-sm font-medium">
+            <a href="/" className="text-gray-600 hover:text-gray-300 text-sm font-medium">
               ← Back to Website
             </a>
           </div>

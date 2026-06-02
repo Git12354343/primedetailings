@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { Droplets, ShieldCheck, Sparkles, ArrowRight } from 'lucide-react';
 import useInView from '../../hooks/useInView';
 
-const GOLD  = 'linear-gradient(135deg,#c9a84c,#f5d376)';
-const GOLD_S = '#c9a84c';
+const GOLD  = 'linear-gradient(135deg,#00a8cc,#00d4ff)';
+const GOLD_S = '#00a8cc';
 
 const POINTS = [
   { icon: Droplets,    title: 'Hydrophobic',       desc: 'Water beads and sheets off, dragging dirt with it.' },
@@ -20,24 +20,24 @@ const CeramicTeaser = () => {
   const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
-    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#080808' }}>
+    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#0b0f1a' }}>
       <div className="divider-gold absolute top-0 inset-x-0" />
       <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 75% 30%, rgba(201,168,76,0.07), transparent 60%)' }} />
+        style={{ background: 'radial-gradient(ellipse at 75% 30%, rgba(0,168,204,0.07), transparent 60%)' }} />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-12 items-center">
 
         {/* LEFT — copy */}
         <div style={{ transition: 'opacity .7s, transform .7s', opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateX(-16px)' }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5"
-            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
-            <ShieldCheck className="w-3 h-3 text-yellow-400" />
-            <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Our Signature Service</span>
+            style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
+            <ShieldCheck className="w-3 h-3 text-cyan-400" />
+            <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">Our Signature Service</span>
           </div>
 
           <h2 className="text-4xl sm:text-5xl font-black text-white mb-4 leading-tight" style={{ letterSpacing: '-0.02em' }}>
             Ceramic{' '}
-            <span style={{ background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <span style={{ color: '#fff' }}>
               coating
             </span>
             <br />that lasts years
@@ -57,7 +57,7 @@ const CeramicTeaser = () => {
                   transform: visible ? 'none' : 'translateX(-10px)',
                 }}>
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                  style={{ background: 'rgba(0,168,204,0.12)', border: '1px solid rgba(0,168,204,0.2)' }}>
                   <Icon className="w-4 h-4" style={{ color: GOLD_S }} />
                 </div>
                 <div>
@@ -83,8 +83,8 @@ const CeramicTeaser = () => {
             opacity: visible ? 1 : 0,
             transform: visible ? 'none' : 'translateY(20px)',
             background: '#1a1208',
-            boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 40px rgba(201,168,76,0.08)',
-            border: '1px solid rgba(201,168,76,0.15)',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 40px rgba(0,168,204,0.08)',
+            border: '1px solid rgba(0,168,204,0.15)',
           }}>
 
           {/* Shimmer while loading */}
@@ -108,11 +108,11 @@ const CeramicTeaser = () => {
 
           {/* Gold sweep sheen */}
           <div className="cer-sweep absolute inset-y-0 w-1/2 pointer-events-none"
-            style={{ background: 'linear-gradient(105deg,transparent,rgba(245,211,118,0.07) 50%,transparent)' }} />
+            style={{ background: 'linear-gradient(105deg,transparent,rgba(0,212,255,0.07) 50%,transparent)' }} />
 
           {/* Stat badge — bottom left */}
           <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full"
-            style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', border: '1px solid rgba(201,168,76,0.3)' }}>
+            style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', border: '1px solid rgba(0,168,204,0.3)' }}>
             <div className="w-2 h-2 rounded-full" style={{ background: GOLD_S }} />
             <span className="text-xs font-bold" style={{ color: GOLD_S }}>110°+ contact angle</span>
           </div>

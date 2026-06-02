@@ -6,11 +6,12 @@ import {
 } from 'lucide-react';
 import useServicesCache from '../hooks/useServicesCache';
 import { useServiceTranslation } from '../utils/serviceUtils';
+import { useTranslation } from '../hooks/useTranslation';
 
-const GOLD = 'linear-gradient(135deg, #c9a84c, #f5d376)';
+const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
 
 const CATEGORY_CONFIG = {
-  PROTECTION:  { icon: Shield,   color: '#c9a84c', bg: 'rgba(201,168,76,0.12)' },
+  PROTECTION:  { icon: Shield,   color: '#00a8cc', bg: 'rgba(0,168,204,0.12)' },
   RESTORATION: { icon: Star,     color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
   DETAILING:   { icon: Sparkles, color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
   SPECIALTY:   { icon: Wrench,   color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
@@ -40,23 +41,24 @@ const fmtDur = (m) => {
 
 // ── Package card (homepage) ────────────────────────────────────────────────
 const HomePkgCard = ({ pkg, index, visible }) => {
+  const { t } = useTranslation();
   const min = getMinPrice(pkg.pricing);
   const dur = fmtDur(pkg.estimatedDuration);
 
   return (
     <div className={`relative rounded-2xl p-6 flex flex-col transition-all duration-700 group hover:-translate-y-1 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
       style={{
-        background: pkg.isMostPopular ? 'rgba(201,168,76,0.06)' : 'rgba(255,255,255,0.03)',
-        border: pkg.isMostPopular ? '1px solid rgba(201,168,76,0.25)' : '1px solid rgba(255,255,255,0.08)',
+        background: pkg.isMostPopular ? 'rgba(0,168,204,0.06)' : 'rgba(255,255,255,0.03)',
+        border: pkg.isMostPopular ? '1px solid rgba(0,168,204,0.25)' : '1px solid rgba(255,255,255,0.08)',
         transitionDelay: `${index * 80}ms`,
-        boxShadow: pkg.isMostPopular ? '0 0 40px rgba(201,168,76,0.1)' : 'none',
+        boxShadow: pkg.isMostPopular ? '0 0 40px rgba(0,168,204,0.1)' : 'none',
       }}>
 
       {/* Badges */}
       {pkg.isMostPopular && (
         <div className="absolute -top-3 left-5 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
-          style={{ background: GOLD, color: '#0a0a0a' }}>
-          <Star className="w-3 h-3" /> Most Popular
+          style={{ background: GOLD, color: '#0b0f1a' }}>
+          <Star className="w-3 h-3" /> {t('overview.mostPopular')}
         </div>
       )}
 
@@ -64,7 +66,7 @@ const HomePkgCard = ({ pkg, index, visible }) => {
         <div className="text-xs text-gray-500 italic mb-2">{pkg.tagline}</div>
       )}
 
-      <h3 className="text-white font-bold text-xl mb-2 group-hover:text-yellow-300 transition-colors">
+      <h3 className="text-white font-bold text-xl mb-2 group-hover:text-cyan-300 transition-colors">
         {pkg.name}
       </h3>
       {pkg.description && (
@@ -79,13 +81,13 @@ const HomePkgCard = ({ pkg, index, visible }) => {
         style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div>
           {pkg.requiresQuote ? (
-            <div className="text-yellow-400 font-bold text-sm">Custom Quote</div>
+            <div className="text-cyan-400 font-bold text-sm">{t('overview.customQuote')}</div>
           ) : min ? (
             <>
               <div className="text-2xl font-black" style={{
                 background: GOLD, WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-              }}>From ${min}</div>
+              }}>{t('overview.from')} ${min}</div>
               {dur && (
                 <div className="flex items-center gap-1 text-gray-500 text-xs mt-0.5">
                   <Clock className="w-3 h-3" /> {dur}
@@ -95,14 +97,14 @@ const HomePkgCard = ({ pkg, index, visible }) => {
           ) : null}
         </div>
         <Link
-          to={`/booking`}
+          to={pkg.requiresQuote ? `/quote?packageId=${pkg.id}&packageName=${encodeURIComponent(pkg.name)}` : `/booking`}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all group-hover:gap-3"
           style={{
-            background: pkg.isMostPopular ? GOLD : 'rgba(201,168,76,0.1)',
-            color: pkg.isMostPopular ? '#0a0a0a' : '#f5d376',
-            border: pkg.isMostPopular ? 'none' : '1px solid rgba(201,168,76,0.25)',
+            background: pkg.isMostPopular ? GOLD : 'rgba(0,168,204,0.1)',
+            color: pkg.isMostPopular ? '#0b0f1a' : '#00d4ff',
+            border: pkg.isMostPopular ? 'none' : '1px solid rgba(0,168,204,0.25)',
           }}>
-          Book
+          {pkg.requiresQuote ? 'Request Quote' : t('overview.book')}
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -113,6 +115,7 @@ const HomePkgCard = ({ pkg, index, visible }) => {
 // ── Service card (homepage overview) ──────────────────────────────────────
 const ServiceCard = ({ service, index, visible }) => {
   const { tField } = useServiceTranslation();
+  const { t } = useTranslation();
   const cfg = CATEGORY_CONFIG[service.category] || CATEGORY_CONFIG.DEFAULT;
   const Icon = cfg.icon;
   const min = getMinPrice(service.pricing);
@@ -128,20 +131,20 @@ const ServiceCard = ({ service, index, visible }) => {
         style={{ background: cfg.bg }}>
         <Icon className="w-5 h-5" style={{ color: cfg.color }} />
       </div>
-      <h3 className="text-base font-bold text-white mb-2 group-hover:text-yellow-300 transition-colors">
+      <h3 className="text-base font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">
         {tField(service, 'name')}
       </h3>
       <p className="text-gray-400 text-sm leading-relaxed mb-4 line-clamp-2">
-        {tField(service, 'description') || 'Professional detailing service.'}
+        {tField(service, 'description') || t('overview.defaultServiceDesc')}
       </p>
       <div className="flex items-center justify-between mt-auto">
         {min ? (
-          <span className="text-yellow-400 font-bold text-sm">From ${min}</span>
+          <span className="text-cyan-400 font-bold text-sm">{t('overview.from')} ${min}</span>
         ) : (
-          <span className="text-gray-500 text-xs">Price on request</span>
+          <span className="text-gray-500 text-xs">{t('overview.priceOnRequest')}</span>
         )}
         <span className="text-xs opacity-0 group-hover:opacity-100 transition-all" style={{ color: cfg.color }}>
-          Book →
+          {t('overview.bookArrow')}
         </span>
       </div>
     </div>
@@ -150,6 +153,7 @@ const ServiceCard = ({ service, index, visible }) => {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 const ServicesOverview = () => {
+  const { t } = useTranslation();
   const { services: rawServices, loading } = useServicesCache();
   const [packages, setPackages]           = useState([]);
   const [pkgLoading, setPkgLoading]       = useState(true);
@@ -179,9 +183,9 @@ const ServicesOverview = () => {
   const featuredPackages = packages.filter(p => p.isActive).slice(0, 3);
 
   return (
-    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#0d0d0d' }}>
+    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background: '#111827' }}>
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, rgba(0,168,204,0.06) 0%, transparent 70%)' }} />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
 
@@ -190,24 +194,24 @@ const ServicesOverview = () => {
           <div className="mb-20">
             <div className={`text-center mb-10 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-                style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
-                <Package className="w-3 h-3 text-yellow-400" />
-                <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Popular Packages</span>
+                style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
+                <Package className="w-3 h-3 text-cyan-400" />
+                <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">{t('overview.pkgBadge')}</span>
               </div>
               <h2 className="text-4xl sm:text-5xl font-black text-white mb-3">
-                Choose a{' '}
-                <span style={{ background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                  Package
+                {t('overview.pkgTitle')}{' '}
+                <span style={{ color: '#fff' }}>
+                  {t('overview.pkgTitleAccent')}
                 </span>
               </h2>
               <p className="text-gray-400 text-base max-w-lg mx-auto">
-                Ready-made packages designed for every need. Select one and you're done in minutes.
+                {t('overview.pkgSubtitle')}
               </p>
             </div>
 
             {pkgLoading ? (
               <div className="flex justify-center py-10">
-                <Loader2 className="w-6 h-6 animate-spin text-yellow-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-cyan-500" />
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
@@ -221,12 +225,12 @@ const ServicesOverview = () => {
             <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 transition-all duration-700 delay-300 ${visible ? 'opacity-100' : 'opacity-0'}`}>
               <Link to="/booking"
                 className="btn-luxury inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-bold tracking-wide group">
-                Book a Package
+                {t('overview.bookPackage')}
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link to="/booking"
                 className="btn-ghost-luxury inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold">
-                Build Your Own Detail →
+                {t('overview.buildOwn')}
               </Link>
             </div>
           </div>
@@ -236,25 +240,25 @@ const ServicesOverview = () => {
         <div>
           <div className={`text-center mb-10 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-              style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
-              <Sparkles className="w-3 h-3 text-yellow-400" />
-              <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Individual Services</span>
+              style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
+              <Sparkles className="w-3 h-3 text-cyan-400" />
+              <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">{t('overview.svcBadge')}</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
-              Or Pick{' '}
-              <span style={{ background: GOLD, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                Exactly
+              {t('overview.svcTitlePre')}{' '}
+              <span style={{ color: '#fff' }}>
+                {t('overview.svcTitleAccent')}
               </span>{' '}
-              What You Need
+              {t('overview.svcTitlePost')}
             </h2>
             <p className="text-gray-400 text-base max-w-xl mx-auto">
-              Know what you want? Choose individual services and build your own detail.
+              {t('overview.svcSubtitle')}
             </p>
           </div>
 
           {loading ? (
             <div className="flex justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-yellow-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-cyan-500" />
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -267,7 +271,7 @@ const ServicesOverview = () => {
           <div className={`text-center mt-10 transition-all duration-700 delay-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
             <Link to="/services"
               className="btn-luxury inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-bold tracking-wide group">
-              View All Services & Pricing
+              {t('overview.viewAll')}
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>

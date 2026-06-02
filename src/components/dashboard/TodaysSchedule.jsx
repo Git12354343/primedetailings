@@ -2,14 +2,14 @@
 import React from 'react';
 import { Calendar, MapPin, Car } from 'lucide-react';
 
-const GOLD_S = '#c9a84c';
+const GOLD_S = '#00a8cc';
 
 const STATUS_STYLE = {
   COMPLETED:   { bg: 'rgba(52,211,153,0.1)',  color: '#34d399' },
   IN_PROGRESS: { bg: 'rgba(245,158,11,0.1)',  color: '#f59e0b' },
   STARTED:     { bg: 'rgba(245,158,11,0.1)',  color: '#f59e0b' },
   EN_ROUTE:    { bg: 'rgba(96,165,250,0.1)',  color: '#60a5fa' },
-  CONFIRMED:   { bg: 'rgba(201,168,76,0.08)', color: '#c9a84c' },
+  CONFIRMED:   { bg: 'rgba(0,168,204,0.08)', color: '#00a8cc' },
 };
 
 const TodaysSchedule = ({ todayBookings }) => {
@@ -21,12 +21,12 @@ const TodaysSchedule = ({ todayBookings }) => {
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(201,168,76,0.04)' }}>
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(0,168,204,0.04)' }}>
         <div className="flex items-center gap-2.5">
           <Calendar className="w-4 h-4" style={{ color: GOLD_S }} />
           <h3 className="font-bold text-white text-sm">Today's Schedule</h3>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(201,168,76,0.15)', color: GOLD_S }}>
+            style={{ background: 'rgba(0,168,204,0.15)', color: GOLD_S }}>
             {todayBookings.length} {todayBookings.length === 1 ? 'job' : 'jobs'}
           </span>
         </div>

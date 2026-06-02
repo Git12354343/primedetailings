@@ -8,9 +8,9 @@ import { Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
 import useInView from '../hooks/useInView';
 
 const API  = import.meta.env.VITE_API_URL;
-const GOLD = 'linear-gradient(135deg,#c9a84c,#f5d376)';
+const GOLD = 'linear-gradient(135deg,#00a8cc,#00d4ff)';
 
-const CARD_COLORS = ['#c9a84c','#60a5fa','#a78bfa','#34d399','#f472b6','#fb923c'];
+const CARD_COLORS = ['#00a8cc','#60a5fa','#a78bfa','#34d399','#f472b6','#fb923c'];
 
 const SEED = [
   { id:'s1', name:'Marc-André L.',  rating:5, vehicle:'BMW M4',        text:'The ceramic coating is unreal — water just sheets off and the gloss is mirror-deep. Booked, they came to me, done in a day.',             source:'Google'   },
@@ -36,7 +36,7 @@ const StarRow = ({ n }) => (
   <div className="flex gap-0.5">
     {Array.from({ length: 5 }).map((_, i) => (
       <Star key={i} className="w-4 h-4"
-        style={{ color: i < n ? '#f5d376' : '#3f3f46', fill: i < n ? '#f5d376' : 'none' }} />
+        style={{ color: i < n ? '#e8b84b' : '#3f3f46', fill: i < n ? '#e8b84b' : 'none' }} />
     ))}
   </div>
 );
@@ -109,10 +109,10 @@ const ReviewsSection = () => {
   const next = () => { setCurrent(c => (c + 1) % reviews.length); setPaused(true); };
 
   return (
-    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background:'#080808' }}>
+    <section ref={ref} className="relative py-24 overflow-hidden" style={{ background:'#0b0f1a' }}>
 
       <div className="absolute bottom-0 right-0 w-96 h-96 pointer-events-none"
-        style={{ background:'radial-gradient(circle,rgba(201,168,76,0.05) 0%,transparent 70%)' }} />
+        style={{ background:'radial-gradient(circle,rgba(0,168,204,0.05) 0%,transparent 70%)' }} />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
 
@@ -120,13 +120,13 @@ const ReviewsSection = () => {
         <div className="text-center mb-14"
           style={{ transition:'opacity .7s, transform .7s', opacity: visible ? 1 : 0, transform: visible ? 'none' : 'translateY(20px)' }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
-            style={{ background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.2)' }}>
-            <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-            <span className="text-yellow-400 text-xs font-semibold tracking-widest uppercase">Client Reviews</span>
+            style={{ background:'rgba(0,168,204,0.08)', border:'1px solid rgba(0,168,204,0.2)' }}>
+            <Star className="w-3 h-3 text-cyan-400 fill-cyan-400" />
+            <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">Client Reviews</span>
           </div>
           <h2 className="text-4xl sm:text-5xl font-black text-white mb-4" style={{ letterSpacing:'-0.02em' }}>
             What Montréal drivers{' '}
-            <span style={{ background: GOLD, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
+            <span style={{ color: '#fff' }}>
               say
             </span>
           </h2>
@@ -171,7 +171,7 @@ const ReviewsSection = () => {
               {reviews.map((_, i) => (
                 <button key={i} onClick={() => { setCurrent(i); setPaused(true); }}
                   className="rounded-full transition-all duration-300"
-                  style={{ height:'6px', width: i === current ? '20px' : '6px', background: i === current ? '#f5d376' : 'rgba(255,255,255,0.2)' }} />
+                  style={{ height:'6px', width: i === current ? '20px' : '6px', background: i === current ? '#00d4ff' : 'rgba(255,255,255,0.2)' }} />
               ))}
             </div>
             <button onClick={next}
@@ -186,7 +186,7 @@ const ReviewsSection = () => {
         <div className="text-center"
           style={{ transition:'opacity .7s .4s', opacity: visible ? 1 : 0 }}>
           <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl"
-            style={{ background:'rgba(201,168,76,0.06)', border:'1px solid rgba(201,168,76,0.2)' }}>
+            style={{ background:'rgba(0,168,204,0.06)', border:'1px solid rgba(0,168,204,0.2)' }}>
             <div className="text-center sm:text-left">
               <div className="text-white font-bold text-lg">Ready to join them?</div>
               <div className="text-gray-400 text-sm">Book your detail today. We come to you.</div>
