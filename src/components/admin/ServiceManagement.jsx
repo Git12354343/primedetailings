@@ -44,6 +44,7 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, vehicleTypes, serviceCate
     category: initialData?.category || 'DETAILING',
     pricing: initialData?.pricing || vehicleTypes.reduce((a, t) => ({ ...a, [t]: '' }), {}),
     isActive: initialData?.isActive ?? true,
+    requiresQuote: initialData?.requiresQuote ?? false,
   });
   const [saving, setSaving] = useState(false);
 
@@ -119,6 +120,16 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, vehicleTypes, serviceCate
           </div>
           <span className="text-sm text-white">Active (visible to customers)</span>
         </label>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div onClick={() => setFormData(p => ({ ...p, requiresQuote: !p.requiresQuote }))}
+            className="w-9 h-5 rounded-full relative transition-colors"
+            style={{ background: formData.requiresQuote ? '#f59e0b' : 'rgba(255,255,255,0.15)' }}>
+            <span className="absolute top-0.5 w-4 h-4 rounded-full bg-[#111827] shadow transition-transform"
+              style={{ transform: formData.requiresQuote ? 'translateX(16px)' : 'translateX(2px)' }} />
+          </div>
+          <span className="text-sm text-white">Requires Custom Quote <span className="text-amber-400 text-xs">(bypasses booking, goes to quote form)</span></span>
+        </label>
+
         <div className="flex gap-3 pt-2">
           <button type="button" onClick={onClose} className="flex-1 py-3 rounded-xl text-sm font-medium text-gray-400"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -141,6 +152,7 @@ const AddOnFormModal = ({ isOpen, onClose, onSubmit, addOnCategories, title, ini
     description: initialData?.description || '', descriptionFr: initialData?.descriptionFr || '',
     category: initialData?.category || 'ENHANCEMENT', price: initialData?.price || '',
     sortOrder: initialData?.sortOrder || 0, isActive: initialData?.isActive ?? true,
+    requiresQuote: initialData?.requiresQuote ?? false,
   });
   const [saving, setSaving] = useState(false);
 
@@ -199,6 +211,16 @@ const AddOnFormModal = ({ isOpen, onClose, onSubmit, addOnCategories, title, ini
           </div>
           <span className="text-sm text-white">Active (visible to customers)</span>
         </label>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div onClick={() => setFormData(p => ({ ...p, requiresQuote: !p.requiresQuote }))}
+            className="w-9 h-5 rounded-full relative transition-colors"
+            style={{ background: formData.requiresQuote ? '#f59e0b' : 'rgba(255,255,255,0.15)' }}>
+            <span className="absolute top-0.5 w-4 h-4 rounded-full bg-[#111827] shadow transition-transform"
+              style={{ transform: formData.requiresQuote ? 'translateX(16px)' : 'translateX(2px)' }} />
+          </div>
+          <span className="text-sm text-white">Requires Custom Quote <span className="text-amber-400 text-xs">(bypasses booking, goes to quote form)</span></span>
+        </label>
+
         <div className="flex gap-3 pt-2">
           <button type="button" onClick={onClose} className="flex-1 py-3 rounded-xl text-sm font-medium text-gray-400"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -309,6 +331,12 @@ const ServiceManagement = ({ services = [], addOns = [], packages = [], onRefres
                       style={{ background: 'rgba(0,168,204,0.1)', color: GOLD_S }}>
                       {svc.category}
                     </span>
+                    {svc.requiresQuote && (
+                      <span className="text-xs px-2 py-0.5 rounded-full"
+                        style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}>
+                        Quote Required
+                      </span>
+                    )}
                   </div>
                   {svc.description && <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>{svc.description}</p>}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -361,6 +389,12 @@ const ServiceManagement = ({ services = [], addOns = [], packages = [], onRefres
                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: addon.isActive ? 'rgba(52,211,153,0.1)' : 'rgba(239,68,68,0.1)', color: addon.isActive ? '#34d399' : '#f87171' }}>
                       {addon.isActive ? 'Active' : 'Inactive'}
                     </span>
+                    {addon.requiresQuote && (
+                      <span className="text-xs px-2 py-0.5 rounded-full"
+                        style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}>
+                        Quote Required
+                      </span>
+                    )}
                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(167,139,250,0.1)', color: '#a78bfa' }}>
                       {addon.category}
                     </span>

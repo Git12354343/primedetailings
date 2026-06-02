@@ -71,7 +71,7 @@ const getActiveAddOns = async (req, res) => {
 // Create new add-on
 const createAddOn = async (req, res) => {
   try {
-    const { name, description, category, price, sortOrder } = req.body;
+    const { name, description, category, price, sortOrder, requiresQuote } = req.body;
 
     // Validate required fields
     if (!name || !price || price <= 0) {
@@ -96,7 +96,8 @@ const createAddOn = async (req, res) => {
         description: description?.trim() || null,
         category: category || 'ENHANCEMENT',
         price: parseFloat(price),
-        sortOrder: sortOrder || 0
+        sortOrder: sortOrder || 0,
+        requiresQuote: requiresQuote ?? false
       }
     });
 
@@ -136,7 +137,7 @@ const createAddOn = async (req, res) => {
 const updateAddOn = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, category, price, isActive, sortOrder } = req.body;
+    const { name, description, category, price, isActive, sortOrder, requiresQuote } = req.body;
 
     // Check if add-on exists
     const existingAddOn = await prisma.addOn.findUnique({
@@ -173,7 +174,8 @@ const updateAddOn = async (req, res) => {
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (category !== undefined) updateData.category = category;
     if (price !== undefined) updateData.price = parseFloat(price);
-    if (isActive !== undefined) updateData.isActive = isActive;
+    if (isActive     !== undefined) updateData.isActive     = isActive;
+    if (requiresQuote !== undefined) updateData.requiresQuote = requiresQuote;
     if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
 
     const updatedAddOn = await prisma.addOn.update({

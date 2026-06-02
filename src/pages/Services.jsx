@@ -120,10 +120,17 @@ const ServiceCard = ({ service, vehicleType, index, visible }) => {
       </div>
 
       <Link
-        to={`/booking?service=${service.id}&vehicle=${vehicleType}`}
-        className="btn-luxury w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide group"
+        to={service.requiresQuote
+          ? `/quote?services=${service.id}${vehicleType ? `&vehicleType=${vehicleType}` : ''}`
+          : `/booking?service=${service.id}&vehicle=${vehicleType}`}
+        className={service.requiresQuote
+          ? 'w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide group'
+          : 'btn-luxury w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide group'}
+        style={service.requiresQuote
+          ? { background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)', color: '#f59e0b' }
+          : undefined}
       >
-        {t('services.bookThis')}
+        {service.requiresQuote ? 'Request Quote' : t('services.bookThis')}
         <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </Link>
     </div>

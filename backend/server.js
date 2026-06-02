@@ -21,6 +21,8 @@ const checklistRoutes    = require('./routes/checklists');
 const imageRoutes        = require('./routes/images');
 const fleetRoutes        = require('./routes/fleet');
 const quoteRoutes        = require('./routes/quotes');
+const exportRoutes       = require('./routes/export');
+const auditRoutes        = require('./routes/auditRoutes');
 
 const { createManualBooking } = require('./controllers/manualBookingController');
 const photoRoutes = require('./routes/photos');
@@ -112,6 +114,8 @@ app.use('/api/checklists',   checklistRoutes);
 app.use('/api/images',       imageRoutes);
 app.use('/api/fleet',        fleetRoutes);
 app.use('/api/quotes',       quoteRoutes);
+app.use('/api/export',       exportRoutes);
+app.use('/api/audit',        auditRoutes);
 app.use('/api/photos',       photoRoutes);
 
 app.post('/api/admin/manual-booking', createManualBooking);

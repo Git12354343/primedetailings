@@ -2,6 +2,8 @@
 const express   = require('express');
 const router    = express.Router();
 const nodemailer = require('nodemailer');
+const { sms } = require('../services/smsService');
+const { audit, getIp } = require('../services/auditService');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
@@ -155,8 +157,9 @@ router.post('/', async (req, res) => {
       },
     });
 
-    // Fire-and-forget owner notification
+    // Fire-and-forget owner notifications (email + SMS)
     sendOwnerQuoteNotification(quote);
+    sms.ownerNewQuote(quote).catch(() => {});
 
     return res.status(201).json({ success: true, referenceId: quote.referenceId, quote: {
       referenceId: quote.referenceId,
@@ -241,10 +244,14 @@ router.put('/admin/:id', requireAdmin, async (req, res) => {
 
     const quote = await prisma.quote.update({ where: { id }, data });
 
-    // Notify customer if quote is ready and they have an email
+    // Notify customer if quote is ready
     if (status === 'QUOTED' && quote.quotedPrice) {
       sendCustomerQuoteReady(quote);
+      sms.quoteReady(quote).catch(() => {});
     }
+    if (status === 'DECLINED') sms.quoteDeclined(quote).catch(() => {});
+    // Audit
+    audit('quote', quote.id, `status_changed:${status}`, null, { status, quotedPrice }, null);
 
     return res.json({ success: true, quote });
   } catch (err) {
@@ -334,6 +341,88 @@ router.get('/admin/count', requireAdmin, async (req, res) => {
   }
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOMER ACTION ENDPOINTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// POST /api/quotes/:ref/accept — customer accepts quote
+router.post('/:referenceId/accept', async (req, res) => {
+  try {
+    const ref = req.params.referenceId.toUpperCase();
+    if (!ref.startsWith('Q-')) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    const { preferredDate, preferredTime } = req.body;
+
+    const quote = await prisma.quote.findUnique({ where: { referenceId: ref } });
+    if (!quote) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    if (!['QUOTED'].includes(quote.status)) {
+      return res.status(400).json({ success: false, message: `Quote cannot be accepted in status: ${quote.status}` });
+    }
+
+    const updated = await prisma.quote.update({
+      where: { referenceId: ref },
+      data: { status: 'ACCEPTED', preferredDate: preferredDate || null, preferredTime: preferredTime || null },
+    });
+
+    // Notify owner
+    sms.ownerQuoteAccepted(updated).catch(() => {});
+    audit('quote', quote.id, 'customer_accepted', { status: 'QUOTED' }, { status: 'ACCEPTED', preferredDate, preferredTime });
+
+    return res.json({ success: true, message: 'Quote accepted. We will contact you shortly to confirm your appointment.' });
+  } catch (err) {
+    console.error('Accept quote error:', err);
+    return res.status(500).json({ success: false, message: 'Error accepting quote.' });
+  }
+});
+
+// POST /api/quotes/:ref/decline — customer declines quote
+router.post('/:referenceId/decline', async (req, res) => {
+  try {
+    const ref = req.params.referenceId.toUpperCase();
+    if (!ref.startsWith('Q-')) return res.status(404).json({ success: false, message: 'Quote not found.' });
+
+    const quote = await prisma.quote.findUnique({ where: { referenceId: ref } });
+    if (!quote) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    if (!['QUOTED', 'ACCEPTED'].includes(quote.status)) {
+      return res.status(400).json({ success: false, message: 'Nothing to decline at this stage.' });
+    }
+
+    await prisma.quote.update({ where: { referenceId: ref }, data: { status: 'DECLINED' } });
+    audit('quote', quote.id, 'customer_declined', { status: quote.status }, { status: 'DECLINED' });
+    return res.json({ success: true, message: 'Quote declined. Thank you for letting us know.' });
+  } catch (err) {
+    console.error('Decline quote error:', err);
+    return res.status(500).json({ success: false, message: 'Error declining quote.' });
+  }
+});
+
+// POST /api/quotes/:ref/request-changes — customer requests changes
+router.post('/:referenceId/request-changes', async (req, res) => {
+  try {
+    const ref = req.params.referenceId.toUpperCase();
+    if (!ref.startsWith('Q-')) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    const { note } = req.body;
+
+    const quote = await prisma.quote.findUnique({ where: { referenceId: ref } });
+    if (!quote) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    if (!['QUOTED', 'REVIEWING'].includes(quote.status)) {
+      return res.status(400).json({ success: false, message: 'Cannot request changes at this stage.' });
+    }
+
+    const updated = await prisma.quote.update({
+      where: { referenceId: ref },
+      data: { status: 'CHANGE_REQUESTED', changeRequestNote: note || null },
+    });
+
+    sms.quoteChangeRequested(updated).catch(() => {});
+    audit('quote', quote.id, 'customer_change_request', { status: quote.status }, { status: 'CHANGE_REQUESTED', note });
+    return res.json({ success: true, message: 'Change request sent. We will review and update your quote.' });
+  } catch (err) {
+    console.error('Change request error:', err);
+    return res.status(500).json({ success: false, message: 'Error submitting change request.' });
+  }
+});
+
 module.exports = router;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -370,10 +459,14 @@ router.put('/admin/:id', requireAdmin, async (req, res) => {
 
     const quote = await prisma.quote.update({ where: { id }, data });
 
-    // Notify customer if quote is ready and they have an email
+    // Notify customer if quote is ready
     if (status === 'QUOTED' && quote.quotedPrice) {
       sendCustomerQuoteReady(quote);
+      sms.quoteReady(quote).catch(() => {});
     }
+    if (status === 'DECLINED') sms.quoteDeclined(quote).catch(() => {});
+    // Audit
+    audit('quote', quote.id, `status_changed:${status}`, null, { status, quotedPrice }, null);
 
     return res.json({ success: true, quote });
   } catch (err) {
@@ -468,5 +561,87 @@ router.get('/admin/count', requireAdmin, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOMER ACTION ENDPOINTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// POST /api/quotes/:ref/accept — customer accepts quote
+router.post('/:referenceId/accept', async (req, res) => {
+  try {
+    const ref = req.params.referenceId.toUpperCase();
+    if (!ref.startsWith('Q-')) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    const { preferredDate, preferredTime } = req.body;
+
+    const quote = await prisma.quote.findUnique({ where: { referenceId: ref } });
+    if (!quote) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    if (!['QUOTED'].includes(quote.status)) {
+      return res.status(400).json({ success: false, message: `Quote cannot be accepted in status: ${quote.status}` });
+    }
+
+    const updated = await prisma.quote.update({
+      where: { referenceId: ref },
+      data: { status: 'ACCEPTED', preferredDate: preferredDate || null, preferredTime: preferredTime || null },
+    });
+
+    // Notify owner
+    sms.ownerQuoteAccepted(updated).catch(() => {});
+    audit('quote', quote.id, 'customer_accepted', { status: 'QUOTED' }, { status: 'ACCEPTED', preferredDate, preferredTime });
+
+    return res.json({ success: true, message: 'Quote accepted. We will contact you shortly to confirm your appointment.' });
+  } catch (err) {
+    console.error('Accept quote error:', err);
+    return res.status(500).json({ success: false, message: 'Error accepting quote.' });
+  }
+});
+
+// POST /api/quotes/:ref/decline — customer declines quote
+router.post('/:referenceId/decline', async (req, res) => {
+  try {
+    const ref = req.params.referenceId.toUpperCase();
+    if (!ref.startsWith('Q-')) return res.status(404).json({ success: false, message: 'Quote not found.' });
+
+    const quote = await prisma.quote.findUnique({ where: { referenceId: ref } });
+    if (!quote) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    if (!['QUOTED', 'ACCEPTED'].includes(quote.status)) {
+      return res.status(400).json({ success: false, message: 'Nothing to decline at this stage.' });
+    }
+
+    await prisma.quote.update({ where: { referenceId: ref }, data: { status: 'DECLINED' } });
+    audit('quote', quote.id, 'customer_declined', { status: quote.status }, { status: 'DECLINED' });
+    return res.json({ success: true, message: 'Quote declined. Thank you for letting us know.' });
+  } catch (err) {
+    console.error('Decline quote error:', err);
+    return res.status(500).json({ success: false, message: 'Error declining quote.' });
+  }
+});
+
+// POST /api/quotes/:ref/request-changes — customer requests changes
+router.post('/:referenceId/request-changes', async (req, res) => {
+  try {
+    const ref = req.params.referenceId.toUpperCase();
+    if (!ref.startsWith('Q-')) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    const { note } = req.body;
+
+    const quote = await prisma.quote.findUnique({ where: { referenceId: ref } });
+    if (!quote) return res.status(404).json({ success: false, message: 'Quote not found.' });
+    if (!['QUOTED', 'REVIEWING'].includes(quote.status)) {
+      return res.status(400).json({ success: false, message: 'Cannot request changes at this stage.' });
+    }
+
+    const updated = await prisma.quote.update({
+      where: { referenceId: ref },
+      data: { status: 'CHANGE_REQUESTED', changeRequestNote: note || null },
+    });
+
+    sms.quoteChangeRequested(updated).catch(() => {});
+    audit('quote', quote.id, 'customer_change_request', { status: quote.status }, { status: 'CHANGE_REQUESTED', note });
+    return res.json({ success: true, message: 'Change request sent. We will review and update your quote.' });
+  } catch (err) {
+    console.error('Change request error:', err);
+    return res.status(500).json({ success: false, message: 'Error submitting change request.' });
+  }
+});
 
 module.exports = router;

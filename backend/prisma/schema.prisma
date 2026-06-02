@@ -52,6 +52,11 @@ model Booking {
   package             Package?      @relation(fields: [packageId], references: [id])
   checklist           JobChecklist?
   images              BookingImage[]
+  history             BookingHistory[]
+  reviewRequest       ReviewRequest?
+  cancellationReason  String?          @db.VarChar(500)
+  prepEmailSent       Boolean          @default(false)
+  reviewRequestSent   Boolean          @default(false)
 
   @@index([detailerId])
   @@map("bookings")
@@ -101,6 +106,7 @@ model Service {
   createdAt         DateTime         @default(now())
   isActive          Boolean          @default(true)
   isFeatured        Boolean          @default(false)
+  requiresQuote     Boolean          @default(false)
   sortOrder         Int              @default(0)
   estimatedDuration Int?
   promoPrice        Decimal?         @db.Decimal(8, 2)
@@ -133,6 +139,7 @@ model AddOn {
   price       Decimal       @db.Decimal(8, 2)
   createdAt   DateTime      @default(now())
   isActive    Boolean       @default(true)
+  requiresQuote Boolean     @default(false)
   sortOrder   Int           @default(0)
   updatedAt   DateTime      @updatedAt
 
@@ -369,6 +376,9 @@ model Quote {
   quotedPrice      Decimal?    @db.Decimal(8, 2)
   adminNotes       String?
   bookingId        Int?
+  changeRequestNote String?
+  preferredDate    String?     @db.VarChar(20)
+  preferredTime    String?     @db.VarChar(20)
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
@@ -380,6 +390,7 @@ enum QuoteStatus {
   REVIEWING
   QUOTED
   ACCEPTED
+  CHANGE_REQUESTED
   DECLINED
   CONVERTED
 }
@@ -504,4 +515,80 @@ enum FleetQuoteStatus {
   ACCEPTED
   DECLINED
   ARCHIVED
+}
+
+
+// ── Booking History ───────────────────────────────────────────────────────────
+model BookingHistory {
+  id          Int      @id @default(autoincrement())
+  bookingId   Int
+  action      String   @db.VarChar(50)
+  oldDate     DateTime? @db.Date
+  newDate     DateTime? @db.Date
+  oldTime     String?  @db.VarChar(20)
+  newTime     String?  @db.VarChar(20)
+  oldStatus   String?  @db.VarChar(30)
+  newStatus   String?  @db.VarChar(30)
+  reason      String?  @db.VarChar(500)
+  initiatedBy String   @default("customer") @db.VarChar(20)
+  createdAt   DateTime @default(now())
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  @@map("booking_history")
+}
+
+// ── Admin Audit Log ───────────────────────────────────────────────────────────
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  entityType String   @db.VarChar(50)
+  entityId   String   @db.VarChar(50)
+  action     String   @db.VarChar(100)
+  oldValue   Json?
+  newValue   Json?
+  adminIp    String?  @db.VarChar(50)
+  note       String?  @db.VarChar(500)
+  createdAt  DateTime @default(now())
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ── Review Requests ───────────────────────────────────────────────────────────
+model ReviewRequest {
+  id          Int      @id @default(autoincrement())
+  bookingId   Int      @unique
+  smsStatus   String   @default("PENDING") @db.VarChar(20)
+  emailStatus String   @default("PENDING") @db.VarChar(20)
+  sentAt      DateTime?
+  error       String?  @db.VarChar(500)
+  createdAt   DateTime @default(now())
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  @@map("review_requests")
+}
+
+// ── Quote Photos ──────────────────────────────────────────────────────────────
+model QuotePhoto {
+  id          Int      @id @default(autoincrement())
+  quoteId     Int
+  storagePath String   @db.VarChar(500)
+  publicUrl   String   @db.VarChar(500)
+  fileName    String   @db.VarChar(200)
+  fileSize    Int?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  @@map("quote_photos")
+}
+
+// ── SMS Log ───────────────────────────────────────────────────────────────────
+model SmsLog {
+  id          Int      @id @default(autoincrement())
+  toNumber    String   @db.VarChar(20)
+  messageType String   @db.VarChar(50)
+  body        String   @db.Text
+  status      String   @default("SENT") @db.VarChar(20)
+  sid         String?  @db.VarChar(50)
+  error       String?  @db.VarChar(500)
+  entityType  String?  @db.VarChar(30)
+  entityId    String?  @db.VarChar(30)
+  createdAt   DateTime @default(now())
+  @@map("sms_logs")
 }

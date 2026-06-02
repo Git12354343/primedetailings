@@ -302,7 +302,7 @@ const BookingForm = () => {
   const { values, errors, handleChange, getFieldProps } = useBookingFormValidation({
     displayName: '', email: '', phone: '',
     address: '', city: '', postalCode: '',
-    vehicleType: '', make: '', model: '', year: '2010',
+    vehicleType: '', make: '', model: '', year: '',
     vehicleCondition: '', propertyType: '', hasWaterPower: null,
     services: [], addOns: [], date: '', time: '',
     specialInstructions: '',
@@ -337,10 +337,25 @@ const BookingForm = () => {
       }).catch(() => {});
   }, [values.date, values.time]);
 
+  const handleQuoteRedirect = () => {
+    const p = new URLSearchParams();
+    if (values.vehicleType)     p.set('vehicleType', values.vehicleType);
+    if (values.vehicleCondition) p.set('vehicleCondition', values.vehicleCondition);
+    if (values.services?.length) p.set('services', values.services.join(','));
+    if (values.addOns?.length)   p.set('addOns',   values.addOns.join(','));
+    navigate('/quote?' + p.toString());
+  };
+
+  const hasQuoteRequired = mode === 'custom' && (
+    (values.services || []).some(id => services.find(sv => String(sv.id) === String(id))?.requiresQuote) ||
+    (values.addOns   || []).some(id => addOns.find(ad => String(ad.id) === String(id))?.requiresQuote)
+  );
+
   const canProceed = () => {
     if (step === 1) {
       if (!values.vehicleType) return false;
       if (!values.vehicleCondition) return false;
+      if (mode === 'custom' && hasQuoteRequired) return false;
       return mode === 'packages' ? !!selectedPkg : values.services.length > 0;
     }
     if (step === 2) return values.date && values.time && !availErr;
@@ -652,7 +667,20 @@ const BookingForm = () => {
               </div>
             )}
 
-            {pricing.total > 0 && (
+            {hasQuoteRequired ? (
+              <div className="flex items-start gap-3 p-4 rounded-xl"
+                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)' }}>
+                <span className="text-lg flex-shrink-0">⚠️</span>
+                <div>
+                  <p className="text-amber-300 font-bold text-sm mb-0.5">Custom quote required</p>
+                  <p className="text-amber-200/70 text-xs leading-relaxed">
+                    One or more selected items need a custom price. Clicking <strong>Request Quote</strong> sends
+                    your selection to us — we'll reply with a price, usually within a few hours.
+                    No payment required upfront.
+                  </p>
+                </div>
+              </div>
+            ) : pricing.total > 0 && (
               <div className="flex items-center justify-between p-4 rounded-xl"
                 style={{ background: 'rgba(0,168,204,0.06)', border: '1px solid rgba(0,168,204,0.15)' }}>
                 <span className="text-gray-400 text-sm">{t('booking.estimatedTotal')}</span>
@@ -735,25 +763,13 @@ const BookingForm = () => {
       <div>
         <h3 className="text-white font-bold text-sm mb-4">{t('booking.vehicleDetails')} <span className="text-gray-600 normal-case font-normal text-xs">{t('booking.optionalSuffix')}</span></h3>
         <div className="grid grid-cols-3 gap-3">
-        {[['make',t('booking.make'),'text','BMW'],
-        ['model',t('booking.model'),'text','3 Series'],
-        ['year',t('booking.year'),'number','2022']].map(([f,l,typ,p]) => (
-          <div key={f}>
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              {l} <span className="text-gray-600 normal-case font-normal">{t('booking.optionalSuffix')}</span>
-            </label>
-
-            <input
-              style={iStyle(errors[f])}
-              type={typ}
-              placeholder={p}
-              min={f === 'year' ? 1990 : undefined}
-              max={f === 'year' ? 2030 : undefined}
-              {...safeProps(getFieldProps(f))}
-            />
-          </div>
-  ))}
-</div>
+          {[['make',t('booking.make'),'text','BMW'],['model',t('booking.model'),'text','3 Series'],['year',t('booking.year'),'number','2022']].map(([f,l,typ,p]) => (
+            <div key={f}>
+              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{l} <span className="text-gray-600 normal-case font-normal">{t('booking.optionalSuffix')}</span></label>
+              <input style={iStyle(errors[f])} type={typ} placeholder={p} {...safeProps(getFieldProps(f))} />
+            </div>
+          ))}
+        </div>
       </div>
       <div>
         <h3 className="text-white font-bold text-sm mb-4">{t('booking.locationTitle')}</h3>
@@ -856,11 +872,14 @@ const BookingForm = () => {
                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#9ca3af' }}>
                     <ChevronLeft className="w-4 h-4" /> {t('booking.back')}
                   </button>
-                  <button onClick={nextStep} disabled={!canProceed() || apiLoading}
-                    className="btn-luxury flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-bold tracking-wide disabled:opacity-40 group">
+                  <button onClick={step === 1 && hasQuoteRequired ? handleQuoteRedirect : nextStep} disabled={step === 1 && hasQuoteRequired ? false : (!canProceed() || apiLoading)}
+                    className="btn-luxury flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-bold tracking-wide disabled:opacity-40 group"
+                    style={step === 1 && hasQuoteRequired ? { background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#0b0f1a' } : {}}>
                     {apiLoading
                       ? <><Loader2 className="w-4 h-4 animate-spin" /> {step === 3 ? t('booking.sending') : t('booking.loadingWord')}</>
-                      : <>{step === 3 ? t('booking.sendCodeConfirm') : t('booking.continueWord')} <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></>}
+                      : step === 1 && hasQuoteRequired
+                        ? <>Request Quote <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></>
+                        : <>{step === 3 ? t('booking.sendCodeConfirm') : t('booking.continueWord')} <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></>}
                   </button>
                 </div>
               )}
@@ -898,9 +917,12 @@ const BookingForm = () => {
               })()}
               <DollarSign className="w-4 h-4" />
             </button>
-            <button onClick={nextStep} disabled={!canProceed() || apiLoading}
-              className="btn-luxury flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide disabled:opacity-40">
+            <button onClick={step === 1 && hasQuoteRequired ? handleQuoteRedirect : nextStep}
+              disabled={step === 1 && hasQuoteRequired ? false : (!canProceed() || apiLoading)}
+              className="btn-luxury flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide disabled:opacity-40"
+              style={step === 1 && hasQuoteRequired ? { background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#0b0f1a' } : {}}>
               {apiLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('booking.processing')}</>
+                : step === 1 && hasQuoteRequired ? <>Request Quote <ChevronRight className="w-4 h-4" /></>
                 : step < 3 ? <>{t('booking.continueWord')} <ChevronRight className="w-4 h-4" /></>
                 : sms.sent ? <><Shield className="w-4 h-4" /> {t('booking.confirmShort')}</>
                 : <><Phone className="w-4 h-4" /> {t('booking.sendCodeShort')}</>}

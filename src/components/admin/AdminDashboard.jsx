@@ -17,6 +17,10 @@ import ScheduleManager        from './ScheduleManager';
 import RevenueAnalytics       from './RevenueAnalytics';
 import DetailerManagement     from './DetailerManagement';
 import GalleryManagement      from './GalleryManagement';
+import AdminBulkReschedule    from './AdminBulkReschedule';
+import AdminAuditLog          from './AdminAuditLog';
+import AdminExport            from './AdminExport';
+import WeatherBanner          from './AdminWeatherAlerts';
 
 // ContactManagement — inline since it may not exist as a separate file
 const ContactManagement = ({ adminToken }) => {
@@ -213,6 +217,7 @@ const AdminDashboard = ({ onLogout, adminToken }) => {
         <div className="flex-1 overflow-y-auto">
           <div className="flex gap-6 items-start p-6">
             <div className="flex-1 min-w-0">
+              {activeTab === 'live-feed'      && <WeatherBanner adminToken={adminToken} />}
               {activeTab === 'live-feed'      && <LiveJobFeed bookings={allBookings} unassignedBookings={unassignedBookings} detailers={activeDetailers} statusCounts={statusCounts} onRefresh={handleRefresh} onJobClick={() => {}} />}
               {activeTab === 'unassigned'     && <UnassignedBookings bookings={unassignedBookings} detailers={activeDetailers} onRefresh={handleRefresh} />}
               {activeTab === 'quotes'         && <AdminQuoteManager adminToken={adminToken} />}
@@ -224,6 +229,9 @@ const AdminDashboard = ({ onLogout, adminToken }) => {
               {activeTab === 'detailers'      && <DetailerManagement adminToken={adminToken} authFetch={authFetch} onRefreshGlobal={handleRefresh} />}
               {activeTab === 'messages'       && <ContactManagement adminToken={adminToken} />}
               {activeTab === 'gallery'        && <GalleryManagement adminToken={adminToken} />}
+              {activeTab === 'bulk'           && <AdminBulkReschedule adminToken={adminToken} />}
+              {activeTab === 'export'         && <AdminExport adminToken={adminToken} />}
+              {activeTab === 'audit'          && <AdminAuditLog adminToken={adminToken} />}
             </div>
 
             {showDetailerRail && (

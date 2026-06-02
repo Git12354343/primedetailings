@@ -470,6 +470,71 @@ class EmailService {
 
     return await this.transporter.sendMail(mailOptions);
   }
+  // Send "What to Expect" preparation email after booking
+  async sendPreparationEmail(bookingData) {
+    const { firstName, email, date, time, address, city, hasWaterPower, services } = bookingData;
+    if (!email) return;
+    const dateStr = new Date(date + (String(date).includes('T') ? '' : 'T12:00:00')).toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric' });
+    try {
+      await this.transporter.sendMail({
+        from: `"Prestige Plus Services" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `Your Appointment is Coming Up — Here's How to Prepare`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0b0f1a;color:#fff;border-radius:12px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#00a8cc,#00d4ff);padding:28px;text-align:center;">
+              <h1 style="margin:0;color:#000;font-size:22px;font-weight:900;">How to Prepare for Your Detail</h1>
+              <p style="margin:4px 0 0;color:#000;opacity:0.6;font-size:13px;">${dateStr} at ${time} · ${address}, ${city}</p>
+            </div>
+            <div style="padding:28px;">
+              <p style="color:rgba(255,255,255,0.8);font-size:15px;">Hi ${firstName}, your appointment is coming up! Here's how to get the most out of your detail:</p>
+              <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+                <tr><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:20px;width:40px;">🚗</td><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.85);"><strong style="color:#fff;">Clear your vehicle</strong><br/>Remove personal items, child seats, and valuables from the interior.</td></tr>
+                <tr><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:20px;">🔑</td><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.85);"><strong style="color:#fff;">Have your keys ready</strong><br/>Our detailer will need access to the vehicle. Please be present or leave keys in an agreed spot.</td></tr>
+                <tr><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:20px;">${hasWaterPower ? '💧' : '📋'}</td><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.85);"><strong style="color:#fff;">${hasWaterPower ? 'Water & power access' : 'No water/power needed'}</strong><br/>${hasWaterPower ? 'Please ensure water and power are accessible near the vehicle.' : "You mentioned no water/power — we'll bring what we need."}</td></tr>
+                <tr><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:20px;">⏱</td><td style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.85);"><strong style="color:#fff;">Allow time</strong><br/>Depending on the service, your detail could take 1–4 hours. Plan accordingly.</td></tr>
+                <tr><td style="padding:10px 0;font-size:20px;">🌤</td><td style="padding:10px 0;color:rgba(255,255,255,0.85);"><strong style="color:#fff;">Weather</strong><br/>If severe weather is expected, we'll contact you to reschedule at no charge.</td></tr>
+              </table>
+              <div style="margin-top:24px;padding:16px;background:rgba(0,168,204,0.08);border-radius:10px;border:1px solid rgba(0,168,204,0.2);">
+                <p style="margin:0;color:rgba(255,255,255,0.7);font-size:13px;">Questions? Call or text us at <a href="tel:+14387968001" style="color:#00a8cc;">(438) 796-8001</a> or reply to this email.</p>
+              </div>
+            </div>
+            <div style="padding:16px 28px;text-align:center;background:rgba(0,168,204,0.05);">
+              <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.4);">Prestige Plus Services · info@prestigeplus.services · (438) 796-8001</p>
+            </div>
+          </div>`,
+      });
+    } catch (e) { console.error('Prep email error:', e.message); }
+  }
+
+  // Send review request email
+  async sendReviewRequest(bookingData, reviewUrl) {
+    const { firstName, email, confirmationCode } = bookingData;
+    if (!email) return;
+    try {
+      await this.transporter.sendMail({
+        from: `"Prestige Plus Services" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `How did we do? Leave us a quick review ⭐`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0b0f1a;color:#fff;border-radius:12px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#00a8cc,#00d4ff);padding:28px;text-align:center;">
+              <h1 style="margin:0;color:#000;font-size:22px;font-weight:900;">How was your detail?</h1>
+            </div>
+            <div style="padding:32px;text-align:center;">
+              <p style="font-size:16px;color:rgba(255,255,255,0.8);">Hi ${firstName}, thank you for choosing Prestige Plus Services!</p>
+              <p style="color:rgba(255,255,255,0.6);">If you're happy with your vehicle, a quick Google review would mean the world to us and helps other Montrealers find us.</p>
+              <a href="${reviewUrl}" style="display:inline-block;margin:24px 0;padding:16px 32px;background:linear-gradient(135deg,#00a8cc,#00d4ff);color:#000;font-weight:900;font-size:16px;border-radius:14px;text-decoration:none;">⭐ Leave a Review</a>
+              <p style="color:rgba(255,255,255,0.4);font-size:12px;">Only takes 30 seconds. We read every one.</p>
+            </div>
+            <div style="padding:16px;text-align:center;background:rgba(0,168,204,0.05);">
+              <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.4);">Prestige Plus Services · info@prestigeplus.services</p>
+            </div>
+          </div>`,
+      });
+    } catch (e) { console.error('Review email error:', e.message); }
+  }
+
 }
 
 module.exports = new EmailService();

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import useServicesCache from '../hooks/useServicesCache';
+import PhotoUpload from '../components/PhotoUpload';
 
 const API    = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const GOLD   = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
@@ -71,27 +72,47 @@ const QuotePage = () => {
   const { packages, services, addOns } = useServicesCache();
 
   const [loading,   setLoading]   = useState(false);
+  const [quoteId,   setQuoteId]   = useState(null); // set after initial quote created
   const [submitted, setSubmitted] = useState(null); // referenceId on success
   const [errors,    setErrors]    = useState({});
+  // Pre-fill from URL params (coming from booking flow or service cards)
+  const initServices  = params.get('services')?.split(',').map(Number).filter(Boolean) || [];
+  const initAddOns    = params.get('addOns')?.split(',').map(Number).filter(Boolean)   || [];
+  const initVehicle   = params.get('vehicleType')   || '';
+  const initCondition = params.get('vehicleCondition') || '';
+
   const [form, setForm] = useState({
     customerName: '', phoneNumber: '', email: '',
     address: '', city: '', postalCode: '',
-    vehicleType: '', vehicleCondition: '',
+    vehicleType:      initVehicle,
+    vehicleCondition: initCondition,
     make: '', model: '', year: '',
-    packageId: params.get('packageId') || '',
+    packageId:   params.get('packageId')   || '',
     packageName: params.get('packageName') || '',
-    services: [], addOns: [],
+    services: initServices,
+    addOns:   initAddOns,
     notes: '',
-    quoteMode: params.get('packageId') ? 'package' : 'services',
+    quoteMode: params.get('packageId') ? 'package' : (initServices.length ? 'services' : 'services'),
   });
 
-  // If a packageId came in via URL, resolve its name
+  // Resolve URL-prefilled IDs once catalog data loads
   useEffect(() => {
     if (params.get('packageId') && packages.length) {
       const pkg = packages.find(p => String(p.id) === params.get('packageId'));
       if (pkg) setForm(f => ({ ...f, packageName: pkg.name, packageId: String(pkg.id) }));
     }
   }, [params, packages]);
+
+  // Keep only service/addOn IDs that actually exist in the catalog
+  useEffect(() => {
+    if (!services.length && !addOns.length) return;
+    setForm(f => ({
+      ...f,
+      services: f.services.filter(id => services.some(s => s.id === id)),
+      addOns:   f.addOns.filter(id   => addOns.some(a => a.id === id)),
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [services.length, addOns.length]);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
@@ -338,7 +359,16 @@ const QuotePage = () => {
             <textarea value={form.notes} onChange={e => set('notes', e.target.value)}
               placeholder="Gate code, parking situation, specific concerns about your vehicle…"
               rows={3} style={{ ...iStyle, resize:'vertical' }} />
-            {/* TODO: Add photo upload here once image upload system is confirmed stable */}
+            {/* Photo uploads */}
+            {quoteId && (
+              <div className="mt-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-2 font-semibold">Photos — paint, condition, concerns</p>
+                <PhotoUpload quoteId={quoteId} onUploadComplete={() => {}} />
+              </div>
+            )}
+            {!quoteId && (
+              <p className="text-xs text-gray-500 mt-3">📷 You can upload photos after submitting your request to help us quote accurately.</p>
+            )}
           </Section>
 
           {/* Error */}

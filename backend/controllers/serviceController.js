@@ -16,6 +16,7 @@ const serializeService = (service) => ({
   category:          service.category,
   isActive:          service.isActive,
   isFeatured:        service.isFeatured   ?? false,
+  requiresQuote:     service.requiresQuote ?? false,
   sortOrder:         service.sortOrder,
   estimatedDuration: service.estimatedDuration ?? null,
   promoPrice:        service.promoPrice ? parseFloat(service.promoPrice) : null,
@@ -59,7 +60,7 @@ const getActiveServices = async (req, res) => {
 // ── POST /api/services ────────────────────────────────────────────────────────
 const createService = async (req, res) => {
   try {
-    const { name, nameFr, description, descriptionFr, includes, includesFr, category, pricing, sortOrder, isFeatured, estimatedDuration, promoPrice, pricingMode } = req.body;
+    const { name, nameFr, description, descriptionFr, includes, includesFr, category, pricing, sortOrder, isFeatured, requiresQuote, estimatedDuration, promoPrice, pricingMode } = req.body;
 
     if (!name || !pricing) {
       return res.status(400).json({ success: false, message: 'Name and pricing are required' });
@@ -82,6 +83,7 @@ const createService = async (req, res) => {
         category:          category || 'DETAILING',
         sortOrder:         sortOrder || 0,
         isFeatured:        isFeatured ?? false,
+        requiresQuote:     requiresQuote ?? false,
         estimatedDuration: estimatedDuration ? parseInt(estimatedDuration) : null,
         promoPrice:        promoPrice ? parseFloat(promoPrice) : null,
         pricing: {
@@ -106,7 +108,7 @@ const createService = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, nameFr, description, descriptionFr, includes, includesFr, category, pricing, isActive, isFeatured, sortOrder, estimatedDuration, promoPrice, pricingMode } = req.body;
+    const { name, nameFr, description, descriptionFr, includes, includesFr, category, pricing, isActive, isFeatured, requiresQuote, sortOrder, estimatedDuration, promoPrice, pricingMode } = req.body;
 
     const existing = await prisma.service.findUnique({ where: { id: parseInt(id) }, include: { pricing: true } });
     if (!existing) return res.status(404).json({ success: false, message: 'Service not found' });
@@ -127,6 +129,7 @@ const updateService = async (req, res) => {
     if (category          !== undefined) updateData.category          = category;
     if (isActive          !== undefined) updateData.isActive          = isActive;
     if (isFeatured        !== undefined) updateData.isFeatured        = isFeatured;
+    if (requiresQuote      !== undefined) updateData.requiresQuote      = requiresQuote;
     if (sortOrder         !== undefined) updateData.sortOrder         = parseInt(sortOrder) || 0;
     if (estimatedDuration !== undefined) updateData.estimatedDuration = estimatedDuration ? parseInt(estimatedDuration) : null;
     if (promoPrice        !== undefined) updateData.promoPrice        = promoPrice ? parseFloat(promoPrice) : null;

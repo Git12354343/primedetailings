@@ -1,6 +1,9 @@
 // backend/controllers/bookingController.js (Enhanced with Availability Integration)
 const { PrismaClient } = require('@prisma/client');
 const emailService = require('../services/emailService');
+const { sms } = require('../services/smsService');
+const { audit, getIp } = require('../services/auditService');
+const { generateBookingIcs } = require('../services/icsService');
 const { isTimeSlotAvailable, BUSINESS_CONFIG } = require('./availabilityController');
 
 const prisma = new PrismaClient();
@@ -895,6 +898,19 @@ const rescheduleBooking = async (req, res) => {
     if (['COMPLETED', 'CANCELED'].includes(booking.status)) {
       return res.status(400).json({ success: false, message: `Cannot reschedule a ${booking.status.toLowerCase()} booking` });
     }
+    // 24-hour policy (admin can override)
+    if (!req.body.adminOverride) {
+      const cutoffHours = parseInt(process.env.CANCEL_CUTOFF_HOURS || '24');
+      const bookingDt = new Date(`${String(booking.date).split('T')[0]}T${booking.time}:00`);
+      const hoursUntil = (bookingDt - Date.now()) / 3600000;
+      if (hoursUntil < cutoffHours) {
+        return res.status(400).json({
+          success: false,
+          message: `Free rescheduling is no longer available (less than ${cutoffHours}h before your appointment). Please call (438) 796-8001.`,
+          policyViolation: true,
+        });
+      }
+    }
     const timeSlotId = mapTimeToSlotId(time);
     if (timeSlotId) {
       const availability = await isTimeSlotAvailable(date, timeSlotId);
@@ -908,6 +924,18 @@ const rescheduleBooking = async (req, res) => {
       where: { confirmationCode: code.toUpperCase() },
       data: { date: new Date(date), time, updatedAt: new Date() }
     });
+
+    // History record
+    await prisma.bookingHistory.create({
+      data: { bookingId: booking.id, action: 'RESCHEDULED',
+              oldDate: booking.date, newDate: new Date(date),
+              oldTime: booking.time, newTime: time,
+              initiatedBy: req.body.adminOverride ? 'admin' : 'customer' }
+    }).catch(() => {});
+
+    sms.bookingRescheduled({ ...updated, firstName: updated.firstName }).catch(() => {});
+    audit('booking', booking.id, 'rescheduled', { date: booking.date, time: booking.time }, { date, time }, getIp(req));
+
     res.json({ success: true, message: 'Booking rescheduled successfully', booking: formatBookingData(updated) });
   } catch (error) {
     console.error('Reschedule booking error:', error);
@@ -919,15 +947,42 @@ const rescheduleBooking = async (req, res) => {
 const cancelBooking = async (req, res) => {
   try {
     const { code } = req.params;
+    const { reason, adminOverride } = req.body;
     if (!code) return res.status(400).json({ success: false, message: 'Confirmation code is required' });
     const booking = await prisma.booking.findUnique({ where: { confirmationCode: code.toUpperCase() } });
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
     if (booking.status === 'CANCELED') return res.status(400).json({ success: false, message: 'Booking is already canceled' });
     if (booking.status === 'COMPLETED') return res.status(400).json({ success: false, message: 'Cannot cancel a completed booking' });
+
+    // 24-hour cancellation policy
+    if (!adminOverride) {
+      const cutoffHours = parseInt(process.env.CANCEL_CUTOFF_HOURS || '24');
+      const bookingDt = new Date(`${String(booking.date).split('T')[0]}T${booking.time}:00`);
+      const hoursUntil = (bookingDt - Date.now()) / 3600000;
+      if (hoursUntil < cutoffHours) {
+        return res.status(400).json({
+          success: false,
+          message: `Free cancellation is no longer available (less than ${cutoffHours}h before your appointment). Please call (438) 796-8001.`,
+          policyViolation: true,
+        });
+      }
+    }
+
     const updated = await prisma.booking.update({
       where: { confirmationCode: code.toUpperCase() },
-      data: { status: 'CANCELED', updatedAt: new Date() }
+      data: { status: 'CANCELED', cancellationReason: reason || null, updatedAt: new Date() }
     });
+
+    // History record
+    await prisma.bookingHistory.create({
+      data: { bookingId: booking.id, action: 'CANCELLED', oldStatus: booking.status, newStatus: 'CANCELED',
+              reason: reason || null, initiatedBy: adminOverride ? 'admin' : 'customer' }
+    }).catch(() => {});
+
+    // Notifications
+    sms.bookingCancelled({ ...updated, firstName: updated.firstName }).catch(() => {});
+    audit('booking', booking.id, 'cancelled', { status: booking.status }, { status: 'CANCELED', reason }, getIp(req));
+
     res.json({ success: true, message: 'Booking canceled successfully', booking: formatBookingData(updated) });
   } catch (error) {
     console.error('Cancel booking error:', error);
