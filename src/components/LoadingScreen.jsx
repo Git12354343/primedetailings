@@ -4,7 +4,6 @@ const LoadingScreen = ({ onDone }) => {
   const [phase, setPhase] = useState('in'); // 'in' | 'hold' | 'out'
 
   useEffect(() => {
-    // hold for 1.2s then fade out
     const hold = setTimeout(() => setPhase('out'), 1200);
     const done = setTimeout(() => onDone?.(), 1700);
     return () => { clearTimeout(hold); clearTimeout(done); };
@@ -26,16 +25,35 @@ const LoadingScreen = ({ onDone }) => {
       />
 
       <div className="flex flex-col items-center gap-5">
-        {/* Logo mark */}
+
+        {/* Logo */}
         <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center animate-pulse-gold"
           style={{
-            background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
-            boxShadow: '0 0 40px rgba(0,168,204,0.4)',
             animation: 'pulseGold 1.5s ease-in-out infinite',
+            filter: 'drop-shadow(0 0 24px rgba(0,168,204,0.45))',
           }}
         >
-          <span className="text-black font-black text-2xl tracking-tight">PP</span>
+          <img
+            src="/logo.png"
+            alt="Prestige Plus Services"
+            style={{ height: '72px', width: 'auto', objectFit: 'contain' }}
+            onError={(e) => {
+              // Fallback to PP box if logo.png is missing
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.nextElementSibling.style.display = 'flex';
+            }}
+          />
+          {/* Fallback — only shown if logo.png fails to load */}
+          <div
+            className="w-16 h-16 rounded-2xl items-center justify-center"
+            style={{
+              display: 'none',
+              background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
+              boxShadow: '0 0 40px rgba(0,168,204,0.4)',
+            }}
+          >
+            <span className="text-black font-black text-2xl tracking-tight">PP</span>
+          </div>
         </div>
 
         {/* Brand name */}
@@ -44,7 +62,9 @@ const LoadingScreen = ({ onDone }) => {
             Prestige Plus{' '}
             <span style={{
               background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
             }}>
               Services
             </span>
@@ -71,6 +91,10 @@ const LoadingScreen = ({ onDone }) => {
         @keyframes loadBar {
           from { width: 0%; }
           to   { width: 100%; }
+        }
+        @keyframes pulseGold {
+          0%, 100% { opacity: 1;   transform: scale(1); }
+          50%       { opacity: 0.85; transform: scale(1.04); }
         }
       `}</style>
     </div>

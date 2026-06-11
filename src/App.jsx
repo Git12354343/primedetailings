@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
-import { NotificationProvider } from './components/NotificationSystem';
+import { NotificationProvider } from './components/notifications/NotificationProvider';
 import { ContentSkeleton } from './components/LoadingSkeleton';
 import { LanguageProvider } from './context/LanguageContext';
 

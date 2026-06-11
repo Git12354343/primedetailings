@@ -245,7 +245,7 @@ const ServiceManagement = ({ services = [], addOns = [], packages = [], onRefres
   const [showCreateAddOn, setShowCreateAddOn]     = useState(false);
   const { success, error } = useNotifications();
 
-  const vehicleTypes = ['Sedan', 'SUV', 'Truck', 'Coupe'];
+  const vehicleTypes = ['Sedan', 'SUV', 'Truck'];
   const serviceCategories = ['DETAILING', 'PROTECTION', 'RESTORATION', 'MAINTENANCE', 'SPECIALTY'];
   const addOnCategories   = ['ENHANCEMENT', 'PROTECTION', 'CLEANING', 'RESTORATION'];
 

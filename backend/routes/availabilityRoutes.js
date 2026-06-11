@@ -4,7 +4,9 @@ const {
   getAvailability,
   checkTimeSlot,
   getBlockedDates,
+  getBookedSlots,
   validateBookingRequest,
+  getConflicts,
   getBusinessConfig
 } = require('../controllers/availabilityController');
 
@@ -24,5 +26,8 @@ router.get('/blocked', getBlockedDates);
 
 // Validate booking request before submission
 router.post('/validate', validateBookingRequest);
+
+router.get('/booked-slots', getBookedSlots);
+router.get('/conflicts', getConflicts);
 
 module.exports = router;

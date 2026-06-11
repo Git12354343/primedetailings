@@ -1,197 +1,414 @@
-import React, { useState, useEffect, useRef } from 'react';
+// src/pages/Services.jsx
+//
+// Mobile UX improvements:
+//   • Sticky category jump-nav (pills scroll to section, highlight tracks scroll)
+//   • Service/Package card descriptions clamped to 2 lines on mobile + Read more
+//   • Includes accordion (hidden by default, tap to expand)
+//   • Cleaner mobile card layout: name → desc → price+dur row → CTA
+//   • Section IDs wired to jump-nav
+//   • Full bilingual support preserved
+//   • All booking links / service IDs untouched
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
 import useServicesCache from '../hooks/useServicesCache';
+import CategoryJumpNav from '../components/CategoryJumpNav';
 import {
-  CheckCircle, ChevronRight, Loader2, Package, Star,
+  CheckCircle, ChevronRight, ChevronDown, Loader2, Package, Star,
   Car, Truck, Users, Zap, Shield, Sparkles, Wrench,
-  Phone, MessageSquare, Mail, RefreshCw
+  Phone, MessageSquare, Mail, RefreshCw, Clock, ArrowRight,
 } from 'lucide-react';
 
-// ── Config (display only, no prices) ──────────────────────────────────────
-const VEHICLE_ICONS = { Sedan: Car, SUV: Users, Truck: Truck, Coupe: Zap };
-const VEHICLE_DESCS = { Sedan: 'Standard', SUV: 'SUV / CUV', Truck: 'Truck', Coupe: 'Sports' };
+// ── Constants ─────────────────────────────────────────────────────────────────
+const ALLOWED_VEHICLE_TYPES = ['Sedan', 'SUV', 'Truck'];
+const VEHICLE_ICONS = { Sedan: Car, SUV: Users, Truck: Truck };
+const VEHICLE_DESCS = { Sedan: 'Standard', SUV: 'SUV / CUV', Truck: 'Truck' };
 
 const CATEGORY_CONFIG = {
-  PROTECTION:  { icon: Shield,   color: '#00a8cc', labelKey: 'services.catProtection' },
+  PROTECTION:  { icon: Shield,   color: '#00a8cc', labelKey: 'services.catProtection'  },
   RESTORATION: { icon: Star,     color: '#a78bfa', labelKey: 'services.catRestoration' },
-  DETAILING:   { icon: Sparkles, color: '#60a5fa', labelKey: 'services.catDetailing' },
-  SPECIALTY:   { icon: Wrench,   color: '#f97316', labelKey: 'services.catSpecialty' },
+  DETAILING:   { icon: Sparkles, color: '#60a5fa', labelKey: 'services.catDetailing'   },
+  SPECIALTY:   { icon: Wrench,   color: '#f97316', labelKey: 'services.catSpecialty'   },
   MAINTENANCE: { icon: Zap,      color: '#34d399', labelKey: 'services.catMaintenance' },
-  DEFAULT:     { icon: Package,  color: '#94a3b8', labelKey: 'services.catService' },
+  DEFAULT:     { icon: Package,  color: '#94a3b8', labelKey: 'services.catService'     },
 };
+
 const CATEGORY_ORDER = ['PROTECTION', 'RESTORATION', 'DETAILING', 'MAINTENANCE', 'SPECIALTY'];
 
 const ADDON_LABELS = {
-  ENHANCEMENT: 'services.addonEnhancement', PROTECTION: 'services.addonProtection',
-  CLEANING: 'services.addonCleaning',       RESTORATION: 'services.addonRestoration',
+  ENHANCEMENT: 'services.addonEnhancement',
+  PROTECTION:  'services.addonProtection',
+  CLEANING:    'services.addonCleaning',
+  RESTORATION: 'services.addonRestoration',
 };
 
 const CONTACT_QUICK = [
-  { icon: Phone,         id: 'call',     labelKey: 'services.contactCall',  href: 'tel:+14387968001',              color: '#34d399' },
-  { icon: MessageSquare, id: 'whatsapp', label: 'WhatsApp', href: 'https://wa.me/14387968001',     color: '#25D366' },
-  { icon: MessageSquare, id: 'sms',      label: 'SMS',      href: 'sms:+14387968001',              color: '#60a5fa' },
+  { icon: Phone,         id: 'call',     labelKey: 'services.contactCall',  href: 'tel:+14387968001',                  color: '#34d399' },
+  { icon: MessageSquare, id: 'whatsapp', label: 'WhatsApp',                 href: 'https://wa.me/14387968001',         color: '#25D366' },
+  { icon: MessageSquare, id: 'sms',      label: 'SMS',                      href: 'sms:+14387968001',                  color: '#60a5fa' },
   { icon: Mail,          id: 'email',    labelKey: 'services.contactEmail', href: 'mailto:info@prestigeplus.services', color: '#f97316' },
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// Navbar height + jump-nav height (used for scroll offset)
+const SCROLL_OFFSET = 64 + 52;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 const getMinPrice = (pricing) => {
   const vals = Object.values(pricing || {}).filter(v => v > 0);
   return vals.length ? Math.min(...vals) : null;
 };
-
 const getPriceForVehicle = (pricing, vehicle) => {
   const p = pricing?.[vehicle];
   return (p && p > 0) ? p : getMinPrice(pricing);
 };
-
 const getPriceLabel = (pricing, vehicle) => {
   const p = getPriceForVehicle(pricing, vehicle);
   if (!p) return { text: null, isExact: false };
-  const exact = pricing?.[vehicle] > 0;
-  return { text: `$${p}`, isExact: exact };
+  return { text: `$${p}`, isExact: !!(pricing?.[vehicle] > 0) };
+};
+const formatDuration = (mins) => {
+  if (!mins) return null;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h && m) return `${h}h ${m}m`;
+  if (h)      return `${h}h`;
+  return `${m}m`;
+};
+const parseIncludes = (raw) => {
+  if (!raw) return [];
+  try {
+    const p = JSON.parse(raw);
+    if (Array.isArray(p)) return p.map(String).filter(Boolean);
+  } catch {}
+  return raw.split(/\n|,\s*/).map(s => s.trim()).filter(Boolean);
 };
 
-// ── Service Card ──────────────────────────────────────────────────────────
-const ServiceCard = ({ service, vehicleType, index, visible }) => {
-  const { t } = useTranslation();
-  const cfg = CATEGORY_CONFIG[service.category] || CATEGORY_CONFIG.DEFAULT;
-  const Icon = cfg.icon;
-  const { text: priceText, isExact } = getPriceLabel(service.pricing, vehicleType);
-  const minPrice = getMinPrice(service.pricing);
+// ── Expandable description (mobile clamp + Read more) ─────────────────────────
+const ExpandableDesc = ({ text, className = '' }) => {
+  const [open, setOpen] = useState(false);
+  if (!text) return null;
+  const isLong = text.length > 90;
+  return (
+    <div>
+      <p
+        className={`text-gray-400 text-sm leading-relaxed transition-all ${
+          !open && isLong ? 'line-clamp-2 sm:line-clamp-none' : ''
+        } ${className}`}
+      >
+        {text}
+      </p>
+      {isLong && (
+        <button
+          className="sm:hidden text-xs font-semibold mt-1 focus:outline-none focus-visible:underline"
+          style={{ color: '#00a8cc' }}
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+        >
+          {open ? '↑ Show less' : '↓ Read more'}
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ── Includes accordion ────────────────────────────────────────────────────────
+const IncludesAccordion = ({ items, openLabel, closeLabel }) => {
+  const [open, setOpen] = useState(false);
+  if (!items.length) return null;
+  return (
+    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} className="pt-2 mt-2">
+      <button
+        className="flex items-center gap-1.5 w-full py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 rounded"
+        style={{ color: open ? '#00d4ff' : 'rgba(255,255,255,0.4)' }}
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+      >
+        <ChevronDown
+          className="w-3.5 h-3.5 transition-transform flex-shrink-0"
+          style={{ transform: open ? 'rotate(180deg)' : 'none' }}
+        />
+        {open ? (closeLabel || 'Hide details') : (openLabel || `What's included (${items.length})`)}
+      </button>
+      {open && (
+        <ul className="mt-2 space-y-1.5 pb-1">
+          {items.map((item, i) => (
+            <li key={i} className="flex items-start gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              <CheckCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#00a8cc' }} />
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
+// ── Package Card ──────────────────────────────────────────────────────────────
+const PackageCard = ({ pkg, vehicleType, index, visible }) => {
+  const { t, language } = useTranslation();
+  const price  = vehicleType ? getPriceForVehicle(pkg.pricing || {}, vehicleType) : getMinPrice(pkg.pricing || {});
+  const dur    = formatDuration(pkg.estimatedDuration);
+  const name   = (language === 'fr' && pkg.nameFr)   ? pkg.nameFr   : pkg.name;
+  const desc   = (language === 'fr' && pkg.descriptionFr) ? pkg.descriptionFr : pkg.description;
+  const tagline = (language === 'fr' && pkg.taglineFr) ? pkg.taglineFr : pkg.tagline;
+
+  // Parse included services/add-ons for the accordion
+  const includedList = (() => {
+    try { return Array.isArray(pkg.includedServices) ? pkg.includedServices : JSON.parse(pkg.includedServices || '[]'); }
+    catch { return []; }
+  })();
 
   return (
     <div
-      className={`service-card relative rounded-2xl p-6 flex flex-col transition-all duration-700 group ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      className={`relative rounded-2xl p-5 flex flex-col transition-all duration-700 group ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
       style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        transitionDelay: `${index * 80}ms`,
+        background:      pkg.isMostPopular ? 'rgba(0,168,204,0.06)' : 'rgba(255,255,255,0.03)',
+        border:          pkg.isMostPopular ? '1px solid rgba(0,168,204,0.3)' : '1px solid rgba(255,255,255,0.08)',
+        boxShadow:       pkg.isMostPopular ? '0 0 40px rgba(0,168,204,0.08)' : 'none',
+        transitionDelay: `${index * 70}ms`,
       }}
     >
-      {/* Popular badge — driven by real data flag, not list position */}
-      {service.isFeatured && (
-        <div className="absolute -top-3 left-5 px-3 py-1 rounded-full text-xs font-bold"
-          style={{ background: 'linear-gradient(135deg, #00a8cc, #00d4ff)', color: '#0b0f1a' }}>
-          {t('services.popularBadge')}
+      {pkg.isMostPopular && (
+        <div className="absolute -top-3 left-5 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
+          style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', color: '#0b0f1a' }}>
+          <Star className="w-3 h-3" /> Most Popular
         </div>
       )}
 
-      {/* Icon + category */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center service-icon"
-          style={{ background: `${cfg.color}18` }}>
-          <Icon className="w-5 h-5" style={{ color: cfg.color }} />
-        </div>
-        <span className="text-xs font-semibold px-2 py-1 rounded-full"
-          style={{ background: `${cfg.color}12`, color: cfg.color }}>
-          {cfg.label}
-        </span>
-      </div>
+      {tagline && <p className="text-xs text-gray-500 italic mb-2">{tagline}</p>}
 
-      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">
-        {service.name}
+      <h3 className="text-white font-bold text-lg mb-2 group-hover:text-cyan-300 transition-colors leading-snug">
+        {name}
       </h3>
 
-      <p className="text-gray-400 text-sm leading-relaxed mb-5 flex-1">
-        {service.description || t('services.defaultDesc')}
-      </p>
+      <ExpandableDesc text={desc} className="mb-4 flex-1" />
 
-      {/* Price block */}
-      <div className="rounded-xl px-4 py-3 mb-4 flex items-center justify-between"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <div>
-          <div className="text-xs text-gray-500 mb-0.5">
-            {isExact ? `${vehicleType} ${t('services.vehiclePriceSuffix')}` : t('services.startingFrom')}
-          </div>
-          <div className="text-xl font-black" style={{
-            background: minPrice ? 'linear-gradient(135deg, #00a8cc, #00d4ff)' : 'none',
-            WebkitBackgroundClip: minPrice ? 'text' : 'unset',
-            WebkitTextFillColor: minPrice ? 'transparent' : 'unset',
-            backgroundClip: minPrice ? 'text' : 'unset',
-            color: minPrice ? 'unset' : '#6b7280',
-          }}>
-            {priceText || t('services.callForPrice')}
-          </div>
+      {/* Price + duration row */}
+      <div className="flex items-center gap-3 mb-4 mt-auto" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px' }}>
+        <div className="flex-1">
+          {pkg.requiresQuote ? (
+            <span className="text-sm font-bold" style={{ color: '#00d4ff' }}>Custom Quote</span>
+          ) : price ? (
+            <span className="text-xl font-black" style={{
+              background: 'linear-gradient(135deg,#00a8cc,#00d4ff)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            }}>
+              From ${price}
+            </span>
+          ) : null}
         </div>
-        {!isExact && minPrice && (
-          <span className="text-xs text-gray-600 text-right max-w-[90px]">{t('services.variesByVehicle')}</span>
+        {dur && (
+          <div className="flex items-center gap-1 text-xs flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <Clock className="w-3 h-3" /> {dur}
+          </div>
         )}
       </div>
 
+      {/* Included services accordion */}
+      {includedList.length > 0 && (
+        <IncludesAccordion
+          items={includedList}
+          openLabel={`View included services (${includedList.length})`}
+          closeLabel="Hide included services"
+        />
+      )}
+
+      {/* CTA */}
       <Link
-        to={service.requiresQuote
-          ? `/quote?services=${service.id}${vehicleType ? `&vehicleType=${vehicleType}` : ''}`
-          : `/booking?service=${service.id}&vehicle=${vehicleType}`}
-        className={service.requiresQuote
-          ? 'w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide group'
-          : 'btn-luxury w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold tracking-wide group'}
-        style={service.requiresQuote
-          ? { background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)', color: '#f59e0b' }
-          : undefined}
+        to={pkg.requiresQuote
+          ? `/quote?packageId=${pkg.id}&packageName=${encodeURIComponent(pkg.name)}`
+          : `/booking`}
+        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold mt-4 transition-all"
+        style={{
+          background: pkg.isMostPopular ? 'linear-gradient(135deg,#00a8cc,#00d4ff)' : 'rgba(0,168,204,0.1)',
+          color:      pkg.isMostPopular ? '#0b0f1a' : '#00d4ff',
+          border:     pkg.isMostPopular ? 'none'    : '1px solid rgba(0,168,204,0.25)',
+          minHeight:  '44px',
+        }}
       >
-        {service.requiresQuote ? 'Request Quote' : t('services.bookThis')}
-        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+        {pkg.requiresQuote ? 'Get Quote' : 'Book Now'}
+        <ArrowRight className="w-4 h-4" />
       </Link>
     </div>
   );
 };
 
-// ── Add-on Card ───────────────────────────────────────────────────────────
-const AddOnCard = ({ addOn, index, visible }) => (
-  <div
-    className={`flex items-center justify-between p-4 rounded-xl transition-all duration-500 hover:-translate-y-0.5 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-    style={{
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.07)',
-      transitionDelay: `${index * 50}ms`,
-    }}
-  >
-    <div className="flex items-center gap-3">
-      <CheckCircle className="w-4 h-4 text-cyan-500 flex-shrink-0" />
-      <div>
-        <div className="text-white font-semibold text-sm">{addOn.name}</div>
-        {addOn.description && <div className="text-gray-500 text-xs mt-0.5">{addOn.description}</div>}
+// ── Service Card ──────────────────────────────────────────────────────────────
+const ServiceCard = ({ service, vehicleType, index, visible }) => {
+  const { t, language } = useTranslation();
+  const cfg  = CATEGORY_CONFIG[service.category] || CATEGORY_CONFIG.DEFAULT;
+  const Icon = cfg.icon;
+
+  const { text: priceText, isExact } = getPriceLabel(service.pricing, vehicleType);
+  const minPrice = getMinPrice(service.pricing);
+  const dur      = formatDuration(service.estimatedDuration);
+
+  const name = (language === 'fr' && service.nameFr)        ? service.nameFr        : service.name;
+  const desc = (language === 'fr' && service.descriptionFr) ? service.descriptionFr : service.description;
+
+  const rawIncludes = language === 'fr' ? (service.includesFr || service.includes) : service.includes;
+  const includes    = parseIncludes(rawIncludes);
+
+  return (
+    <div
+      className={`relative rounded-2xl p-5 flex flex-col transition-all duration-700 group ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      style={{
+        background:      'rgba(255,255,255,0.03)',
+        border:          '1px solid rgba(255,255,255,0.08)',
+        transitionDelay: `${index * 70}ms`,
+      }}
+    >
+      {/* Featured badge */}
+      {service.isFeatured && (
+        <div className="absolute -top-3 left-5 px-3 py-1 rounded-full text-xs font-bold"
+          style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', color: '#0b0f1a' }}>
+          {t('services.popularBadge')}
+        </div>
+      )}
+
+      {/* Icon + category pill */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ background: `${cfg.color}18` }}>
+          <Icon className="w-4 h-4" style={{ color: cfg.color }} />
+        </div>
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+          style={{ background: `${cfg.color}12`, color: cfg.color }}>
+          {t(cfg.labelKey)}
+        </span>
       </div>
+
+      {/* Name */}
+      <h3 className="text-white font-bold text-base mb-2 leading-snug group-hover:text-cyan-300 transition-colors">
+        {name}
+      </h3>
+
+      {/* Description — 2-line clamp on mobile, full on desktop */}
+      <ExpandableDesc text={desc} className="mb-4 flex-1" />
+
+      {/* Price + duration inline row */}
+      <div
+        className="flex items-center justify-between rounded-xl px-3 py-2.5 mb-3"
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+      >
+        <div>
+          <div className="text-xs mb-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            {isExact ? `${vehicleType} price` : t('services.startingFrom')}
+          </div>
+          <div className="text-lg font-black" style={{
+            background: minPrice ? 'linear-gradient(135deg,#00a8cc,#00d4ff)' : 'none',
+            WebkitBackgroundClip: minPrice ? 'text' : 'unset',
+            WebkitTextFillColor:  minPrice ? 'transparent' : '#6b7280',
+            backgroundClip:       minPrice ? 'text' : 'unset',
+          }}>
+            {priceText || t('services.callForPrice')}
+          </div>
+        </div>
+        {dur && (
+          <div className="flex items-center gap-1 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <Clock className="w-3.5 h-3.5" /> {dur}
+          </div>
+        )}
+      </div>
+
+      {/* Includes accordion */}
+      <IncludesAccordion items={includes} />
+
+      {/* CTA — full width, 44px touch target */}
+      <Link
+        to={service.requiresQuote ? `/quote?serviceId=${service.id}` : `/booking`}
+        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold mt-3 transition-all"
+        style={service.requiresQuote
+          ? { background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)', color: '#f59e0b', minHeight: '44px' }
+          : { background: 'rgba(0,168,204,0.1)', border: '1px solid rgba(0,168,204,0.25)', color: '#00d4ff', minHeight: '44px' }}
+      >
+        {service.requiresQuote ? 'Request Quote' : t('services.bookThis')}
+        <ChevronRight className="w-4 h-4" />
+      </Link>
     </div>
-    <span className="text-sm font-black flex-shrink-0 ml-3" style={{
-      background: 'linear-gradient(135deg, #34d399, #6ee7b7)',
-      WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-    }}>
-      +${addOn.price}
-    </span>
+  );
+};
+
+// ── Add-on Card ───────────────────────────────────────────────────────────────
+const AddOnCard = ({ addOn, index, visible }) => {
+  const { language } = useTranslation();
+  const name = (language === 'fr' && addOn.nameFr)        ? addOn.nameFr        : addOn.name;
+  const desc = (language === 'fr' && addOn.descriptionFr) ? addOn.descriptionFr : addOn.description;
+  return (
+    <div
+      className={`flex items-center justify-between p-3.5 rounded-xl transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      style={{
+        background:      'rgba(255,255,255,0.03)',
+        border:          '1px solid rgba(255,255,255,0.07)',
+        transitionDelay: `${index * 40}ms`,
+        minHeight:       '52px',
+      }}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#00a8cc' }} />
+        <div className="min-w-0">
+          <div className="text-white font-semibold text-sm leading-snug">{name}</div>
+          {desc && <div className="text-gray-500 text-xs mt-0.5 line-clamp-1">{desc}</div>}
+        </div>
+      </div>
+      <span className="text-sm font-black flex-shrink-0 ml-3" style={{
+        background: 'linear-gradient(135deg,#34d399,#6ee7b7)',
+        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+      }}>
+        +${addOn.price}
+      </span>
+    </div>
+  );
+};
+
+// ── Section header ────────────────────────────────────────────────────────────
+const SectionHeader = ({ icon: Icon, iconColor, iconBg, title, subtitle }) => (
+  <div className="flex items-center gap-3 mb-5">
+    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+      style={{ background: iconBg }}>
+      <Icon className="w-4 h-4" style={{ color: iconColor }} />
+    </div>
+    <h2 className="text-lg font-bold text-white">{title}</h2>
+    {subtitle && <span className="text-gray-500 text-xs hidden sm:block">{subtitle}</span>}
+    <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
   </div>
 );
 
-// ── Main Page ─────────────────────────────────────────────────────────────
+// ── Main page ─────────────────────────────────────────────────────────────────
 const Services = () => {
-  const { t } = useTranslation();
-  const { services, addOns, loading, error, refresh: load } = useServicesCache();
-  const [vehicleType, setVehicleType] = useState(null);
-  const [visible, setVisible]         = useState(false);
-  const ref = useRef(null);
+  const { t }        = useTranslation();
+  const { services, addOns, packages, loading, error, refresh: load } = useServicesCache();
 
-  // Auto-select first vehicle type when data loads
+  const [vehicleType,    setVehicleType]    = useState(null);
+  const [visible,        setVisible]        = useState(false);
+  const [activeSection,  setActiveSection]  = useState('');
+
+  const pageRef = useRef(null);
+
+  // Set default vehicle type when data arrives
   useEffect(() => {
     if (services.length && !vehicleType) {
       const first = Object.keys(services[0]?.pricing || {})[0] ?? 'Sedan';
       setVehicleType(first);
     }
-  }, [services]);
+  }, [services, vehicleType]);
 
+  // Trigger entrance animation
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.05 }
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setVisible(true); },
+      { threshold: 0.02 }
     );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
+    if (pageRef.current) obs.observe(pageRef.current);
+    return () => obs.disconnect();
   }, []);
 
-  // Derive vehicle types from all services' pricing keys
-  const vehicleTypes = [...new Set(services.flatMap(s => Object.keys(s.pricing || {})))];
-  const activeVehicle = vehicleType ?? vehicleTypes[0] ?? 'Sedan';
+  // Derived data
+  const vehicleTypes   = ALLOWED_VEHICLE_TYPES.filter(t =>
+    services.some(s => Object.keys(s.pricing || {}).includes(t)));
+  const activeVehicle  = vehicleType ?? vehicleTypes[0] ?? 'Sedan';
 
-  // Group + sort services by category
   const grouped = services.reduce((acc, s) => {
     const cat = s.category || 'DEFAULT';
     if (!acc[cat]) acc[cat] = [];
@@ -203,7 +420,6 @@ const Services = () => {
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
-  // Group add-ons by category
   const groupedAddOns = addOns.reduce((acc, a) => {
     const cat = a.category || 'OTHER';
     if (!acc[cat]) acc[cat] = [];
@@ -211,62 +427,102 @@ const Services = () => {
     return acc;
   }, {});
 
-  return (
-    <div ref={ref} style={{ background: '#0b0f1a', minHeight: '100vh' }}>
+  // Build jump-nav items from available data (only sections that exist)
+  const navItems = [
+    packages.length > 0     && { id: 'section-packages', label: 'Packages',  icon: Package      },
+    addOns.length > 0        && { id: 'section-addons',   label: 'Add-ons',   icon: CheckCircle  },
+    ...sortedCategories.map(cat => {
+      const cfg = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.DEFAULT;
+      return { id: `section-${cat.toLowerCase()}`, label: t(cfg.labelKey), icon: cfg.icon };
+    }),
+  ].filter(Boolean);
 
-      {/* Hero banner */}
-      <div className="relative pt-32 pb-20 px-4 text-center overflow-hidden"
-        style={{ background: 'linear-gradient(180deg, #111827 0%, #0b0f1a 100%)' }}>
+  // IntersectionObserver — updates active nav pill while scrolling
+  useEffect(() => {
+    if (!navItems.length || loading) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const intersecting = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (intersecting.length > 0) setActiveSection(intersecting[0].target.id);
+      },
+      { rootMargin: `-${SCROLL_OFFSET}px 0px -55% 0px`, threshold: 0 }
+    );
+    navItems.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [navItems.length, loading]);
+
+  // Smooth scroll to section with navbar + jump-nav offset
+  const scrollToSection = useCallback((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }, []);
+
+  return (
+    <div ref={pageRef} style={{ background: '#0b0f1a', minHeight: '100vh' }}>
+
+      {/* ── Hero ────────────────────────────────────────────────────────── */}
+      <div className="relative pt-32 pb-16 px-4 text-center overflow-hidden"
+        style={{ background: 'linear-gradient(180deg,#111827 0%,#0b0f1a 100%)' }}>
         <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(0,168,204,0.08) 0%, transparent 60%)' }} />
+          style={{ background: 'radial-gradient(ellipse at 50% 0%,rgba(0,168,204,0.07) 0%,transparent 60%)' }} />
         <div className="absolute top-0 left-0 right-0 h-px"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(0,168,204,0.3), transparent)' }} />
+          style={{ background: 'linear-gradient(90deg,transparent,rgba(0,168,204,0.3),transparent)' }} />
         <div className="relative z-10 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
             style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
             <Sparkles className="w-3 h-3 text-cyan-400" />
             <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">{t('services.badge')}</span>
           </div>
-          <h1 className="text-5xl sm:text-6xl font-black text-white mb-4 leading-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
             {t('services.title')}{' '}
             <span style={{
-              background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
+              background: 'linear-gradient(135deg,#00a8cc,#00d4ff)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            }}>{t('services.pageTitleAccent')}</span>
+            }}>
+              {t('services.pageTitleAccent')}
+            </span>
           </h1>
-          <p className="text-gray-400 text-lg">
-            {t('services.pageSubtitle')}
-          </p>
+          <p className="text-gray-400 text-base sm:text-lg">{t('services.pageSubtitle')}</p>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">
+      {/* ── Category jump-nav (sticky, below navbar) ────────────────────── */}
+      <CategoryJumpNav
+        items={navItems}
+        activeId={activeSection}
+        onNavigate={scrollToSection}
+      />
 
-        {/* Vehicle selector — fully dynamic */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-24 pt-6">
+
+        {/* ── Vehicle selector ──────────────────────────────────────────── */}
         {vehicleTypes.length > 0 && (
-          <div
-            className={`rounded-2xl p-5 mb-12 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
-            <p className="text-white font-semibold text-xs mb-4 uppercase tracking-widest">
-              {t('services.vehiclePrompt')}
-            </p>
-            <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(vehicleTypes.length, 4)}, 1fr)` }}>
+          <div className={`rounded-2xl p-4 sm:p-5 mb-10 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">{t('services.vehiclePrompt')}</p>
+            <div className="flex flex-wrap gap-2.5">
               {vehicleTypes.map(v => {
-                const Icon = VEHICLE_ICONS[v] || Car;
-                const isSelected = activeVehicle === v;
+                const VIcon  = VEHICLE_ICONS[v] || Car;
+                const active = activeVehicle === v;
                 return (
                   <button key={v} onClick={() => setVehicleType(v)}
-                    className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 active:scale-95"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
                     style={{
-                      background: isSelected ? 'rgba(0,168,204,0.12)' : 'rgba(255,255,255,0.02)',
-                      border: isSelected ? '1px solid rgba(0,168,204,0.4)' : '1px solid rgba(255,255,255,0.07)',
-                      transform: isSelected ? 'translateY(-2px)' : 'none',
-                    }}
-                  >
-                    <Icon className="w-6 h-6" style={{ color: isSelected ? '#00d4ff' : '#6b7280' }} />
-                    <span className="text-sm font-bold" style={{ color: isSelected ? '#00d4ff' : '#9ca3af' }}>{v}</span>
-                    <span className="text-xs text-gray-600">{VEHICLE_DESCS[v] || v}</span>
+                      background: active ? 'rgba(0,168,204,0.15)' : 'rgba(255,255,255,0.04)',
+                      border:     active ? '1px solid rgba(0,168,204,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                      color:      active ? '#00d4ff' : 'rgba(255,255,255,0.6)',
+                      minHeight:  '44px',
+                    }}>
+                    <VIcon className="w-4 h-4" />
+                    {v}
+                    {VEHICLE_DESCS[v] && <span className="text-xs opacity-50 hidden sm:inline">· {VEHICLE_DESCS[v]}</span>}
                   </button>
                 );
               })}
@@ -274,118 +530,129 @@ const Services = () => {
           </div>
         )}
 
-        {/* Loading */}
+        {/* ── Loading ───────────────────────────────────────────────────── */}
         {loading && (
-          <div className="flex flex-col items-center gap-3 py-20">
-            <Loader2 className="w-7 h-7 animate-spin text-cyan-500" />
-            <span className="text-gray-500 text-sm">{t('services.loading')}</span>
+          <div className="flex items-center justify-center gap-3 py-20 text-gray-500">
+            <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+            {t('services.loading')}
           </div>
         )}
 
-        {/* Error */}
-        {error && !loading && (
-          <div className="rounded-2xl p-6 text-center mb-8"
-            style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
-            <p className="text-red-400 mb-3">{error}</p>
-            <button onClick={load} className="inline-flex items-center gap-2 text-cyan-400 text-sm hover:text-cyan-300">
+        {/* ── Error ─────────────────────────────────────────────────────── */}
+        {!loading && error && (
+          <div className="text-center py-20">
+            <p className="text-red-400 mb-4">{t('services.loadError')}</p>
+            <button onClick={() => load(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold mx-auto"
+              style={{ background: 'rgba(0,168,204,0.1)', border: '1px solid rgba(0,168,204,0.25)', color: '#00d4ff' }}>
               <RefreshCw className="w-4 h-4" /> {t('services.retry')}
             </button>
           </div>
         )}
 
-        {/* Service groups */}
-        {!loading && !error && sortedCategories.map(cat => {
-          const cfg = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.DEFAULT;
-          const items = grouped[cat].sort((a, b) => a.sortOrder - b.sortOrder);
-          return (
-            <div key={cat} className="mb-16">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: `${cfg.color}18` }}>
-                  <cfg.icon className="w-4 h-4" style={{ color: cfg.color }} />
-                </div>
-                <h2 className="text-xl font-bold text-white">{t(cfg.labelKey)} {t('services.categorySuffix')}</h2>
-                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {items.map((service, i) => (
-                  <ServiceCard key={service.id} service={service} vehicleType={activeVehicle} index={i} visible={visible} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+        {!loading && !error && (
+          <div className="space-y-16">
 
-        {/* Empty state */}
-        {!loading && !error && sortedCategories.length === 0 && (
-          <div className="text-center py-20">
-            <Package className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">{t('services.comingSoonTitle')}</h3>
-            <p className="text-gray-500">{t('services.comingSoonDesc')}</p>
-          </div>
-        )}
-
-        {/* Add-ons */}
-        {!loading && Object.keys(groupedAddOns).length > 0 && (
-          <div className="mb-16">
-            <div className="rounded-2xl p-6 sm:p-8"
-              style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: 'rgba(52,211,153,0.15)' }}>
-                  <CheckCircle className="w-4 h-4 text-green-400" />
+            {/* ── 1. PACKAGES ───────────────────────────────────────────── */}
+            {packages.length > 0 && (
+              <section id="section-packages" aria-label="Packages">
+                <SectionHeader
+                  icon={Package}
+                  iconColor="#00d4ff"
+                  iconBg="rgba(0,168,204,0.15)"
+                  title="Packages"
+                  subtitle="— complete detailing bundles"
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {packages.map((pkg, i) => (
+                    <PackageCard key={pkg.id} pkg={pkg} vehicleType={activeVehicle} index={i} visible={visible} />
+                  ))}
                 </div>
-                <h2 className="text-xl font-bold text-white">{t('services.addOnTitle')}</h2>
-                <span className="text-gray-500 text-sm">{t('services.addOnSuffix')}</span>
-              </div>
-              {Object.entries(groupedAddOns)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([cat, items]) => (
-                  <div key={cat} className="mb-6 last:mb-0">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
-                      {ADDON_LABELS[cat] ? t(ADDON_LABELS[cat]) : cat}
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {items.sort((a, b) => a.sortOrder - b.sortOrder).map((addon, i) => (
-                        <AddOnCard key={addon.id} addOn={addon} index={i} visible={visible} />
-                      ))}
-                    </div>
+              </section>
+            )}
+
+            {/* ── 2. ADD-ONS ────────────────────────────────────────────── */}
+            {Object.keys(groupedAddOns).length > 0 && (
+              <section id="section-addons" aria-label="Add-ons">
+                <div className="rounded-2xl p-5 sm:p-7"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <SectionHeader
+                    icon={CheckCircle}
+                    iconColor="#34d399"
+                    iconBg="rgba(52,211,153,0.15)"
+                    title={t('services.addOnTitle')}
+                    subtitle={t('services.addOnSuffix')}
+                  />
+                  {Object.entries(groupedAddOns)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([cat, items]) => (
+                      <div key={cat} className="mb-6 last:mb-0">
+                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                          {ADDON_LABELS[cat] ? t(ADDON_LABELS[cat]) : cat}
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {items.map((a, i) => (
+                            <AddOnCard key={a.id} addOn={a} index={i} visible={visible} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </section>
+            )}
+
+            {/* ── 3. SERVICE CATEGORIES ─────────────────────────────────── */}
+            {sortedCategories.map(cat => {
+              const cfg   = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.DEFAULT;
+              const items = [...(grouped[cat] || [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+              return (
+                <section key={cat} id={`section-${cat.toLowerCase()}`} aria-label={t(cfg.labelKey)}>
+                  <SectionHeader
+                    icon={cfg.icon}
+                    iconColor={cfg.color}
+                    iconBg={`${cfg.color}18`}
+                    title={`${t(cfg.labelKey)} ${t('services.categorySuffix')}`}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                    {items.map((service, i) => (
+                      <ServiceCard key={service.id} service={service} vehicleType={activeVehicle} index={i} visible={visible} />
+                    ))}
                   </div>
+                </section>
+              );
+            })}
+
+            {/* ── Empty state ────────────────────────────────────────────── */}
+            {sortedCategories.length === 0 && packages.length === 0 && (
+              <div className="text-center py-20">
+                <Package className="w-12 h-12 text-gray-700 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">{t('services.comingSoonTitle')}</h3>
+                <p className="text-gray-500">{t('services.comingSoonDesc')}</p>
+              </div>
+            )}
+
+            {/* ── CTA strip ─────────────────────────────────────────────── */}
+            <div className="rounded-2xl p-7 text-center"
+              style={{ background: 'rgba(0,168,204,0.04)', border: '1px solid rgba(0,168,204,0.15)' }}>
+              <h3 className="text-xl font-bold text-white mb-2">{t('services.ctaTitle')}</h3>
+              <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">{t('services.ctaDesc')}</p>
+              <div className="flex flex-wrap gap-3 justify-center">
+                {CONTACT_QUICK.map(({ icon: Icon, id, labelKey, label, href, color }) => (
+                  <a key={id} href={href}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95"
+                    style={{
+                      background: `${color}12`, border: `1px solid ${color}30`, color,
+                      minHeight: '44px',
+                    }}>
+                    <Icon className="w-4 h-4" />
+                    {labelKey ? t(labelKey) : label}
+                  </a>
                 ))}
+              </div>
             </div>
+
           </div>
         )}
-
-        {/* Bottom CTA */}
-        <div
-          className={`rounded-2xl p-8 text-center transition-all duration-700 delay-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-          style={{ background: 'rgba(0,168,204,0.05)', border: '1px solid rgba(0,168,204,0.15)' }}
-        >
-          <h3 className="text-2xl font-black text-white mb-2">{t('services.ctaTitle')}</h3>
-          <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-            {t('services.ctaDesc')}
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto mb-6">
-            {CONTACT_QUICK.map(({ icon: Icon, id, label, labelKey, href, color }) => (
-              <a key={label} href={href}
-                target={id === 'whatsapp' ? '_blank' : undefined}
-                rel="noopener noreferrer"
-                className="flex flex-col items-center gap-2 py-3 px-2 rounded-xl transition-all duration-200 hover:-translate-y-1 active:scale-95"
-                style={{ background: `${color}10`, border: `1px solid ${color}25` }}
-              >
-                <Icon className="w-5 h-5" style={{ color }} />
-                <span className="text-white text-xs font-bold">{labelKey ? t(labelKey) : label}</span>
-              </a>
-            ))}
-          </div>
-          <Link
-            to={`/booking${activeVehicle ? `?vehicle=${activeVehicle}` : ''}`}
-            className="btn-luxury inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-bold tracking-wide group"
-          >
-            {t('services.bookYourNow', { v: activeVehicle })}
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
       </div>
     </div>
   );

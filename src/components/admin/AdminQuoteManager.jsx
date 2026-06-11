@@ -1,6 +1,7 @@
 // src/components/admin/AdminQuoteManager.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, ChevronDown, ChevronUp, Phone, Mail, MapPin, Car, DollarSign, Calendar, Loader2, Check, X, ExternalLink } from 'lucide-react';
+import ConvertModal from './ConvertModal';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -21,67 +22,14 @@ const iStyle = {
   border:'1px solid rgba(255,255,255,0.1)', fontFamily:'inherit',
 };
 
-// ── Convert Modal ─────────────────────────────────────────────────────────────
-const ConvertModal = ({ quote, adminToken, onClose, onDone }) => {
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('09:00');
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState('');
-
-  const convert = async () => {
-    if (!date || !time) { setError('Date and time required.'); return; }
-    setLoading(true); setError('');
-    try {
-      const res = await fetch(`${API}/quotes/admin/${quote.id}/convert`, {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'x-admin-secret': adminToken },
-        body: JSON.stringify({ date, time }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || 'Failed');
-      onDone(data.confirmationCode);
-    } catch (e) { setError(e.message); setLoading(false); }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background:'rgba(0,0,0,0.8)' }}>
-      <div className="w-full max-w-sm rounded-2xl p-6" style={{ background:'#111827', border:'1px solid rgba(0,168,204,0.25)' }}>
-        <h3 className="text-white font-bold text-lg mb-1">Convert to Booking</h3>
-        <p className="text-gray-500 text-sm mb-5">Set the appointment date and time to create the booking.</p>
-        <div className="space-y-3 mb-4">
-          <div>
-            <label className="block text-xs text-gray-500 uppercase tracking-wide mb-1">Date *</label>
-            <input type="date" value={date} onChange={e => setDate(e.target.value)} style={iStyle} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 uppercase tracking-wide mb-1">Time *</label>
-            <input type="time" value={time} onChange={e => setTime(e.target.value)} style={iStyle} />
-          </div>
-        </div>
-        {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
-        <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-400"
-            style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
-          <button onClick={convert} disabled={loading}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold text-[#0b0f1a] disabled:opacity-50"
-            style={{ background:'linear-gradient(135deg,#00a8cc,#00d4ff)' }}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Create Booking'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ── Quote Card ────────────────────────────────────────────────────────────────
 const QuoteCard = ({ quote, adminToken, onRefresh }) => {
-  const [open,         setOpen]         = useState(false);
-  const [savingStatus, setSavingStatus] = useState(false);
-  const [savingPrice,  setSavingPrice]  = useState(false);
-  const [price,        setPrice]        = useState(quote.quotedPrice || '');
-  const [adminNotes,   setAdminNotes]   = useState(quote.adminNotes || '');
-  const [convertModal, setConvertModal] = useState(false);
+  const [open,          setOpen]          = useState(false);
+  const [savingStatus,  setSavingStatus]  = useState(false);
+  const [savingPrice,   setSavingPrice]   = useState(false);
+  const [price,         setPrice]         = useState(quote.quotedPrice || '');
+  const [adminNotes,    setAdminNotes]    = useState(quote.adminNotes || '');
+  const [convertModal,  setConvertModal]  = useState(false);
   const [convertedCode, setConvertedCode] = useState(null);
 
   const headers = { 'Content-Type':'application/json', 'x-admin-secret': adminToken };
@@ -103,12 +51,13 @@ const QuoteCard = ({ quote, adminToken, onRefresh }) => {
     setSavingPrice(false); onRefresh();
   };
 
-  const services = (() => { try { return JSON.parse(quote.services); } catch { return []; } })();
+  const services   = (() => { try { return JSON.parse(quote.services); } catch { return []; } })();
   const vehicleLine = [quote.year, quote.make, quote.model].filter(Boolean).join(' ') || quote.vehicleType;
-  const createdAt = new Date(quote.createdAt).toLocaleDateString('en-CA', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  const createdAt  = new Date(quote.createdAt).toLocaleDateString('en-CA', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)' }}>
+
       {/* Header row */}
       <button className="w-full flex items-start justify-between gap-3 p-5 text-left" onClick={() => setOpen(o => !o)}>
         <div className="flex-1 min-w-0">
@@ -131,6 +80,7 @@ const QuoteCard = ({ quote, adminToken, onRefresh }) => {
 
       {open && (
         <div className="px-5 pb-5 space-y-5 border-t border-white/5 pt-4">
+
           {/* Customer + vehicle details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -148,7 +98,7 @@ const QuoteCard = ({ quote, adminToken, onRefresh }) => {
             </div>
           </div>
 
-          {/* Notes */}
+          {/* Customer notes */}
           {quote.notes && (
             <div className="p-3 rounded-xl" style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)' }}>
               <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-1">Customer Notes</h4>
@@ -167,7 +117,8 @@ const QuoteCard = ({ quote, adminToken, onRefresh }) => {
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Admin Notes</label>
-              <textarea value={adminNotes} onChange={e => setAdminNotes(e.target.value)} rows={2} style={{ ...iStyle, resize:'vertical' }} placeholder="Internal notes…" />
+              <textarea value={adminNotes} onChange={e => setAdminNotes(e.target.value)} rows={2}
+                style={{ ...iStyle, resize:'vertical' }} placeholder="Internal notes…" />
             </div>
             <button onClick={savePrice} disabled={savingPrice}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-[#0b0f1a] disabled:opacity-50"
@@ -203,14 +154,21 @@ const QuoteCard = ({ quote, adminToken, onRefresh }) => {
             <div className="text-center text-purple-300 text-sm">✓ Converted — Booking #{quote.bookingId}</div>
           )}
 
-          {/* Convert modal */}
+          {/* Convert modal — uses new ConvertModal with slot picker */}
           {convertModal && (
-            <ConvertModal quote={quote} adminToken={adminToken} onClose={() => setConvertModal(false)}
-              onDone={(code) => { setConvertModal(false); setConvertedCode(code); onRefresh(); }} />
+            <ConvertModal
+              quote={quote}
+              adminToken={adminToken}
+              onClose={() => setConvertModal(false)}
+              onDone={(code) => { setConvertModal(false); setConvertedCode(code); onRefresh(); }}
+            />
           )}
           {convertedCode && (
-            <div className="text-center text-green-400 text-sm">✓ Booking created — Code: <span className="font-mono font-bold">{convertedCode}</span></div>
+            <div className="text-center text-green-400 text-sm">
+              ✓ Booking created — Code: <span className="font-mono font-bold">{convertedCode}</span>
+            </div>
           )}
+
         </div>
       )}
     </div>
@@ -239,7 +197,7 @@ const AdminQuoteManager = ({ adminToken }) => {
 
   useEffect(() => { fetchQuotes(); }, [fetchQuotes]);
 
-  const FILTERS = ['ALL', ...ALL_STATUSES];
+  const FILTERS      = ['ALL', ...ALL_STATUSES];
   const pendingCount = quotes.filter(q => ['NEW','REVIEWING'].includes(q.status)).length;
 
   return (
@@ -249,7 +207,9 @@ const AdminQuoteManager = ({ adminToken }) => {
           <h2 className="text-xl font-bold text-white">
             Quote Requests
             {pendingCount > 0 && (
-              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">{pendingCount} pending</span>
+              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                {pendingCount} pending
+              </span>
             )}
           </h2>
           <p className="text-gray-500 text-sm mt-0.5">Manage retail custom-quote requests</p>
@@ -268,9 +228,11 @@ const AdminQuoteManager = ({ adminToken }) => {
             className="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap flex-shrink-0 transition-all"
             style={{
               background: filter === f ? 'rgba(0,168,204,0.15)' : 'rgba(255,255,255,0.04)',
-              border: filter === f ? '1px solid rgba(0,168,204,0.4)' : '1px solid rgba(255,255,255,0.08)',
-              color: filter === f ? '#00d4ff' : 'rgba(255,255,255,0.6)',
-            }}>{f}</button>
+              border:     filter === f ? '1px solid rgba(0,168,204,0.4)' : '1px solid rgba(255,255,255,0.08)',
+              color:      filter === f ? '#00d4ff' : 'rgba(255,255,255,0.6)',
+            }}>
+            {f}
+          </button>
         ))}
       </div>
 
@@ -286,7 +248,9 @@ const AdminQuoteManager = ({ adminToken }) => {
         </div>
       ) : (
         <div className="space-y-3">
-          {quotes.map(q => <QuoteCard key={q.id} quote={q} adminToken={adminToken} onRefresh={() => fetchQuotes(true)} />)}
+          {quotes.map(q => (
+            <QuoteCard key={q.id} quote={q} adminToken={adminToken} onRefresh={() => fetchQuotes(true)} />
+          ))}
         </div>
       )}
     </div>

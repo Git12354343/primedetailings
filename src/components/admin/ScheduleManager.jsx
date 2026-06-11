@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Save, Plus, Trash2, AlertTriangle, CheckCircle, Settings, Loader2 } from 'lucide-react';
 
-const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
+const GOLD   = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
 const GOLD_S = '#00a8cc';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const DEFAULT_CONFIG = {
-  workingDays: [1, 2, 3, 4, 5],
-  operatingHours: { start: 8, end: 18 },
+  workingDays:        [1, 2, 3, 4, 5],
+  operatingHours:     { start: 8, end: 18 },
   timeSlots: [
-    { id: 'morning',   label: '8:00 AM',  startHour: 8,  endHour: 14 },
-    { id: 'afternoon', label: '12:00 PM', startHour: 12, endHour: 18 },
+    { id: 'morning',   label: '8:00 AM',  startHour: 8,  endHour: 12 },
+    { id: 'afternoon', label: '1:00 PM',  startHour: 13, endHour: 18 },
   ],
   maxBookingsPerSlot: 1,
-  minAdvanceHours: 24,
-  maxAdvanceDays: 60,
+  minAdvanceHours:    24,
+  maxAdvanceDays:     60,
 };
 
 const sanitizeConfig = (raw) => {
@@ -45,26 +45,28 @@ const safeInt = (val, fallback) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-// ── Shared input styles ────────────────────────────────────────────────────────
-const iBase = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', padding: '8px 12px', fontSize: '13px', outline: 'none' };
-const iNum  = { ...iBase, width: '100%', fontSize: '1.5rem', fontWeight: '900', textAlign: 'center', color: '#00d4ff', borderRadius: '12px', padding: '12px' };
-const iSlot = { ...iBase, width: '7rem' };
-const iHour = { ...iBase, width: '4rem', textAlign: 'center' };
-const iDate = { ...iBase, flex: 1 };
+// ── Shared input styles ───────────────────────────────────────────────────────
+const iBase  = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', padding: '8px 12px', fontSize: '13px', outline: 'none' };
+const iNum   = { ...iBase, width: '100%', fontSize: '1.5rem', fontWeight: '900', textAlign: 'center', color: '#00d4ff', borderRadius: '12px', padding: '12px' };
+const iSlot  = { ...iBase, width: '7rem' };
+const iHour  = { ...iBase, width: '4rem', textAlign: 'center' };
+const iDate  = { ...iBase, flex: 1 };
 const selStyle = { ...iBase, cursor: 'pointer', width: '100%' };
-const lGold = { display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(0,168,204,0.7)', marginBottom: '6px' };
-const cardD = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' };
+const lGold  = { display: 'block', fontSize: '11px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', color: 'rgba(0,168,204,0.7)', marginBottom: '6px' };
+const cardD  = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' };
 
-const ScheduleManager = () => {
-  const [config, setConfig]         = useState(sanitizeConfig(null));
-  const [blockedDates, setBlockedDates] = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [saving, setSaving]         = useState(false);
-  const [saved, setSaved]           = useState(false);
-  const [error, setError]           = useState('');
-  const [newBlockDate, setNewBlockDate]     = useState('');
+// ── Component ─────────────────────────────────────────────────────────────────
+// adminToken prop is required — passed down from AdminDashboard
+const ScheduleManager = ({ adminToken }) => {
+  const [config,         setConfig]         = useState(sanitizeConfig(null));
+  const [blockedDates,   setBlockedDates]   = useState([]);
+  const [loading,        setLoading]        = useState(true);
+  const [saving,         setSaving]         = useState(false);
+  const [saved,          setSaved]          = useState(false);
+  const [error,          setError]          = useState('');
+  const [newBlockDate,   setNewBlockDate]   = useState('');
   const [newBlockReason, setNewBlockReason] = useState('');
-  const [activeSection, setActiveSection]   = useState('hours');
+  const [activeSection,  setActiveSection]  = useState('hours');
 
   useEffect(() => { fetchConfig(); fetchBlockedDates(); }, []);
 
@@ -85,31 +87,99 @@ const ScheduleManager = () => {
     } catch (e) { console.error('fetchBlockedDates error:', e); }
   };
 
+  // ── PATCHED: saveConfig with overlap + ID validation ─────────────────────────
   const saveConfig = async () => {
     setSaving(true); setError('');
+
+    // Slot IDs must be unique
+    const ids = config.timeSlots.map(s => s.id?.trim()).filter(Boolean);
+    if (ids.length !== new Set(ids).size) {
+      setError('Each time slot must have a unique ID. Duplicate IDs found.');
+      setSaving(false);
+      return;
+    }
+
+    // No empty IDs
+    if (config.timeSlots.some(s => !s.id?.trim())) {
+      setError('All time slots must have a non-empty ID.');
+      setSaving(false);
+      return;
+    }
+
+    // Time ranges must not overlap
+    const sorted = [...config.timeSlots].sort((a, b) => a.startHour - b.startHour);
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const curr = sorted[i];
+      const next = sorted[i + 1];
+      if (curr.endHour > next.startHour) {
+        setError(
+          `Slot "${curr.label || curr.id}" ends at ${curr.endHour}:00 but ` +
+          `slot "${next.label || next.id}" starts at ${next.startHour}:00. ` +
+          `Time slots must not overlap.`
+        );
+        setSaving(false);
+        return;
+      }
+    }
+
+    // endHour must be after startHour
+    for (const slot of config.timeSlots) {
+      if (slot.endHour <= slot.startHour) {
+        setError(`Slot "${slot.label || slot.id}": end hour must be after start hour.`);
+        setSaving(false);
+        return;
+      }
+    }
+
+    // All checks passed — save
     try {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/config`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminToken || '' }, body: JSON.stringify(config),
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminToken || '' },
+        body:    JSON.stringify(config),
       });
       const data = await res.json();
-      if (data.success) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
-      else setError(data.message || 'Failed to save');
-    } catch { setError('Network error. Please try again.'); }
-    finally { setSaving(false); }
+      if (data.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        setError(data.message || 'Failed to save');
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const toggleWorkingDay   = (i)   => setConfig(p => ({ ...p, workingDays: p.workingDays.includes(i) ? p.workingDays.filter(d => d !== i) : [...p.workingDays, i].sort() }));
-  const updateOperatingHours = (f, v) => setConfig(p => ({ ...p, operatingHours: { ...p.operatingHours, [f]: safeInt(v, p.operatingHours[f]) } }));
+  const toggleWorkingDay     = (i)      => setConfig(p => ({ ...p, workingDays: p.workingDays.includes(i) ? p.workingDays.filter(d => d !== i) : [...p.workingDays, i].sort() }));
+  const updateOperatingHours = (f, v)   => setConfig(p => ({ ...p, operatingHours: { ...p.operatingHours, [f]: safeInt(v, p.operatingHours[f]) } }));
+
+  // ── PATCHED: updateTimeSlot with immutable-id warning ─────────────────────────
   const updateTimeSlot = (idx, field, val) => {
     setConfig(p => ({
       ...p,
       timeSlots: p.timeSlots.map((s, i) => {
         if (i !== idx) return s;
+
+        if (field === 'id') {
+          // Slot ID is the stable scheduling key — warn on change
+          console.warn(
+            `[ScheduleManager] Changing slot id from "${s.id}" to "${val}". ` +
+            `Existing bookings reference this id. Ensure you've run the backfill ` +
+            `script so all bookings use slotId, not the label, as the scheduling key.`
+          );
+          return { ...s, id: val };
+        }
+
         if (field === 'label') return { ...s, label: val };
+
+        // Numeric fields
         return { ...s, [field]: safeInt(val, s[field]) };
       }),
     }));
   };
+
   const removeTimeSlot = (idx) => setConfig(p => ({ ...p, timeSlots: p.timeSlots.filter((_, i) => i !== idx) }));
   const addTimeSlot    = ()    => setConfig(p => ({ ...p, timeSlots: [...p.timeSlots, { id: `slot_${Date.now()}`, label: 'New Slot', startHour: 9, endHour: 15 }] }));
   const updateCapacity = (field, val) => {
@@ -121,31 +191,40 @@ const ScheduleManager = () => {
     if (!newBlockDate) return;
     try {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/blocked-dates`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: newBlockDate, reason: newBlockReason || 'Blocked by admin' }),
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminToken || '' },
+        body:    JSON.stringify({ date: newBlockDate, reason: newBlockReason || 'Blocked by admin' }),
       });
       const data = await res.json();
-      if (data.success) { setBlockedDates(data.blockedDates || []); setNewBlockDate(''); setNewBlockReason(''); }
+      if (data.success) {
+        setBlockedDates(data.blockedDates || []);
+        setNewBlockDate('');
+        setNewBlockReason('');
+      }
     } catch (e) { console.error('blockDate error:', e); }
   };
 
   const unblockDate = async (date) => {
     try {
-      const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/blocked-dates/${date}`, { method: 'DELETE', headers: { 'X-Admin-Secret': adminToken || '' } });
+      const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/blocked-dates/${date}`, {
+        method:  'DELETE',
+        headers: { 'X-Admin-Secret': adminToken || '' },
+      });
       const data = await res.json();
       if (data.success) setBlockedDates(data.blockedDates || []);
     } catch (e) { console.error('unblockDate error:', e); }
   };
 
   const sections = [
-    { id: 'hours',    label: 'Working Hours', icon: Clock },
+    { id: 'hours',    label: 'Working Hours', icon: Clock    },
     { id: 'capacity', label: 'Capacity',       icon: Settings },
     { id: 'blocked',  label: 'Block Dates',    icon: Calendar },
   ];
 
   if (loading) return (
     <div className="flex items-center justify-center py-20">
-      <div className="w-8 h-8 rounded-full animate-spin" style={{ border: '2px solid rgba(0,168,204,0.2)', borderTopColor: GOLD_S }} />
+      <div className="w-8 h-8 rounded-full animate-spin"
+        style={{ border: '2px solid rgba(0,168,204,0.2)', borderTopColor: GOLD_S }} />
     </div>
   );
 
@@ -162,16 +241,20 @@ const ScheduleManager = () => {
             Control working days, hours, availability and blocked dates
           </p>
         </div>
-        <button onClick={saveConfig} disabled={saving}
+        <button
+          onClick={saveConfig}
+          disabled={saving}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-black disabled:opacity-50"
           style={{ background: saved ? 'linear-gradient(135deg,#34d399,#10b981)' : GOLD }}>
-          {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-            : saved ? <><CheckCircle className="w-4 h-4" /> Saved!</>
+          {saving
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+            : saved
+            ? <><CheckCircle className="w-4 h-4" /> Saved!</>
             : <><Save className="w-4 h-4" /> Save Changes</>}
         </button>
       </div>
 
-      {/* Error */}
+      {/* Error banner */}
       {error && (
         <div className="flex items-center gap-2 p-3 rounded-xl text-sm"
           style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5' }}>
@@ -179,20 +262,21 @@ const ScheduleManager = () => {
         </div>
       )}
 
-      {/* Tabs + content card */}
+      {/* Tabs + content */}
       <div className="rounded-2xl overflow-hidden" style={cardD}>
+
         {/* Tab strip */}
         <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           {sections.map(s => {
-            const Icon = s.icon;
+            const Icon   = s.icon;
             const active = activeSection === s.id;
             return (
               <button key={s.id} onClick={() => setActiveSection(s.id)}
                 className="flex-1 py-3 px-4 text-sm font-semibold flex items-center justify-center gap-2 transition-all"
                 style={{
                   borderBottom: active ? `2px solid ${GOLD_S}` : '2px solid transparent',
-                  color: active ? GOLD_S : 'rgba(255,255,255,0.4)',
-                  background: active ? 'rgba(0,168,204,0.06)' : 'transparent',
+                  color:        active ? GOLD_S : 'rgba(255,255,255,0.4)',
+                  background:   active ? 'rgba(0,168,204,0.06)' : 'transparent',
                 }}>
                 <Icon className="w-4 h-4" /> {s.label}
               </button>
@@ -202,7 +286,7 @@ const ScheduleManager = () => {
 
         <div className="p-5">
 
-          {/* ── Working Hours ──────────────────────────────────────────────── */}
+          {/* ── Working Hours ────────────────────────────────────────────── */}
           {activeSection === 'hours' && (
             <div className="space-y-6">
 
@@ -259,7 +343,11 @@ const ScheduleManager = () => {
 
               {/* Time slots */}
               <div>
-                <h3 className="text-sm font-bold text-white mb-3">Time Slots</h3>
+                <h3 className="text-sm font-bold text-white mb-1">Time Slots</h3>
+                <p className="text-xs mb-3" style={{ color: 'rgba(251,191,36,0.7)' }}>
+                  ⚠ Slot <strong>IDs</strong> are used internally as scheduling keys.
+                  Rename labels freely — only change IDs if you also run the backfill script.
+                </p>
                 <div className="space-y-2">
                   {config.timeSlots.map((slot, idx) => (
                     <div key={slot.id || idx} className="flex items-center gap-3 p-3 rounded-xl"
@@ -288,17 +376,17 @@ const ScheduleManager = () => {
                   </button>
                 </div>
               </div>
+
             </div>
           )}
 
-          {/* ── Capacity ───────────────────────────────────────────────────── */}
+          {/* ── Capacity ─────────────────────────────────────────────────── */}
           {activeSection === 'capacity' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
               {[
-                { field: 'maxBookingsPerSlot', label: 'Max Bookings Per Slot', desc: 'How many jobs per time slot', min: 1, max: 10 },
-                { field: 'minAdvanceHours',    label: 'Min Advance Hours',     desc: 'Minimum hours before booking', min: 1, max: 168 },
-                { field: 'maxAdvanceDays',     label: 'Max Advance Days',      desc: 'How far in advance to book', min: 7, max: 365 },
+                { field: 'maxBookingsPerSlot', label: 'Max Bookings Per Slot', desc: 'How many jobs per time slot',    min: 1, max: 10  },
+                { field: 'minAdvanceHours',    label: 'Min Advance Hours',     desc: 'Minimum hours before booking',  min: 1, max: 168 },
+                { field: 'maxAdvanceDays',     label: 'Max Advance Days',      desc: 'How far in advance to book',    min: 7, max: 365 },
               ].map(({ field, label, desc, min, max }) => (
                 <div key={field} className="p-5 rounded-2xl" style={cardD}>
                   <label style={lGold}>{label}</label>
@@ -308,11 +396,10 @@ const ScheduleManager = () => {
                   <p className="text-xs mt-2 text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>{desc}</p>
                 </div>
               ))}
-
             </div>
           )}
 
-          {/* ── Blocked Dates ──────────────────────────────────────────────── */}
+          {/* ── Blocked Dates ─────────────────────────────────────────────── */}
           {activeSection === 'blocked' && (
             <div className="space-y-5">
 
@@ -324,10 +411,12 @@ const ScheduleManager = () => {
                 </h3>
                 <div className="flex gap-3 flex-wrap">
                   <input type="date" style={iDate}
-                    value={newBlockDate} min={new Date().toISOString().split('T')[0]}
+                    value={newBlockDate}
+                    min={new Date().toISOString().split('T')[0]}
                     onChange={e => setNewBlockDate(e.target.value)} />
                   <input style={iDate} placeholder="Reason (optional)"
-                    value={newBlockReason} onChange={e => setNewBlockReason(e.target.value)} />
+                    value={newBlockReason}
+                    onChange={e => setNewBlockReason(e.target.value)} />
                   <button onClick={blockDate} disabled={!newBlockDate}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-black disabled:opacity-50"
                     style={{ background: GOLD }}>
@@ -336,7 +425,7 @@ const ScheduleManager = () => {
                 </div>
               </div>
 
-              {/* List */}
+              {/* Blocked list */}
               <div>
                 <h3 className="text-sm font-bold text-white mb-3">
                   Blocked Dates ({blockedDates.length})
@@ -349,29 +438,34 @@ const ScheduleManager = () => {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {[...blockedDates].sort((a, b) => a.date.localeCompare(b.date)).map(b => (
-                      <div key={b.date} className="flex items-center justify-between p-3 rounded-xl"
-                        style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                        <div>
-                          <span className="font-medium text-sm" style={{ color: '#fca5a5' }}>
-                            {new Date(b.date + 'T12:00:00').toLocaleDateString('en-CA', {
-                              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-                            })}
-                          </span>
-                          {b.reason && (
-                            <p className="text-xs mt-0.5" style={{ color: 'rgba(248,113,113,0.7)' }}>{b.reason}</p>
-                          )}
+                    {[...blockedDates]
+                      .sort((a, b) => a.date.localeCompare(b.date))
+                      .map(b => (
+                        <div key={b.date} className="flex items-center justify-between p-3 rounded-xl"
+                          style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                          <div>
+                            <span className="font-medium text-sm" style={{ color: '#fca5a5' }}>
+                              {new Date(b.date + 'T12:00:00').toLocaleDateString('en-CA', {
+                                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                              })}
+                            </span>
+                            {b.reason && (
+                              <p className="text-xs mt-0.5" style={{ color: 'rgba(248,113,113,0.7)' }}>
+                                {b.reason}
+                              </p>
+                            )}
+                          </div>
+                          <button onClick={() => unblockDate(b.date)}
+                            className="p-1.5 rounded-lg transition-colors hover:bg-red-500/20"
+                            style={{ color: '#f87171' }}>
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                        <button onClick={() => unblockDate(b.date)}
-                          className="p-1.5 rounded-lg transition-colors hover:bg-red-500/20"
-                          style={{ color: '#f87171' }}>
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </div>
+
             </div>
           )}
 

@@ -9,73 +9,90 @@ datasource db {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EXISTING MODELS (unchanged)
+// BOOKING
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Booking {
-  id                  Int           @id @default(autoincrement())
-  make                String?       @db.VarChar(50)
-  model               String?       @db.VarChar(50)
+  id                  Int              @id @default(autoincrement())
+  make                String?          @db.VarChar(50)
+  model               String?          @db.VarChar(50)
   year                Int?
   services            String
   extras              String?
-  date                DateTime      @db.Date
-  time                String        @db.VarChar(20)
-  status              BookingStatus @default(PENDING)
-  address             String        @db.VarChar(255)
-  city                String        @db.VarChar(100)
-  email               String        @db.VarChar(255)
+  date                DateTime         @db.Date
+  time                String           @db.VarChar(20)
+
+  // ── Scheduling fields (race-condition fix) ────────────────────────────────
+  slotId              String?          @db.VarChar(50)
+  startAt             DateTime?
+  endAt               DateTime?
+
+  status              BookingStatus    @default(PENDING)
+  address             String           @db.VarChar(255)
+  city                String           @db.VarChar(100)
+  email               String           @db.VarChar(255)
   notes               String?
   arrivedAt           DateTime?
   completedAt         DateTime?
-  confirmationCode    String        @unique @db.VarChar(10)
-  createdAt           DateTime      @default(now())
+  confirmationCode    String           @unique @db.VarChar(10)
+  createdAt           DateTime         @default(now())
   detailerId          Int?
-  emailSent           Boolean       @default(false)
+  emailSent           Boolean          @default(false)
   enRouteAt           DateTime?
   estimatedDuration   Int?
-  firstName           String        @db.VarChar(100)
-  lastName            String        @db.VarChar(100)
-  phoneNumber         String        @db.VarChar(20)
-  postalCode          String        @db.VarChar(10)
-  reminderSent        Boolean       @default(false)
+  firstName           String           @db.VarChar(100)
+  lastName            String           @db.VarChar(100)
+  phoneNumber         String           @db.VarChar(20)
+  postalCode          String           @db.VarChar(10)
+  reminderSent        Boolean          @default(false)
   specialInstructions String?
   startedAt           DateTime?
-  totalPrice          Decimal?      @db.Decimal(8, 2)
-  updatedAt           DateTime      @updatedAt
-  vehicleType         String        @db.VarChar(50)
-  vehicleCondition    String        @default("") @db.VarChar(20)
-  propertyType        String        @default("") @db.VarChar(50)
-  hasWaterPower       Boolean       @default(true)
+  totalPrice          Decimal?         @db.Decimal(8, 2)
+  updatedAt           DateTime         @updatedAt
+  vehicleType         String           @db.VarChar(50)
+  vehicleCondition    String           @default("") @db.VarChar(20)
+  propertyType        String           @default("") @db.VarChar(50)
+  hasWaterPower       Boolean          @default(true)
   packageId           Int?
-  detailer            Detailer?     @relation(fields: [detailerId], references: [id])
-  package             Package?      @relation(fields: [packageId], references: [id])
-  checklist           JobChecklist?
-  images              BookingImage[]
-  history             BookingHistory[]
-  reviewRequest       ReviewRequest?
   cancellationReason  String?          @db.VarChar(500)
   prepEmailSent       Boolean          @default(false)
   reviewRequestSent   Boolean          @default(false)
 
+  detailer            Detailer?        @relation(fields: [detailerId], references: [id])
+  package             Package?         @relation(fields: [packageId], references: [id])
+  checklist           JobChecklist?
+  images              BookingImage[]
+  history             BookingHistory[]
+  reviewRequest       ReviewRequest?
+
   @@index([detailerId])
+  @@index([startAt, endAt, status])
+  @@index([startAt, reminderSent, status])
   @@map("bookings")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DETAILER
+// ─────────────────────────────────────────────────────────────────────────────
+
 model Detailer {
-  id             Int                @id @default(autoincrement())
-  name           String             @db.VarChar(100)
-  phone          String             @unique @db.VarChar(20)
-  email          String             @unique @db.VarChar(255)
-  createdAt      DateTime           @default(now())
-  isActive       Boolean            @default(true)
-  supabaseUserId String?            @unique @db.VarChar(255)
-  updatedAt      DateTime           @updatedAt
-  bookings       Booking[]
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(100)
+  phone            String             @unique @db.VarChar(20)
+  email            String             @unique @db.VarChar(255)
+  createdAt        DateTime           @default(now())
+  isActive         Boolean            @default(true)
+  supabaseUserId   String?            @unique @db.VarChar(255)
+  updatedAt        DateTime           @updatedAt
+  bookings         Booking[]
   trainingProgress TrainingProgress[]
 
   @@map("detailers")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTACT
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Contact {
   id          Int           @id @default(autoincrement())
@@ -92,6 +109,10 @@ model Contact {
 
   @@map("contacts")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SERVICES & PRICING
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Service {
   id                Int              @id @default(autoincrement())
@@ -130,18 +151,18 @@ model ServicePricing {
 }
 
 model AddOn {
-  id          Int           @id @default(autoincrement())
+  id            Int           @id @default(autoincrement())
   name          String        @unique @db.VarChar(100)
   nameFr        String?       @db.VarChar(100)
   description   String?
   descriptionFr String?
   category      AddOnCategory @default(ENHANCEMENT)
-  price       Decimal       @db.Decimal(8, 2)
-  createdAt   DateTime      @default(now())
-  isActive    Boolean       @default(true)
-  requiresQuote Boolean     @default(false)
-  sortOrder   Int           @default(0)
-  updatedAt   DateTime      @updatedAt
+  price         Decimal       @db.Decimal(8, 2)
+  createdAt     DateTime      @default(now())
+  isActive      Boolean       @default(true)
+  requiresQuote Boolean       @default(false)
+  sortOrder     Int           @default(0)
+  updatedAt     DateTime      @updatedAt
 
   @@map("add_ons")
 }
@@ -171,6 +192,30 @@ model Package {
   @@map("packages")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// REVIEWS  (managed from admin panel, displayed on homepage)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  rating    Int      @default(5)
+  vehicle   String?  @db.VarChar(100)
+  text      String   @db.Text
+  source    String   @default("Google") @db.VarChar(50)
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("reviews")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GALLERY PHOTOS
+// ─────────────────────────────────────────────────────────────────────────────
+
 model JobPhoto {
   id          Int      @id @default(autoincrement())
   beforeUrl   String   @db.VarChar(500)
@@ -187,6 +232,10 @@ model JobPhoto {
   @@map("job_photos")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// VERIFICATION CODES  (SMS flow)
+// ─────────────────────────────────────────────────────────────────────────────
+
 model VerificationCode {
   id          Int      @id @default(autoincrement())
   phoneNumber String   @unique @db.VarChar(20)
@@ -199,6 +248,10 @@ model VerificationCode {
   @@map("verification_codes")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// APP CONFIG  (schedule config, blocked dates, FAQ, etc.)
+// ─────────────────────────────────────────────────────────────────────────────
+
 model AppConfig {
   id        Int      @id @default(autoincrement())
   key       String   @unique @db.VarChar(100)
@@ -209,16 +262,15 @@ model AppConfig {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NEW MODELS
+// TRAINING CENTER
 // ─────────────────────────────────────────────────────────────────────────────
-
-// ── Training Center ──────────────────────────────────────────────────────────
 
 model TrainingModule {
   id               Int                @id @default(autoincrement())
   title            String             @db.VarChar(150)
   titleFr          String?            @db.VarChar(150)
   description      String?
+  descriptionFr    String?
   content          String             @db.Text
   contentFr        String?            @db.Text
   category         TrainingCategory   @default(GENERAL)
@@ -242,8 +294,8 @@ model TrainingQuiz {
   moduleId      Int
   question      String         @db.VarChar(500)
   questionFr    String?        @db.VarChar(500)
-  options       Json           // string[]
-  optionsFr     Json?          // string[]
+  options       Json
+  optionsFr     Json?
   correctIdx    Int
   explanation   String?
   explanationFr String?
@@ -271,16 +323,18 @@ model TrainingProgress {
   @@map("training_progress")
 }
 
-// ── Job Checklists ───────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// JOB CHECKLISTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 model ChecklistTemplate {
-  id          Int                    @id @default(autoincrement())
-  name        String                 @db.VarChar(100)
-  serviceType ChecklistServiceType   @default(STANDARD)
-  isDefault   Boolean                @default(false)
-  isActive    Boolean                @default(true)
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
+  id          Int                     @id @default(autoincrement())
+  name        String                  @db.VarChar(100)
+  serviceType ChecklistServiceType    @default(STANDARD)
+  isDefault   Boolean                 @default(false)
+  isActive    Boolean                 @default(true)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
   items       ChecklistTemplateItem[]
 
   @@map("checklist_templates")
@@ -329,7 +383,9 @@ model JobChecklistItem {
   @@map("job_checklist_items")
 }
 
-// ── Booking Images ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// BOOKING IMAGES
+// ─────────────────────────────────────────────────────────────────────────────
 
 model BookingImage {
   id          Int       @id @default(autoincrement())
@@ -351,49 +407,45 @@ model BookingImage {
   @@map("booking_images")
 }
 
-// ── Retail Quotes ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// QUOTES
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Quote {
-  id               Int         @id @default(autoincrement())
-  referenceId      String      @unique @db.VarChar(20)
-  status           QuoteStatus @default(NEW)
-  customerName     String      @db.VarChar(100)
-  phoneNumber      String      @db.VarChar(20)
-  email            String?     @db.VarChar(255)
-  address          String      @db.VarChar(255)
-  city             String      @db.VarChar(100)
-  postalCode       String      @db.VarChar(10)
-  vehicleType      String      @db.VarChar(50)
-  vehicleCondition String      @db.VarChar(20)
-  make             String?     @db.VarChar(50)
-  model            String?     @db.VarChar(50)
-  year             Int?
-  packageId        Int?
-  packageName      String?     @db.VarChar(100)
-  services         String      @default("[]")
-  addOns           String      @default("[]")
-  notes            String?
-  quotedPrice      Decimal?    @db.Decimal(8, 2)
-  adminNotes       String?
-  bookingId        Int?
+  id                Int         @id @default(autoincrement())
+  referenceId       String      @unique @db.VarChar(20)
+  status            QuoteStatus @default(NEW)
+  customerName      String      @db.VarChar(100)
+  phoneNumber       String      @db.VarChar(20)
+  email             String?     @db.VarChar(255)
+  address           String      @db.VarChar(255)
+  city              String      @db.VarChar(100)
+  postalCode        String      @db.VarChar(10)
+  vehicleType       String      @db.VarChar(50)
+  vehicleCondition  String      @db.VarChar(20)
+  make              String?     @db.VarChar(50)
+  model             String?     @db.VarChar(50)
+  year              Int?
+  packageId         Int?
+  packageName       String?     @db.VarChar(100)
+  services          String      @default("[]")
+  addOns            String      @default("[]")
+  notes             String?
+  quotedPrice       Decimal?    @db.Decimal(8, 2)
+  adminNotes        String?
+  bookingId         Int?
   changeRequestNote String?
-  preferredDate    String?     @db.VarChar(20)
-  preferredTime    String?     @db.VarChar(20)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  preferredDate     String?     @db.VarChar(20)
+  preferredTime     String?     @db.VarChar(20)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   @@map("quotes")
 }
 
-enum QuoteStatus {
-  NEW
-  REVIEWING
-  QUOTED
-  ACCEPTED
-  CHANGE_REQUESTED
-  DECLINED
-  CONVERTED
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// FLEET QUOTES
+// ─────────────────────────────────────────────────────────────────────────────
 
 model FleetQuote {
   id                String           @id @default(cuid())
@@ -419,7 +471,94 @@ model FleetQuote {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ENUMS — existing
+// BOOKING HISTORY & AUDIT
+// ─────────────────────────────────────────────────────────────────────────────
+
+model BookingHistory {
+  id          Int       @id @default(autoincrement())
+  bookingId   Int
+  action      String    @db.VarChar(50)
+  oldDate     DateTime? @db.Date
+  newDate     DateTime? @db.Date
+  oldTime     String?   @db.VarChar(20)
+  newTime     String?   @db.VarChar(20)
+  oldStatus   String?   @db.VarChar(30)
+  newStatus   String?   @db.VarChar(30)
+  reason      String?   @db.VarChar(500)
+  initiatedBy String    @default("customer") @db.VarChar(20)
+  createdAt   DateTime  @default(now())
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+
+  @@map("booking_history")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  entityType String   @db.VarChar(50)
+  entityId   String   @db.VarChar(50)
+  action     String   @db.VarChar(100)
+  oldValue   Json?
+  newValue   Json?
+  adminIp    String?  @db.VarChar(50)
+  note       String?  @db.VarChar(500)
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REVIEW REQUESTS  (post-job review follow-up)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ReviewRequest {
+  id          Int       @id @default(autoincrement())
+  bookingId   Int       @unique
+  smsStatus   String    @default("PENDING") @db.VarChar(20)
+  emailStatus String    @default("PENDING") @db.VarChar(20)
+  sentAt      DateTime?
+  error       String?   @db.VarChar(500)
+  createdAt   DateTime  @default(now())
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+
+  @@map("review_requests")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QUOTE PHOTOS & SMS LOGS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model QuotePhoto {
+  id          Int       @id @default(autoincrement())
+  quoteId     Int
+  storagePath String    @db.VarChar(500)
+  publicUrl   String    @db.VarChar(500)
+  fileName    String    @db.VarChar(200)
+  fileSize    Int?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("quote_photos")
+}
+
+model SmsLog {
+  id          Int      @id @default(autoincrement())
+  toNumber    String   @db.VarChar(20)
+  messageType String   @db.VarChar(50)
+  body        String   @db.Text
+  status      String   @default("SENT") @db.VarChar(20)
+  sid         String?  @db.VarChar(50)
+  error       String?  @db.VarChar(500)
+  entityType  String?  @db.VarChar(30)
+  entityId    String?  @db.VarChar(30)
+  createdAt   DateTime @default(now())
+
+  @@map("sms_logs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum BookingStatus {
@@ -455,10 +594,40 @@ enum AddOnCategory {
   RESTORATION
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ENUMS — new
-// ─────────────────────────────────────────────────────────────────────────────
+enum QuoteStatus {
+  NEW
+  REVIEWING
+  QUOTED
+  ACCEPTED
+  CHANGE_REQUESTED
+  DECLINED
+  CONVERTED
+}
 
+enum FleetFrequency {
+  ONE_TIME
+  WEEKLY
+  BI_WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
+enum FleetQuoteStatus {
+  NEW
+  CONTACTED
+  QUOTED
+  ACCEPTED
+  DECLINED
+  ARCHIVED
+}
+
+enum ImageType {
+  CUSTOMER_QUOTE
+  BEFORE_JOB
+  AFTER_JOB
+  DAMAGE_REPORT
+  GALLERY
+}
 
 enum TrainingCategory {
   GENERAL
@@ -490,105 +659,4 @@ enum ChecklistServiceType {
   INTERIOR_ONLY
   EXTERIOR_ONLY
   PAINT_CORRECTION
-}
-
-enum ImageType {
-  CUSTOMER_QUOTE
-  BEFORE_JOB
-  AFTER_JOB
-  DAMAGE_REPORT
-  GALLERY
-}
-
-enum FleetFrequency {
-  ONE_TIME
-  WEEKLY
-  BI_WEEKLY
-  MONTHLY
-  QUARTERLY
-}
-
-enum FleetQuoteStatus {
-  NEW
-  CONTACTED
-  QUOTED
-  ACCEPTED
-  DECLINED
-  ARCHIVED
-}
-
-
-// ── Booking History ───────────────────────────────────────────────────────────
-model BookingHistory {
-  id          Int      @id @default(autoincrement())
-  bookingId   Int
-  action      String   @db.VarChar(50)
-  oldDate     DateTime? @db.Date
-  newDate     DateTime? @db.Date
-  oldTime     String?  @db.VarChar(20)
-  newTime     String?  @db.VarChar(20)
-  oldStatus   String?  @db.VarChar(30)
-  newStatus   String?  @db.VarChar(30)
-  reason      String?  @db.VarChar(500)
-  initiatedBy String   @default("customer") @db.VarChar(20)
-  createdAt   DateTime @default(now())
-  booking     Booking  @relation(fields: [bookingId], references: [id])
-  @@map("booking_history")
-}
-
-// ── Admin Audit Log ───────────────────────────────────────────────────────────
-model AuditLog {
-  id         Int      @id @default(autoincrement())
-  entityType String   @db.VarChar(50)
-  entityId   String   @db.VarChar(50)
-  action     String   @db.VarChar(100)
-  oldValue   Json?
-  newValue   Json?
-  adminIp    String?  @db.VarChar(50)
-  note       String?  @db.VarChar(500)
-  createdAt  DateTime @default(now())
-  @@index([entityType, entityId])
-  @@index([createdAt])
-  @@map("audit_logs")
-}
-
-// ── Review Requests ───────────────────────────────────────────────────────────
-model ReviewRequest {
-  id          Int      @id @default(autoincrement())
-  bookingId   Int      @unique
-  smsStatus   String   @default("PENDING") @db.VarChar(20)
-  emailStatus String   @default("PENDING") @db.VarChar(20)
-  sentAt      DateTime?
-  error       String?  @db.VarChar(500)
-  createdAt   DateTime @default(now())
-  booking     Booking  @relation(fields: [bookingId], references: [id])
-  @@map("review_requests")
-}
-
-// ── Quote Photos ──────────────────────────────────────────────────────────────
-model QuotePhoto {
-  id          Int      @id @default(autoincrement())
-  quoteId     Int
-  storagePath String   @db.VarChar(500)
-  publicUrl   String   @db.VarChar(500)
-  fileName    String   @db.VarChar(200)
-  fileSize    Int?
-  expiresAt   DateTime?
-  createdAt   DateTime @default(now())
-  @@map("quote_photos")
-}
-
-// ── SMS Log ───────────────────────────────────────────────────────────────────
-model SmsLog {
-  id          Int      @id @default(autoincrement())
-  toNumber    String   @db.VarChar(20)
-  messageType String   @db.VarChar(50)
-  body        String   @db.Text
-  status      String   @default("SENT") @db.VarChar(20)
-  sid         String?  @db.VarChar(50)
-  error       String?  @db.VarChar(500)
-  entityType  String?  @db.VarChar(30)
-  entityId    String?  @db.VarChar(30)
-  createdAt   DateTime @default(now())
-  @@map("sms_logs")
 }

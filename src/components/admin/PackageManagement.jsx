@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
 
-const VEHICLE_TYPES = ['Sedan', 'SUV', 'Truck', 'Coupe'];
+const VEHICLE_TYPES = ['Sedan', 'SUV', 'Truck'];
 
 
 

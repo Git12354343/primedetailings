@@ -13,7 +13,7 @@ const API    = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const GOLD   = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
 const GOLD_S = '#00a8cc';
 
-const VEHICLE_TYPES  = ['Sedan', 'SUV', 'Truck', 'Coupe'];
+const VEHICLE_TYPES  = ['Sedan', 'SUV', 'Truck'];
 const CONDITIONS     = [
   { value: 'LIGHT',    label: 'Light',    desc: 'Well maintained — light dust & dirt' },
   { value: 'MODERATE', label: 'Moderate', desc: 'Normal use — visible dirt & grime' },

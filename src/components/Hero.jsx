@@ -117,24 +117,6 @@ const Hero = () => {
           ))}
         </div>
 
-        {/* Stats row */}
-        <div
-          className={`grid grid-cols-3 gap-2 sm:gap-4 max-w-md mx-auto transition-all duration-700 delay-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-        >
-          {[
-            { num: '500+', label: 'Cars Detailed' },
-            { num: '4.9★', label: 'Avg Rating' },
-            { num: '100%', label: 'Mobile' },
-          ].map(({ num, label }, i) => (
-            <div key={i} className="text-center">
-              <div className="text-2xl font-black" style={{
-                background: 'linear-gradient(135deg, #00a8cc, #00d4ff)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
-              }}>{num}</div>
-              <div className="text-gray-400 text-xs mt-0.5">{label}</div>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Bottom fade */}

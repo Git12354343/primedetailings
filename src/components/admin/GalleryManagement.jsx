@@ -9,7 +9,7 @@ const GOLD = 'linear-gradient(135deg, #00a8cc, #00d4ff)';
 const GOLD_S = '#00a8cc';
 
 const SERVICE_TYPES = ['Full Detail', 'Interior', 'Exterior', 'Ceramic Coat', 'Paint Correction', 'Engine Bay'];
-const VEHICLE_TYPES = ['Sedan', 'SUV', 'Truck', 'Coupe', 'Van'];
+const VEHICLE_TYPES = ['Sedan', 'SUV', 'Truck', 'Van'];
 
 // ── Image picker — stores raw File object, shows preview via object URL ──────
 const ImagePicker = ({ label, file: fileProp, onChange }) => {

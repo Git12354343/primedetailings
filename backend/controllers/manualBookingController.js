@@ -1,88 +1,119 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+/**
+ * manualBookingController.js
+ *
+ * Changes from original:
+ *  - Uses createBookingAtomic() — no more bare prisma.booking.create
+ *  - Checks for conflicts before creating; returns conflicting code to the UI
+ *  - override:true bypasses the conflict block but records it in AuditLog
+ *  - Validation requires a valid slotId or recognisable time label
+ */
 
-// Load calendar service safely — won't crash if googleapis not installed
-let addBookingToCalendar = null;
-try {
-  addBookingToCalendar = require('./services/googleCalendar').addBookingToCalendar;
-} catch { /* Google Calendar not configured */ }
+'use strict';
 
-const generateConfirmationCode = () =>
-  Math.random().toString(36).substring(2, 8).toUpperCase();
+const { createBookingAtomic, BookingConflictError, resolveSlotId } = require('../services/bookingAtomic');
+const { audit, getIp } = require('../services/auditService');
 
-// POST /api/admin/manual-booking — create a booking for a phone client
+// POST /api/admin/manual-booking
 const createManualBooking = async (req, res) => {
   try {
     const {
       firstName, lastName, phoneNumber, email,
       address, city, postalCode,
-      vehicleType, make, model, year,
+      vehicleType, vehicleCondition, make, model, year,
       services, extras,
-      date, time,
+      date, time, slotId: rawSlotId,
       totalPrice, specialInstructions, notes,
-      detailerId
+      detailerId,
+      override = false,   // admin can pass override:true to proceed past conflicts
     } = req.body;
 
-    // Required fields
-    if (!firstName || !lastName || !phoneNumber || !vehicleType || !make || !model || !year || !date || !time) {
+    // ── Required field validation ────────────────────────────────────────────
+    const missing = [];
+    if (!firstName)   missing.push('firstName');
+    if (!lastName)    missing.push('lastName');
+    if (!phoneNumber) missing.push('phoneNumber');
+    if (!vehicleType) missing.push('vehicleType');
+    if (!make)        missing.push('make');
+    if (!model)       missing.push('model');
+    if (!year)        missing.push('year');
+    if (!date)        missing.push('date');
+    if (!time)        missing.push('time');
+    if (missing.length) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: firstName, lastName, phoneNumber, vehicleType, make, model, year, date, time'
+        message: `Missing required fields: ${missing.join(', ')}`,
       });
     }
-
     if (!services || services.length === 0) {
       return res.status(400).json({ success: false, message: 'At least one service is required' });
     }
 
-    const confirmationCode = generateConfirmationCode();
-
-    const booking = await prisma.booking.create({
-      data: {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        phoneNumber: phoneNumber.trim(),
-        email: email?.trim() || '',
-        address: address?.trim() || 'In-person booking',
-        city: city?.trim() || '',
-        postalCode: postalCode?.trim() || '',
-        vehicleType,
-        make,
-        model,
-        year: parseInt(year),
-        services: JSON.stringify(services),
-        extras: JSON.stringify(extras || []),
-        date: new Date(date.includes('T') ? date : date + 'T12:00:00'),
-        time,
-        status: 'CONFIRMED',
-        confirmationCode,
-        totalPrice: totalPrice ? parseFloat(totalPrice) : null,
-        specialInstructions: specialInstructions?.trim() || null,
-        notes: notes?.trim() || 'Manual booking — added by admin',
-        detailerId: detailerId ? parseInt(detailerId) : null
-      }
-    });
-
-    // Add to Google Calendar (non-blocking, safe)
-    if (addBookingToCalendar) {
-      addBookingToCalendar(booking).catch(err => console.error('Calendar error:', err));
+    // ── Resolve slotId ───────────────────────────────────────────────────────
+    const slotId = rawSlotId || await resolveSlotId(time);
+    if (!slotId) {
+      return res.status(400).json({
+        success: false,
+        message: `"${time}" does not match any configured time slot. Use the slot picker.`,
+      });
     }
 
-    res.status(201).json({
-      success: true,
-      message: 'Manual booking created successfully',
-      booking: {
-        id: booking.id,
-        confirmationCode: booking.confirmationCode,
-        status: booking.status,
-        date: booking.date,
-        time: booking.time,
-        firstName: booking.firstName,
-        lastName: booking.lastName,
-        phoneNumber: booking.phoneNumber
-      }
-    });
+    // ── Create atomically ────────────────────────────────────────────────────
+    try {
+      const booking = await createBookingAtomic({
+        date, slotId, time,
+        firstName, lastName, phoneNumber, email: email || '',
+        address:  address  || 'In-person booking',
+        city:     city     || '',
+        postalCode: postalCode || '',
+        vehicleType, vehicleCondition: vehicleCondition || '',
+        make, model, year,
+        services: JSON.stringify(services),
+        extras:   JSON.stringify(extras || []),
+        totalPrice,
+        specialInstructions,
+        notes: notes || 'Manual booking — added by admin',
+        detailerId,
+      }, {
+        override,
+        initiatedBy: 'admin',
+        status: 'CONFIRMED',
+      });
 
+      audit('booking', booking.id, 'manual_booking_created',
+        null,
+        { confirmationCode: booking.confirmationCode, override },
+        getIp(req)
+      ).catch(() => {});
+
+      return res.status(201).json({
+        success: true,
+        message: 'Manual booking created successfully',
+        booking: {
+          id:               booking.id,
+          confirmationCode: booking.confirmationCode,
+          status:           booking.status,
+          date:             booking.date,
+          time:             booking.time,
+          slotId:           booking.slotId,
+          startAt:          booking.startAt,
+          firstName:        booking.firstName,
+          lastName:         booking.lastName,
+          phoneNumber:      booking.phoneNumber,
+        },
+      });
+    } catch (err) {
+      if (err instanceof BookingConflictError) {
+        // Return conflict details so the frontend can show an override prompt
+        return res.status(409).json({
+          success:      false,
+          conflict:     true,
+          message:      err.message,
+          conflictCode: err.conflictCode,
+          hint:         'Pass override:true to proceed (this will be logged)',
+        });
+      }
+      throw err;
+    }
   } catch (error) {
     console.error('Create manual booking error:', error);
     if (error.code === 'P2002') {

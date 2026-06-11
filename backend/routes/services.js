@@ -37,7 +37,7 @@ const router = express.Router();
 router.get('/active',            getActiveServices);
 router.post('/calculate-pricing',calculateDynamicPricing);
 router.get('/categories',        (req, res) => res.json({ success: true, categories: ['DETAILING','PROTECTION','RESTORATION','MAINTENANCE','SPECIALTY'].map(c => ({ value: c, label: c[0]+c.slice(1).toLowerCase() })) }));
-router.get('/vehicle-types',     (req, res) => res.json({ success: true, vehicleTypes: ['Sedan','SUV','Truck','Coupe'] }));
+router.get('/vehicle-types',     (req, res) => res.json({ success: true, vehicleTypes: ['Sedan','SUV','Truck'] }));
 router.get('/health',            (req, res) => res.json({ success: true, message: 'Services API is healthy' }));
 
 // Admin — protected
