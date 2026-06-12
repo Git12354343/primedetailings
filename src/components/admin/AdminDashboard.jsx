@@ -21,6 +21,7 @@ import AdminBulkReschedule    from './AdminBulkReschedule';
 import AdminAuditLog          from './AdminAuditLog';
 import AdminExport            from './AdminExport';
 import WeatherBanner          from './AdminWeatherAlerts';
+import CustomerManagement     from './CustomerManagement';
 
 // ContactManagement — inline since it may not exist as a separate file
 const ContactManagement = ({ adminToken }) => {
@@ -116,6 +117,7 @@ const TITLES = {
   'manual-booking': { t: 'Add Booking',   s: 'Create a booking on behalf of a customer' },
   'schedule':       { t: 'Schedule',      s: 'Availability and working hours' },
   'revenue':        { t: 'Revenue',       s: 'Earnings and analytics' },
+  'customers':      { t: 'Customers',     s: 'Profiles, history and lifetime value' },
   'detailers':      { t: 'Detailers',     s: 'Manage your team' },
   'messages':       { t: 'Messages',      s: 'Customer contact form submissions' },
   'gallery':        { t: 'Gallery',       s: 'Before & after job photos' },
@@ -243,6 +245,7 @@ const AdminDashboard = ({ onLogout, adminToken }) => {
               {activeTab === 'manual-booking' && <ManualBookingForm adminToken={adminToken} detailers={activeDetailers} services={services} onSuccess={handleRefresh} />}
               {activeTab === 'schedule'       && <ScheduleManager adminToken={adminToken} />}
               {activeTab === 'revenue'        && <RevenueAnalytics adminToken={adminToken} />}
+              {activeTab === 'customers'      && <CustomerManagement adminToken={adminToken} />}
               {activeTab === 'detailers'      && <DetailerManagement adminToken={adminToken} authFetch={authFetch} onRefreshGlobal={handleRefresh} />}
               {activeTab === 'messages'       && <ContactManagement adminToken={adminToken} />}
               {activeTab === 'gallery'        && <GalleryManagement adminToken={adminToken} />}

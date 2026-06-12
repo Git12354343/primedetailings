@@ -11,11 +11,13 @@
 'use strict';
 
 const cron = require('node-cron');
-const { cleanupExpiredImages }  = require('../services/imageCleanupService');
-const { sendReminders }         = require('../services/reminderService');
-const { sendReviewRequests }    = require('../services/reviewService');
-const { checkTomorrowsJobs }    = require('../services/weatherService');
-const { expirePendingBookings } = require('../services/pendingExpiryService');
+const { cleanupExpiredImages }       = require('../services/imageCleanupService');
+const { sendReminders }              = require('../services/reminderService');
+const { sendReviewRequests }         = require('../services/reviewService');
+const { checkTomorrowsJobs }         = require('../services/weatherService');
+const { expirePendingBookings }      = require('../services/pendingExpiryService');
+const { recoverAbandonedBookings }   = require('../services/abandonedRecoveryService');
+const { runLifecycleAutomations }    = require('../services/lifecycleService');
 
 let started = false;
 
@@ -84,6 +86,27 @@ function startScheduler() {
       console.log('[Scheduler] Reviews:', r);
     } catch (e) {
       console.error('[Scheduler] Review error:', e.message);
+    }
+  }, { timezone: 'America/Toronto' });
+
+  // Every hour at :30 — abandoned booking recovery (service enforces 9–20h quiet hours)
+  cron.schedule('30 * * * *', async () => {
+    try {
+      const r = await recoverAbandonedBookings();
+      if (r?.sent) console.log('[Scheduler] Abandoned recovery:', r);
+    } catch (e) {
+      console.error('[Scheduler] Abandoned recovery error:', e.message);
+    }
+  }, { timezone: 'America/Toronto' });
+
+  // 10:00 AM — lifecycle automations (ceramic follow-ups, maintenance reminders, reactivation)
+  cron.schedule('0 10 * * *', async () => {
+    console.log('[Scheduler] Lifecycle automations...');
+    try {
+      const r = await runLifecycleAutomations();
+      console.log('[Scheduler] Lifecycle:', r);
+    } catch (e) {
+      console.error('[Scheduler] Lifecycle error:', e.message);
     }
   }, { timezone: 'America/Toronto' });
 

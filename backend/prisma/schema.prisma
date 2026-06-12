@@ -57,18 +57,60 @@ model Booking {
   cancellationReason  String?          @db.VarChar(500)
   prepEmailSent       Boolean          @default(false)
   reviewRequestSent   Boolean          @default(false)
+  customerId          Int?
 
   detailer            Detailer?        @relation(fields: [detailerId], references: [id])
   package             Package?         @relation(fields: [packageId], references: [id])
+  customer            Customer?        @relation(fields: [customerId], references: [id])
   checklist           JobChecklist?
   images              BookingImage[]
   history             BookingHistory[]
   reviewRequest       ReviewRequest?
 
   @@index([detailerId])
+  @@index([customerId])
   @@index([startAt, endAt, status])
   @@index([startAt, reminderSent, status])
   @@map("bookings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CRM — CUSTOMERS & VEHICLES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Customer {
+  id               Int       @id @default(autoincrement())
+  phone            String    @unique @db.VarChar(20)
+  email            String?   @db.VarChar(255)
+  firstName        String    @default("") @db.VarChar(100)
+  lastName         String    @default("") @db.VarChar(100)
+  language         String    @default("en") @db.VarChar(5)
+  isVip            Boolean   @default(false)
+  marketingConsent Boolean   @default(false)
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  bookings         Booking[]
+  vehicles         Vehicle[]
+
+  @@index([email])
+  @@map("customers")
+}
+
+model Vehicle {
+  id         Int      @id @default(autoincrement())
+  customerId Int
+  type       String   @db.VarChar(50)
+  make       String?  @db.VarChar(50)
+  model      String?  @db.VarChar(50)
+  year       Int?
+  notes      String?  @db.VarChar(500)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("vehicles")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,13 +279,14 @@ model JobPhoto {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model VerificationCode {
-  id          Int      @id @default(autoincrement())
-  phoneNumber String   @unique @db.VarChar(20)
-  code        String   @db.VarChar(6)
-  expiresAt   DateTime
-  attempts    Int      @default(0)
-  bookingData String?  @db.Text
-  createdAt   DateTime @default(now())
+  id             Int       @id @default(autoincrement())
+  phoneNumber    String    @unique @db.VarChar(20)
+  code           String    @db.VarChar(6)
+  expiresAt      DateTime
+  attempts       Int       @default(0)
+  bookingData    String?   @db.Text
+  recoverySentAt DateTime?
+  createdAt      DateTime  @default(now())
 
   @@map("verification_codes")
 }

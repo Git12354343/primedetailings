@@ -158,7 +158,7 @@ const BookingSummary = ({ pkg, values, services, addOns, pricing }) => {
 
 // ── Main BookingForm ──────────────────────────────────────────────────────────
 const BookingForm = () => {
-  const { t }    = useTranslation();
+  const { t, lang } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -200,6 +200,7 @@ const BookingForm = () => {
     date:             '',
     time:             '',
     specialInstructions: '',
+    marketingConsent: false,
   });
 
   // Load business config
@@ -283,6 +284,7 @@ const BookingForm = () => {
           phoneNumber: values.phone,
           bookingData: {
             ...values,
+            language:    lang,
             firstName:   values.displayName?.split(' ')[0]          || 'Customer',
             lastName:    values.displayName?.split(' ').slice(1).join(' ') || '',
             packageId:   selectedPkg?.id   || null,
@@ -314,6 +316,7 @@ const BookingForm = () => {
           code:        sms.code,
           bookingData: {
             ...values,
+            language:    lang,
             firstName:   values.displayName?.split(' ')[0]          || 'Customer',
             lastName:    values.displayName?.split(' ').slice(1).join(' ') || '',
             packageId:   selectedPkg?.id   || null,
@@ -782,6 +785,22 @@ const BookingForm = () => {
         <textarea style={{ ...iStyle(false), resize: 'vertical', minHeight: '72px' }}
           placeholder={t('booking.specialHint')} {...safeProps(getFieldProps('specialInstructions'))} />
       </div>
+
+      {/* CASL marketing consent — express opt-in, unchecked by default */}
+      <button onClick={() => handleChange('marketingConsent', !values.marketingConsent)}
+        className="flex items-start gap-3 w-full p-3 rounded-xl text-left transition-all"
+        style={{
+          background: values.marketingConsent ? 'rgba(0,168,204,0.06)' : 'rgba(255,255,255,0.02)',
+          border:     values.marketingConsent ? '1px solid rgba(0,168,204,0.25)' : '1px solid rgba(255,255,255,0.07)',
+        }}>
+        <div className="w-4 h-4 mt-0.5 rounded flex items-center justify-center flex-shrink-0"
+          style={{ background: values.marketingConsent ? GOLD_S : 'rgba(255,255,255,0.08)', border: values.marketingConsent ? 'none' : '1px solid rgba(255,255,255,0.2)' }}>
+          {values.marketingConsent && <CheckCircle className="w-3 h-3 text-black" />}
+        </div>
+        <span className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          {t('booking.marketingConsent')}
+        </span>
+      </button>
 
       <p className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>{t('booking.smsNote')}</p>
     </div>

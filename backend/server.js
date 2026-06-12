@@ -42,6 +42,7 @@ const auditRoutes        = require('./routes/auditRoutes');
 const photoRoutes        = require('./routes/photos');
 const reviewRoutes       = require('./routes/reviews');
 const faqRoutes          = require('./routes/faq');
+const customerRoutes     = require('./routes/customers');
 
 const { createManualBooking } = require('./controllers/manualBookingController');
 const { startScheduler }      = require('./jobs/scheduler');
@@ -106,6 +107,7 @@ app.use('/api/audit',        auditRoutes);
 app.use('/api/photos',       photoRoutes);
 app.use('/api/reviews',      reviewRoutes);
 app.use('/api/faq',          faqRoutes);
+app.use('/api/customers',    customerRoutes);
 
 app.post('/api/admin/manual-booking', createManualBooking);
 

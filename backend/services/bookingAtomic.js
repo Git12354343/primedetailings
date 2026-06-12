@@ -244,6 +244,16 @@ const createBookingAtomic = async (data, options = {}) => {
   });
 
   // ── 5. Non-blocking side-effects (fire & forget) ─────────────────────────
+  try {
+    const { linkBookingToCustomer } = require('./customerService');
+    linkBookingToCustomer(booking, {
+      language:         data.language,
+      marketingConsent: data.marketingConsent,
+    }).catch(() => {});
+  } catch (err) {
+    console.error('[bookingAtomic] CRM link error:', err.message);
+  }
+
   if (_addToCalendar) {
     _addToCalendar(booking).catch(err =>
       console.error('[bookingAtomic] Google Calendar error:', err.message)

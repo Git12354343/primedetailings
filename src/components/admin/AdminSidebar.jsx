@@ -3,7 +3,7 @@
 // Same activeTab/setActiveTab contract, so it's a drop-in.
 // Collapses to a horizontal scroll strip on mobile automatically.
 import React from 'react';
-import { Activity, AlertCircle, PlusCircle, Calendar, CalendarRange, Layers, Star, MessageSquare, Camera, TrendingUp, Users, LogOut, RefreshCw, FileText, Download, BookOpen } from 'lucide-react';
+import { Activity, AlertCircle, PlusCircle, Calendar, CalendarRange, Layers, Star, MessageSquare, Camera, TrendingUp, Users, UserCog, LogOut, RefreshCw, FileText, Download, BookOpen } from 'lucide-react';
 
 const NAV_GROUPS = [
   {
@@ -20,9 +20,10 @@ const NAV_GROUPS = [
   {
     label: 'Business',
     items: [
+      { id: 'customers',      label: 'Customers',   icon: Users,         countKey: null },
       { id: 'catalog',        label: 'Catalog',     icon: Layers,        countKey: null },
       { id: 'revenue',        label: 'Revenue',     icon: TrendingUp,    countKey: null },
-      { id: 'detailers',      label: 'Detailers',   icon: Users,         countKey: null },
+      { id: 'detailers',      label: 'Detailers',   icon: UserCog,       countKey: null },
       { id: 'gallery',        label: 'Gallery',     icon: Camera,        countKey: null },
     ],
   },

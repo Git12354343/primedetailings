@@ -535,6 +535,33 @@ class EmailService {
     } catch (e) { console.error('Review email error:', e.message); }
   }
 
+  // Generic branded lifecycle email (abandoned recovery, maintenance
+  // reminders, ceramic follow-ups, reactivation). One template, many uses.
+  async sendLifecycleEmail({ email, firstName, subject, heading, bodyHtml, ctaLabel, ctaUrl }) {
+    if (!email) return;
+    try {
+      await this.transporter.sendMail({
+        from: `"Prestige Plus Services" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0b0f1a;color:#fff;border-radius:12px;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#00a8cc,#00d4ff);padding:28px;text-align:center;">
+              <h1 style="margin:0;color:#000;font-size:22px;font-weight:900;">${heading}</h1>
+            </div>
+            <div style="padding:32px;text-align:center;">
+              <p style="font-size:16px;color:rgba(255,255,255,0.8);">Hi ${firstName || 'there'},</p>
+              <div style="color:rgba(255,255,255,0.65);font-size:14px;line-height:1.6;">${bodyHtml}</div>
+              ${ctaUrl ? `<a href="${ctaUrl}" style="display:inline-block;margin:24px 0 8px;padding:16px 32px;background:linear-gradient(135deg,#00a8cc,#00d4ff);color:#000;font-weight:900;font-size:16px;border-radius:14px;text-decoration:none;">${ctaLabel || 'Book Now'}</a>` : ''}
+            </div>
+            <div style="padding:16px;text-align:center;background:rgba(0,168,204,0.05);">
+              <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.4);">Prestige Plus Services · info@prestigeplus.services · (438) 796-8001</p>
+            </div>
+          </div>`,
+      });
+    } catch (e) { console.error('Lifecycle email error:', e.message); }
+  }
+
 }
 
 module.exports = new EmailService();

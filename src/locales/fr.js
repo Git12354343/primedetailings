@@ -126,6 +126,7 @@ const fr = {
     title:         'Réservez votre détail',
     subtitle:      'Rapide, facile et confirmé par SMS.',
     headerBadge:   'Réservation en ligne',
+    marketingConsent: 'Envoyez-moi des rappels d’entretien et des offres saisonnières par SMS/courriel. Désabonnement possible en tout temps. (Facultatif)',
     step1:         'Choisir le véhicule',
     step2:         'Choisir les services',
     step3:         'Vos coordonnées',

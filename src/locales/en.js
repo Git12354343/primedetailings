@@ -126,6 +126,7 @@ const en = {
     title:         'Book Your Detail',
     subtitle:      'Fast, easy, and confirmed by SMS.',
     headerBadge:   'Online Booking',
+    marketingConsent: 'Send me maintenance reminders and seasonal offers by SMS/email. You can opt out anytime. (Optional)',
     step1:         'Choose Vehicle',
     step2:         'Pick Services',
     step3:         'Your Info',
