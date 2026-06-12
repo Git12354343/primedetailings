@@ -16,14 +16,16 @@ const Navbar = () => {
   const { t } = useTranslation();
 
   const NAV_LINKS = [
-    { label: t('nav.services'),    to: '/services'        },
-    { label: t('nav.ceramic'),     to: '/ceramic-coating' },
-    { label: t('nav.gallery'),     to: '/gallery'         },
-    { label: t('nav.howItWorks'),  to: '/how-it-works'    },
+    { label: t('nav.services'),    to: '/services',        desktop: true },
+    { label: t('nav.ceramic'),     to: '/ceramic-coating', desktop: true },
+    { label: t('nav.gallery'),     to: '/gallery',         desktop: true },
+    { label: t('nav.howItWorks'),  to: '/how-it-works',    desktop: true },
     { label: t('nav.fleet'),       to: '/fleet'           },
-    { label: t('nav.contact'),     to: '/contact'         },
+    { label: t('nav.contact'),     to: '/contact',         desktop: true },
     { label: t('nav.track'),       to: '/lookup'          },
   ];
+
+  const DESKTOP_LINKS = NAV_LINKS.filter(l => l.desktop);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 30);
@@ -44,7 +46,7 @@ const Navbar = () => {
           borderBottom:   scrolled ? '1px solid rgba(0,168,204,0.18)' : '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16 gap-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16 gap-4">
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
@@ -63,12 +65,31 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* Right side — phone + Book Now + hamburger */}
-          <div className="flex items-center gap-3">
+          {/* Desktop inline links */}
+          <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
+            {DESKTOP_LINKS.map(({ label, to }) => {
+              const active = location.pathname === to;
+              return (
+                <Link key={to} to={to}
+                  className="px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                  style={{
+                    color:      active ? '#00d4ff' : 'rgba(255,255,255,0.65)',
+                    background: active ? 'rgba(0,168,204,0.1)' : 'transparent',
+                  }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.color = '#fff'; }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; }}>
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
 
-            {/* Phone — hidden on very small screens */}
+          {/* Right side — phone + Book Now + hamburger */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+
+            {/* Phone — hidden on small and squeezed screens */}
             <a href="tel:+14387968001"
-              className="hidden sm:flex items-center gap-1.5 text-sm font-medium transition-colors"
+              className="hidden sm:flex lg:hidden xl:flex items-center gap-1.5 text-sm font-medium transition-colors"
               style={{ color: 'rgba(255,255,255,0.65)' }}
               onMouseEnter={e => e.currentTarget.style.color='#00d4ff'}
               onMouseLeave={e => e.currentTarget.style.color='rgba(255,255,255,0.65)'}>

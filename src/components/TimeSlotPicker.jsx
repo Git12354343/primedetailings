@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Clock, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
+const fmtHour = (h) => {
+  if (!Number.isFinite(h)) return '';
+  const hr = ((h % 24) + 24) % 24;
+  return `${hr % 12 || 12}:00 ${hr < 12 ? 'AM' : 'PM'}`;
+};
+
 const TimeSlotPicker = ({ selectedDate, selectedTime, onTimeSelect, businessConfig, className = '' }) => {
   const [slots, setSlots]           = useState([]);
   const [loading, setLoading]       = useState(false);
@@ -124,7 +130,7 @@ const TimeSlotPicker = ({ selectedDate, selectedTime, onTimeSelect, businessConf
               <div>
                 <div className="text-white font-bold text-base leading-tight">{slot.label}</div>
                 <div className="text-gray-500 text-xs mt-0.5">
-                  {slot.startHour}:00 — {slot.endHour}:00
+                  {fmtHour(slot.startHour)} — {fmtHour(slot.endHour)}
                   {businessConfig?.serviceDuration && ` · ~${businessConfig.serviceDuration}h service`}
                 </div>
               </div>
@@ -172,7 +178,7 @@ const TimeSlotPicker = ({ selectedDate, selectedTime, onTimeSelect, businessConf
         <div className="flex items-center gap-2 pt-1">
           <Clock className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
           <span className="text-gray-600 text-xs">
-            Operating {businessConfig.operatingHours.start}:00 — {businessConfig.operatingHours.end}:00
+            Operating {fmtHour(businessConfig.operatingHours.start)} — {fmtHour(businessConfig.operatingHours.end)}
             {businessConfig.minAdvanceHours && ` · ${businessConfig.minAdvanceHours}h min notice`}
           </span>
         </div>

@@ -55,6 +55,21 @@ const en = {
     stat1:    'Cars Detailed',
     stat2:    'Avg Rating',
     stat3:    'Mobile',
+    trustRating:      '4.9 Stars',
+    trustRatingSub:   '200+ Reviews',
+    trustWarranty:    '5-Year Warranty',
+    trustWarrantySub: 'Ceramic Coating',
+    trustSameDay:     'Same Day',
+    trustSameDaySub:  'Available',
+  },
+
+  home: {
+    trust1Title: 'We come to you',
+    trust1Desc:  'Home, condo, parking lot, office, or street. No shop visit required.',
+    trust2Title: 'No payment to book',
+    trust2Desc:  'Choose your service and confirm your appointment. Pay only after.',
+    trust3Title: 'Satisfaction guaranteed',
+    trust3Desc:  "We review the results with you before payment. If it's not right, we fix it.",
   },
 
   services: {

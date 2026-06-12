@@ -55,6 +55,21 @@ const fr = {
     stat1:    'Véhicules traités',
     stat2:    'Note moyenne',
     stat3:    'Mobile',
+    trustRating:      '4,9 étoiles',
+    trustRatingSub:   '200+ avis',
+    trustWarranty:    'Garantie 5 ans',
+    trustWarrantySub: 'Revêtement céramique',
+    trustSameDay:     'Jour même',
+    trustSameDaySub:  'Disponible',
+  },
+
+  home: {
+    trust1Title: 'Nous venons à vous',
+    trust1Desc:  'Maison, condo, stationnement, bureau ou rue. Aucun déplacement requis.',
+    trust2Title: 'Aucun paiement à la réservation',
+    trust2Desc:  'Choisissez votre service et confirmez votre rendez-vous. Payez seulement après.',
+    trust3Title: 'Satisfaction garantie',
+    trust3Desc:  'Nous passons les résultats en revue avec vous avant le paiement. Si ce n\'est pas parfait, nous corrigeons.',
   },
 
   services: {

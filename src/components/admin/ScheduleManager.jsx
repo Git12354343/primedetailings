@@ -45,6 +45,11 @@ const safeInt = (val, fallback) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+const fmtHour = (h) => {
+  const hr = ((h % 24) + 24) % 24;
+  return `${hr % 12 || 12}:00 ${hr < 12 ? 'AM' : 'PM'}`;
+};
+
 // ── Shared input styles ───────────────────────────────────────────────────────
 const iBase  = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', padding: '8px 12px', fontSize: '13px', outline: 'none' };
 const iNum   = { ...iBase, width: '100%', fontSize: '1.5rem', fontWeight: '900', textAlign: 'center', color: '#00d4ff', borderRadius: '12px', padding: '12px' };
@@ -131,15 +136,36 @@ const ScheduleManager = ({ adminToken }) => {
       }
     }
 
-    // All checks passed — save
+    // Operating hours must form a valid window
+    if (config.operatingHours.end <= config.operatingHours.start) {
+      setError('Closing hour must be after opening hour.');
+      setSaving(false);
+      return;
+    }
+
+    // Slots must fall within operating hours
+    for (const slot of config.timeSlots) {
+      if (slot.startHour < config.operatingHours.start || slot.endHour > config.operatingHours.end) {
+        setError(
+          `Slot "${slot.label || slot.id}" (${fmtHour(slot.startHour)} – ${fmtHour(slot.endHour)}) ` +
+          `is outside operating hours (${fmtHour(config.operatingHours.start)} – ${fmtHour(config.operatingHours.end)}).`
+        );
+        setSaving(false);
+        return;
+      }
+    }
+
+    // All checks passed — save with slots in chronological order
+    const sortedConfig = { ...config, timeSlots: sorted };
     try {
       const res  = await fetch(`${import.meta.env.VITE_API_URL}/schedule/config`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': adminToken || '' },
-        body:    JSON.stringify(config),
+        body:    JSON.stringify(sortedConfig),
       });
       const data = await res.json();
       if (data.success) {
+        setConfig(sortedConfig);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
       } else {
@@ -362,6 +388,10 @@ const ScheduleManager = ({ adminToken }) => {
                       <input style={iHour} type="number" min={6} max={24}
                         value={Number.isFinite(slot.endHour) ? slot.endHour : ''}
                         onChange={e => updateTimeSlot(idx, 'endHour', e.target.value)} />
+                      <span className="text-xs hidden sm:inline whitespace-nowrap"
+                        style={{ color: 'rgba(0,212,255,0.6)' }}>
+                        {fmtHour(slot.startHour)} – {fmtHour(slot.endHour)}
+                      </span>
                       <button onClick={() => removeTimeSlot(idx)}
                         className="ml-auto p-1.5 rounded-lg transition-colors hover:bg-red-500/20"
                         style={{ color: '#f87171' }}>
@@ -375,6 +405,43 @@ const ScheduleManager = ({ adminToken }) => {
                     <Plus className="w-4 h-4" /> Add Time Slot
                   </button>
                 </div>
+
+                {/* Visual day preview */}
+                {config.timeSlots.length > 0 && config.operatingHours.end > config.operatingHours.start && (
+                  <div className="mt-5">
+                    <div className="flex justify-between text-[10px] mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                      <span>{fmtHour(config.operatingHours.start)}</span>
+                      <span>{fmtHour(config.operatingHours.end)}</span>
+                    </div>
+                    <div className="relative h-9 rounded-lg"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      {config.timeSlots.map(slot => {
+                        const span    = config.operatingHours.end - config.operatingHours.start;
+                        const left    = ((slot.startHour - config.operatingHours.start) / span) * 100;
+                        const width   = ((slot.endHour - slot.startHour) / span) * 100;
+                        const outside = slot.startHour < config.operatingHours.start || slot.endHour > config.operatingHours.end;
+                        return (
+                          <div key={slot.id}
+                            className="absolute top-1 bottom-1 rounded-md flex items-center justify-center overflow-hidden"
+                            style={{
+                              left:       `${Math.max(0, Math.min(100, left))}%`,
+                              width:      `${Math.max(2, Math.min(100 - Math.max(0, left), width))}%`,
+                              background: outside ? 'rgba(239,68,68,0.25)' : 'rgba(0,168,204,0.25)',
+                              border:     outside ? '1px solid rgba(239,68,68,0.5)' : '1px solid rgba(0,168,204,0.5)',
+                            }}>
+                            <span className="text-[10px] font-semibold truncate px-1"
+                              style={{ color: outside ? '#fca5a5' : '#00d4ff' }}>
+                              {slot.label || slot.id}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[10px] mt-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      Day preview — a red slot falls outside operating hours and will block saving.
+                    </p>
+                  </div>
+                )}
               </div>
 
             </div>

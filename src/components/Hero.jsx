@@ -46,7 +46,7 @@ const Hero = () => {
         >
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse-slow" />
           <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">
-            Québec's Premier Mobile Detailing
+            {t('hero.badge')}
           </span>
         </div>
 
@@ -63,7 +63,7 @@ const Hero = () => {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text'
           }}>
-            Perfected.
+            {t('hero.titleGold')}
           </span>
         </h1>
 
@@ -71,8 +71,7 @@ const Hero = () => {
         <p
           className={`text-lg sm:text-xl text-gray-300 max-w-xl mx-auto mb-10 leading-relaxed transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
         >
-          Ceramic coatings, paint correction & premium detailing.
-          We come to <strong className="text-white">you</strong> — anywhere in Québec.
+          {t('hero.subtitle')}
         </p>
 
         {/* CTA Buttons */}
@@ -83,14 +82,14 @@ const Hero = () => {
             to="/booking"
             className="btn-luxury px-8 py-4 rounded-xl text-base font-bold tracking-wide inline-flex items-center justify-center gap-2 group"
           >
-            Book Appointment
+            {t('hero.cta')}
             <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link
             to="/services"
             className="btn-ghost-luxury px-8 py-4 rounded-xl text-base font-semibold inline-flex items-center justify-center gap-2"
           >
-            View Packages
+            {t('hero.ctaSub')}
           </Link>
         </div>
 
@@ -99,9 +98,9 @@ const Hero = () => {
           className={`flex flex-wrap justify-center gap-3 sm:gap-6 mb-12 transition-all duration-700 delay-400 ${visible ? 'opacity-100' : 'opacity-0'}`}
         >
           {[
-            { icon: Star, label: '4.9 Stars', sub: '200+ Reviews' },
-            { icon: Shield, label: '5-Year Warranty', sub: 'Ceramic Coating' },
-            { icon: Zap, label: 'Same Day', sub: 'Available' },
+            { icon: Star, label: t('hero.trustRating'), sub: t('hero.trustRatingSub') },
+            { icon: Shield, label: t('hero.trustWarranty'), sub: t('hero.trustWarrantySub') },
+            { icon: Zap, label: t('hero.trustSameDay'), sub: t('hero.trustSameDaySub') },
           ].map(({ icon: Icon, label, sub }, i) => (
             <div
               key={i}

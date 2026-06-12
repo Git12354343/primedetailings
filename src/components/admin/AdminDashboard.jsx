@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAdminData } from '../../hooks/useAdminData';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw, LogOut } from 'lucide-react';
 
 import AdminSidebar           from './AdminSidebar';
 import AdminStatsPro          from './AdminStatsPro';
@@ -119,6 +119,9 @@ const TITLES = {
   'detailers':      { t: 'Detailers',     s: 'Manage your team' },
   'messages':       { t: 'Messages',      s: 'Customer contact form submissions' },
   'gallery':        { t: 'Gallery',       s: 'Before & after job photos' },
+  'bulk':           { t: 'Bulk Ops',      s: 'Reschedule multiple bookings at once' },
+  'export':         { t: 'Export',        s: 'Download booking and revenue data' },
+  'audit':          { t: 'Audit Log',     s: 'Track admin actions and changes' },
 };
 
 const SHOW_DETAILER_RAIL = ['live-feed', 'unassigned'];
@@ -170,7 +173,7 @@ const AdminDashboard = ({ onLogout, adminToken }) => {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#0b0f1a' }}>
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden" style={{ background: '#0b0f1a' }}>
 
       {/* Sidebar */}
       <AdminSidebar
@@ -197,9 +200,23 @@ const AdminDashboard = ({ onLogout, adminToken }) => {
             <h1 className="text-white font-black text-lg">{title.t}</h1>
             <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{title.s}</p>
           </div>
-          {error && (
-            <p className="text-xs text-red-400 max-w-xs truncate">{error}</p>
-          )}
+          <div className="flex items-center gap-2">
+            {error && (
+              <p className="text-xs text-red-400 max-w-xs truncate">{error}</p>
+            )}
+            <div className="flex items-center gap-1 lg:hidden">
+              <button onClick={handleRefresh} disabled={refreshing} aria-label="Refresh"
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-white transition-colors"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <button onClick={onLogout} aria-label="Sign out"
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-red-400 transition-colors"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Stats row */}
