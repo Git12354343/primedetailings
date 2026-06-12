@@ -96,7 +96,7 @@ const StepBar = ({ current, confirmed }) => {
 };
 
 // ── Booking Summary sidebar (desktop) ─────────────────────────────────────────
-const BookingSummary = ({ mode, pkg, values, services, addOns, pricing }) => {
+const BookingSummary = ({ pkg, values, services, addOns, pricing }) => {
   const { t } = useTranslation();
   const pkgPrice   = pkg ? getPkgPrice(pkg, values.vehicleType) : null;
   const total      = pkgPrice || pricing?.total || 0;
@@ -175,6 +175,7 @@ const BookingForm = () => {
   const [sms,            setSms]            = useState({ code: '', sent: false, attempts: 3 });
   const [apiLoading,     setApiLoading]     = useState(false);
   const [showMobSum,     setShowMobSum]     = useState(false);
+  const [showVehDetails, setShowVehDetails] = useState(false);
   const topRef = useRef(null);
 
   const { services, addOns, packages, loading: pkgLoading } = useServicesCache();
@@ -191,18 +192,15 @@ const BookingForm = () => {
     make:             '',
     model:            '',
     year:             '',
-    vehicleCondition: '',
+    vehicleCondition: prefilled?.vehicleCondition || 'MODERATE',
     propertyType:     '',
-    hasWaterPower:    null,
+    hasWaterPower:    true,
     services:         prefilled?.services?.map(String) || [],
     addOns:           prefilled?.addOns?.map(String)   || [],
     date:             '',
     time:             '',
     specialInstructions: '',
   });
-
-  const svcMap   = Object.fromEntries(services.map(s => [s.id, s]));
-  const addonMap = Object.fromEntries(addOns.map(a => [a.id, a]));
 
   // Load business config
   useEffect(() => {
@@ -626,19 +624,24 @@ const BookingForm = () => {
         )}
       </div>
 
-      {/* Optional vehicle details */}
+      {/* Optional vehicle details — collapsed by default to keep step 1 short */}
       <div>
-        <h3 className="text-white font-bold text-sm mb-3">
+        <button onClick={() => setShowVehDetails(s => !s)}
+          className="flex items-center gap-2 text-sm font-semibold transition-colors"
+          style={{ color: showVehDetails ? '#00d4ff' : 'rgba(255,255,255,0.45)' }}>
+          {showVehDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           {t('booking.vehicleDetails')} <span className="text-gray-600 normal-case font-normal text-xs">{t('booking.optionalSuffix')}</span>
-        </h3>
-        <div className="grid grid-cols-3 gap-3">
-          {[['make',t('booking.make'),'text','BMW'],['model',t('booking.model'),'text','3 Series'],['year',t('booking.year'),'number','2022']].map(([f,l,typ,p]) => (
-            <div key={f}>
-              <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{l}</label>
-              <input style={iStyle(errors[f])} type={typ} placeholder={p} {...safeProps(getFieldProps(f))} />
-            </div>
-          ))}
-        </div>
+        </button>
+        {showVehDetails && (
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            {[['make',t('booking.make'),'text','BMW'],['model',t('booking.model'),'text','3 Series'],['year',t('booking.year'),'number','2022']].map(([f,l,typ,p]) => (
+              <div key={f}>
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{l}</label>
+                <input style={iStyle(errors[f])} type={typ} placeholder={p} {...safeProps(getFieldProps(f))} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -870,6 +873,17 @@ const BookingForm = () => {
                           ? <>{t('booking.sendCode')} <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></>
                           : <>{t('booking.next')} <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></>}
                   </button>
+                </div>
+              )}
+
+              {/* Trust microcopy at the decision point */}
+              {!sms.sent && (
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4">
+                  {[t('booking.trustCancellation'), t('booking.trustLocation'), t('booking.trustInsured')].map(txt => (
+                    <span key={txt} className="flex items-center gap-1 text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                      <CheckCircle className="w-3 h-3" style={{ color: 'rgba(0,212,255,0.5)' }} /> {txt}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>

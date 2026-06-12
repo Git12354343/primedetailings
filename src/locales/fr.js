@@ -125,6 +125,7 @@ const fr = {
   booking: {
     title:         'Réservez votre détail',
     subtitle:      'Rapide, facile et confirmé par SMS.',
+    headerBadge:   'Réservation en ligne',
     step1:         'Choisir le véhicule',
     step2:         'Choisir les services',
     step3:         'Vos coordonnées',

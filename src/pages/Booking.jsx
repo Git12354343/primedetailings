@@ -1,15 +1,19 @@
 import React from 'react';
 import BookingForm from '../components/BookingForm';
 import { Shield, Zap, MapPin, Phone } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
-const TRUST_BADGES = [
-  { icon: Shield,  text: 'Fully Insured' },
-  { icon: Zap,     text: 'Same-Day Available' },
-  { icon: MapPin,  text: 'We Come To You' },
-  { icon: Phone,   text: 'SMS Confirmation' },
-];
+const Booking = () => {
+  const { t } = useTranslation();
 
-const Booking = () => (
+  const TRUST_BADGES = [
+    { icon: Shield, text: t('booking.trustInsured')      },
+    { icon: Zap,    text: t('booking.trustCancellation') },
+    { icon: MapPin, text: t('booking.trustLocation')     },
+    { icon: Phone,  text: t('booking.trustSms')          },
+  ];
+
+  return (
   <div style={{ background: '#0b0f1a', minHeight: '100vh' }}>
 
     {/* Page header */}
@@ -23,14 +27,13 @@ const Booking = () => (
       <div className="relative z-10 max-w-xl mx-auto">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4"
           style={{ background: 'rgba(0,168,204,0.08)', border: '1px solid rgba(0,168,204,0.2)' }}>
-          <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">Online Booking</span>
+          <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">{t('booking.headerBadge')}</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-black text-white mb-3 leading-tight">
-          Book Your{' '}
-          <span style={{ color: '#fff' }}>Detail</span>
+          {t('booking.title')}
         </h1>
         <p className="text-gray-400 text-base mb-6">
-          Takes 2 minutes. We come to you anywhere in Montreal.
+          {t('booking.subtitle')}
         </p>
 
         {/* Trust badges */}
@@ -53,6 +56,7 @@ const Booking = () => (
     </div>
 
   </div>
-);
+  );
+};
 
 export default Booking;

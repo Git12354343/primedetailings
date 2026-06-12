@@ -125,6 +125,7 @@ const en = {
   booking: {
     title:         'Book Your Detail',
     subtitle:      'Fast, easy, and confirmed by SMS.',
+    headerBadge:   'Online Booking',
     step1:         'Choose Vehicle',
     step2:         'Pick Services',
     step3:         'Your Info',
