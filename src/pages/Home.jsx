@@ -2,6 +2,7 @@
 // Structure inspired by Onyx:
 //   Hero → InstantQuote → Trust strip → Reviews → FAQ → CTA
 
+import Seo from '../components/Seo';
 import React from 'react';
 import Hero from '../components/Hero';
 import InstantQuote from '../components/InstantQuote';
@@ -55,6 +56,7 @@ const TrustStrip = () => {
 // ── Page ──────────────────────────────────────────────────────────────────────
 const Home = () => (
   <div style={{ background: '#0b0f1a' }}>
+      <Seo page="home" path="/" />
     <Hero />
     <InstantQuote />
     <TrustStrip />

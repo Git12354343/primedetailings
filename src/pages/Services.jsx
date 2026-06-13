@@ -9,6 +9,7 @@
 //   • Full bilingual support preserved
 //   • All booking links / service IDs untouched
 
+import Seo from '../components/Seo';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
@@ -466,6 +467,7 @@ const Services = () => {
 
   return (
     <div ref={pageRef} style={{ background: '#0b0f1a', minHeight: '100vh' }}>
+      <Seo page="services" path="/services" />
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
       <div className="relative pt-32 pb-16 px-4 text-center overflow-hidden"

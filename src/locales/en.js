@@ -63,6 +63,41 @@ const en = {
     trustSameDaySub:  'Available',
   },
 
+  seo: {
+    home: {
+      title:       'Prestige Plus Detailing — Mobile Car Detailing in Montréal & Québec',
+      description: "Montréal's premier mobile detailing. Ceramic coatings, paint correction, interior & exterior detailing — we come to you. Book online in under a minute.",
+    },
+    services: {
+      title:       'Detailing Services & Packages — Prestige Plus Detailing Montréal',
+      description: 'Compare our detailing packages: interior, exterior, full detail and ceramic coating. Transparent pricing by vehicle type. Mobile — we come to you.',
+    },
+    ceramic: {
+      title:       'Ceramic Coating Montréal — 5-Year Protection | Prestige Plus',
+      description: 'Professional ceramic coating with up to 5 years of protection. Extreme gloss, hydrophobic finish, winter & salt protection. Mobile service across Québec.',
+    },
+    booking: {
+      title:       'Book Your Mobile Detail Online — Prestige Plus Detailing',
+      description: 'Book your car detailing in under a minute. Live availability, instant pricing, SMS confirmation. No payment required to book.',
+    },
+    contact: {
+      title:       'Contact Us — Prestige Plus Detailing Montréal',
+      description: 'Questions about detailing or ceramic coating? Call (438) 796-8001 or send us a message. We answer fast.',
+    },
+    gallery: {
+      title:       'Before & After Gallery — Prestige Plus Detailing',
+      description: 'Real results from real customers: paint correction, ceramic coatings, interior transformations. See our work before you book.',
+    },
+    howItWorks: {
+      title:       'How Mobile Detailing Works — Prestige Plus Detailing',
+      description: 'Book online, we come to you, pay after the result. See how our mobile detailing service works step by step.',
+    },
+    fleet: {
+      title:       'Fleet & B2B Detailing — Prestige Plus Detailing Montréal',
+      description: 'Fleet detailing for businesses: company cars, vans and trucks, on your schedule, at your location. Request a fleet quote.',
+    },
+  },
+
   home: {
     trust1Title: 'We come to you',
     trust1Desc:  'Home, condo, parking lot, office, or street. No shop visit required.',

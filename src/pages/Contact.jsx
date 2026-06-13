@@ -1,3 +1,4 @@
+import Seo from '../components/Seo';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -146,6 +147,7 @@ const ContactPage = () => {
 
   return (
     <div className="min-h-screen" style={{ background: '#0b0f1a' }}>
+      <Seo page="contact" path="/contact" />
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section ref={heroRef} className="relative pt-32 pb-16 overflow-hidden">

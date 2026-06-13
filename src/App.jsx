@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import ErrorBoundary from './components/ErrorBoundary';
 import { NotificationProvider } from './components/notifications/NotificationProvider';
 import { ContentSkeleton } from './components/LoadingSkeleton';
@@ -115,16 +116,18 @@ function EnhancedApp() {
 
   return (
     <ErrorBoundary>
-      <LanguageProvider>
-        <NotificationProvider>
-          {!appReady && <LoadingScreen onDone={() => setAppReady(true)} />}
-          <div style={{ visibility: appReady ? 'visible' : 'hidden' }}>
-            <Router>
-              <AnimatedRoutes />
-            </Router>
-          </div>
-        </NotificationProvider>
-      </LanguageProvider>
+      <HelmetProvider>
+        <LanguageProvider>
+          <NotificationProvider>
+            {!appReady && <LoadingScreen onDone={() => setAppReady(true)} />}
+            <div style={{ visibility: appReady ? 'visible' : 'hidden' }}>
+              <Router>
+                <AnimatedRoutes />
+              </Router>
+            </div>
+          </NotificationProvider>
+        </LanguageProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 }

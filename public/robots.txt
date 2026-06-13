@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /detailer-login
+Disallow: /detailer-dashboard
+Disallow: /lookup
+Disallow: /quote/lookup
+
+Sitemap: https://prestigeplus.services/sitemap.xml

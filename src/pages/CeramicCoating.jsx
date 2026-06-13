@@ -4,6 +4,7 @@
 // shared useInView hook. All motion is GPU-friendly and reduced-motion safe.
 //
 // NOTE: Footer is rendered by PublicLayout in App.jsx — do NOT add one here.
+import Seo from '../components/Seo';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, ChevronDown, Phone, MessageSquare, ArrowRight, Award } from 'lucide-react';
@@ -49,6 +50,15 @@ const CeramicCoating = () => {
 
   return (
     <div style={{ background: '#0b0f1a' }}>
+      <Seo page="ceramic" path="/ceramic-coating" jsonLd={{
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        serviceType: 'Ceramic Coating',
+        name: 'Ceramic Coating',
+        description: 'Professional ceramic coating with up to 5 years of protection. Mobile service across greater Montr\u00e9al and Qu\u00e9bec.',
+        provider: { '@type': 'LocalBusiness', name: 'Prestige Plus Detailing', telephone: '+14387968001', url: 'https://prestigeplus.services' },
+        areaServed: ['Montr\u00e9al', 'Laval', 'Longueuil', 'South Shore', 'North Shore'],
+      }} />
       {/* 1. Cinematic hero (swap imageUrl/videoUrl for real assets when ready) */}
       <WaterBeadHero />
 

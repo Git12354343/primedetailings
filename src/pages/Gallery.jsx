@@ -1,3 +1,4 @@
+import Seo from '../components/Seo';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Camera, Loader2, AlertCircle } from 'lucide-react';
@@ -141,6 +142,7 @@ const Gallery = () => {
 
   return (
     <div className="min-h-screen" style={{ background: '#0b0f1a' }}>
+      <Seo page="gallery" path="/gallery" />
       <style>{`@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }`}</style>
 
       {/* Hero */}

@@ -63,6 +63,41 @@ const fr = {
     trustSameDaySub:  'Disponible',
   },
 
+  seo: {
+    home: {
+      title:       'Prestige Plus Detailing — Esthétique automobile mobile à Montréal et au Québec',
+      description: 'Esthétique automobile mobile haut de gamme à Montréal. Revêtement céramique, correction de peinture, détail intérieur et extérieur — nous venons à vous.',
+    },
+    services: {
+      title:       'Services et forfaits d’esthétique — Prestige Plus Detailing Montréal',
+      description: 'Comparez nos forfaits : intérieur, extérieur, détail complet et revêtement céramique. Prix transparents selon le type de véhicule. Service mobile.',
+    },
+    ceramic: {
+      title:       'Revêtement céramique Montréal — Protection 5 ans | Prestige Plus',
+      description: 'Revêtement céramique professionnel avec jusqu’à 5 ans de protection. Brillance extrême, fini hydrophobe, protection hiver et calcium. Service mobile au Québec.',
+    },
+    booking: {
+      title:       'Réservez votre détail mobile en ligne — Prestige Plus Detailing',
+      description: 'Réservez votre esthétique automobile en moins d’une minute. Disponibilités en direct, prix instantané, confirmation par SMS. Aucun paiement requis.',
+    },
+    contact: {
+      title:       'Contactez-nous — Prestige Plus Detailing Montréal',
+      description: 'Des questions sur l’esthétique ou le revêtement céramique ? Appelez le (438) 796-8001 ou écrivez-nous. Réponse rapide.',
+    },
+    gallery: {
+      title:       'Galerie avant / après — Prestige Plus Detailing',
+      description: 'Des résultats réels : correction de peinture, revêtements céramiques, transformations intérieures. Voyez notre travail avant de réserver.',
+    },
+    howItWorks: {
+      title:       'Comment fonctionne le détail mobile — Prestige Plus Detailing',
+      description: 'Réservez en ligne, nous venons à vous, payez après le résultat. Découvrez notre service d’esthétique mobile étape par étape.',
+    },
+    fleet: {
+      title:       'Esthétique de flotte et B2B — Prestige Plus Detailing Montréal',
+      description: 'Esthétique de flotte pour entreprises : voitures, fourgonnettes et camions, selon votre horaire, à votre emplacement. Demandez une soumission.',
+    },
+  },
+
   home: {
     trust1Title: 'Nous venons à vous',
     trust1Desc:  'Maison, condo, stationnement, bureau ou rue. Aucun déplacement requis.',

@@ -1,3 +1,4 @@
+import Seo from '../components/Seo';
 import React from 'react';
 import BookingForm from '../components/BookingForm';
 import { Shield, Zap, MapPin, Phone } from 'lucide-react';
@@ -15,6 +16,7 @@ const Booking = () => {
 
   return (
   <div style={{ background: '#0b0f1a', minHeight: '100vh' }}>
+      <Seo page="booking" path="/booking" />
 
     {/* Page header */}
     <div className="relative pt-28 pb-10 px-4 text-center overflow-hidden"

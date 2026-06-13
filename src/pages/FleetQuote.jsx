@@ -1,4 +1,5 @@
 // src/pages/FleetQuote.jsx
+import Seo from '../components/Seo';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, Car, Wrench, Calendar, MapPin, ChevronRight, CheckCircle, Loader2 } from 'lucide-react';
@@ -129,6 +130,7 @@ const FleetQuote = () => {
 
   return (
     <div style={{ background: '#0b0f1a', minHeight: '100vh' }}>
+      <Seo page="fleet" path="/fleet" />
 
       {/* Hero */}
       <section ref={ref} className="relative pt-24 pb-16 overflow-hidden">
