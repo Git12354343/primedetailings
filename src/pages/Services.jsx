@@ -81,7 +81,7 @@ const parseIncludes = (raw) => {
   try {
     const p = JSON.parse(raw);
     if (Array.isArray(p)) return p.map(String).filter(Boolean);
-  } catch {}
+  } catch { /* not JSON; fall through to delimiter parsing */ }
   return raw.split(/\n|,\s*/).map(s => s.trim()).filter(Boolean);
 };
 
@@ -145,14 +145,147 @@ const IncludesAccordion = ({ items, openLabel, closeLabel }) => {
   );
 };
 
+// ── Paint Correction spotlight ────────────────────────────────────────────────
+// Dedicated marketing section for the highest-margin restoration service.
+const PaintCorrectionSpotlight = () => {
+  const { t } = useTranslation();
+  const stages = [
+    { n: '01', title: t('services.pcStage1'), desc: t('services.pcStage1d') },
+    { n: '02', title: t('services.pcStage2'), desc: t('services.pcStage2d') },
+    { n: '03', title: t('services.pcStage3'), desc: t('services.pcStage3d') },
+  ];
+  return (
+    <section id="section-paint-correction" aria-label="Paint correction"
+      className="rounded-2xl p-6 sm:p-8 overflow-hidden relative"
+      style={{ background: 'linear-gradient(135deg, rgba(0,168,204,0.07), rgba(255,255,255,0.02))', border: '1px solid rgba(0,168,204,0.2)' }}>
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4"
+        style={{ background: 'rgba(0,168,204,0.12)', border: '1px solid rgba(0,168,204,0.3)' }}>
+        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+        <span className="text-cyan-400 text-xs font-semibold tracking-widest uppercase">{t('services.pcBadge')}</span>
+      </div>
+      <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">{t('services.pcTitle')}</h2>
+      <p className="text-sm leading-relaxed max-w-2xl mb-6" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        {t('services.pcDesc')}
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        {stages.map(({ n, title, desc }) => (
+          <div key={n} className="p-4 rounded-xl"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="text-xs font-black mb-1" style={{ color: 'rgba(0,212,255,0.5)' }}>{n}</div>
+            <div className="text-white font-bold text-sm mb-1">{title}</div>
+            <div className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>{desc}</div>
+          </div>
+        ))}
+      </div>
+      <Link to="/quote" className="btn-luxury inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold tracking-wide">
+        {t('services.pcCta')} <ChevronRight className="w-4 h-4" />
+      </Link>
+    </section>
+  );
+};
+
+// ── Package Comparison table ──────────────────────────────────────────────────
+// Side-by-side view of what each package includes — the fastest way for an
+// undecided visitor to pick a tier. Rows = union of included services.
+const PackageComparison = ({ packages, services, vehicleType }) => {
+  const { t, isFr } = useTranslation();
+
+  const parseIds = (raw) => {
+    try { return (Array.isArray(raw) ? raw : JSON.parse(raw || '[]')).map(String); }
+    catch { return []; }
+  };
+
+  const pkgIncluded = packages.map(p => new Set(parseIds(p.includedServices)));
+
+  // Rows: services included in at least one package, in catalog order
+  const rows = services.filter(s => pkgIncluded.some(set => set.has(String(s.id))));
+  if (rows.length === 0 || packages.length < 2) return null;
+
+  return (
+    <div className="mt-10 rounded-2xl overflow-hidden"
+      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="px-5 pt-5 pb-3">
+        <h3 className="text-white font-bold text-base">{t('services.compareTitle')}</h3>
+        <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{t('services.compareSubtitle')}</p>
+      </div>
+      <div className="overflow-x-auto custom-scrollbar">
+        <table className="w-full text-sm" style={{ minWidth: `${280 + packages.length * 130}px` }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider"
+                style={{ color: 'rgba(255,255,255,0.35)' }}>{t('services.compareService')}</th>
+              {packages.map(p => (
+                <th key={p.id} className="px-3 py-3 text-center">
+                  <div className="text-white font-bold text-sm leading-tight">
+                    {(isFr && p.nameFr) ? p.nameFr : p.name}
+                  </div>
+                  {p.isMostPopular && (
+                    <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      style={{ background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', color: '#0b0f1a' }}>
+                      {t('services.popularBadge')}
+                    </span>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((s, i) => (
+              <tr key={s.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: i % 2 ? 'rgba(255,255,255,0.015)' : 'transparent' }}>
+                <td className="px-5 py-2.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  {(isFr && s.nameFr) ? s.nameFr : s.name}
+                </td>
+                {packages.map((p, pi) => (
+                  <td key={p.id} className="px-3 py-2.5 text-center">
+                    {pkgIncluded[pi].has(String(s.id))
+                      ? <CheckCircle className="w-4 h-4 mx-auto" style={{ color: '#00d4ff' }} aria-label={t('services.included')} />
+                      : <span aria-hidden="true" style={{ color: 'rgba(255,255,255,0.15)' }}>{'\u2014'}</span>}
+                  </td>
+                ))}
+              </tr>
+            ))}
+            {/* Price + CTA row */}
+            <tr>
+              <td className="px-5 py-4 text-xs font-semibold uppercase tracking-wider"
+                style={{ color: 'rgba(255,255,255,0.35)' }}>{t('services.comparePrice')}</td>
+              {packages.map(p => {
+                const { text, isExact } = getPriceLabel(p.pricing || {}, vehicleType);
+                return (
+                  <td key={p.id} className="px-3 py-4 text-center">
+                    {p.requiresQuote ? (
+                      <div className="text-amber-400 text-xs font-semibold">{t('services.quote')}</div>
+                    ) : text ? (
+                      <div className="font-black text-base" style={{
+                        background: 'linear-gradient(135deg,#00a8cc,#00d4ff)',
+                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                      }}>{!isExact && `${t('services.from')} `}{text}</div>
+                    ) : null}
+                    <Link to="/booking"
+                      className="inline-block mt-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+                      style={p.isMostPopular
+                        ? { background: 'linear-gradient(135deg,#00a8cc,#00d4ff)', color: '#0b0f1a' }
+                        : { border: '1px solid rgba(0,168,204,0.4)', color: '#00d4ff' }}>
+                      {t('services.bookNow')}
+                    </Link>
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 // ── Package Card ──────────────────────────────────────────────────────────────
 const PackageCard = ({ pkg, vehicleType, index, visible }) => {
-  const { t, language } = useTranslation();
+  const { isFr } = useTranslation();
   const price  = vehicleType ? getPriceForVehicle(pkg.pricing || {}, vehicleType) : getMinPrice(pkg.pricing || {});
   const dur    = formatDuration(pkg.estimatedDuration);
-  const name   = (language === 'fr' && pkg.nameFr)   ? pkg.nameFr   : pkg.name;
-  const desc   = (language === 'fr' && pkg.descriptionFr) ? pkg.descriptionFr : pkg.description;
-  const tagline = (language === 'fr' && pkg.taglineFr) ? pkg.taglineFr : pkg.tagline;
+  const name   = (isFr && pkg.nameFr)   ? pkg.nameFr   : pkg.name;
+  const desc   = (isFr && pkg.descriptionFr) ? pkg.descriptionFr : pkg.description;
+  const tagline = (isFr && pkg.taglineFr) ? pkg.taglineFr : pkg.tagline;
 
   // Parse included services/add-ons for the accordion
   const includedList = (() => {
@@ -237,7 +370,7 @@ const PackageCard = ({ pkg, vehicleType, index, visible }) => {
 
 // ── Service Card ──────────────────────────────────────────────────────────────
 const ServiceCard = ({ service, vehicleType, index, visible }) => {
-  const { t, language } = useTranslation();
+  const { t, isFr } = useTranslation();
   const cfg  = CATEGORY_CONFIG[service.category] || CATEGORY_CONFIG.DEFAULT;
   const Icon = cfg.icon;
 
@@ -245,10 +378,10 @@ const ServiceCard = ({ service, vehicleType, index, visible }) => {
   const minPrice = getMinPrice(service.pricing);
   const dur      = formatDuration(service.estimatedDuration);
 
-  const name = (language === 'fr' && service.nameFr)        ? service.nameFr        : service.name;
-  const desc = (language === 'fr' && service.descriptionFr) ? service.descriptionFr : service.description;
+  const name = (isFr && service.nameFr)        ? service.nameFr        : service.name;
+  const desc = (isFr && service.descriptionFr) ? service.descriptionFr : service.description;
 
-  const rawIncludes = language === 'fr' ? (service.includesFr || service.includes) : service.includes;
+  const rawIncludes = isFr ? (service.includesFr || service.includes) : service.includes;
   const includes    = parseIncludes(rawIncludes);
 
   return (
@@ -333,9 +466,9 @@ const ServiceCard = ({ service, vehicleType, index, visible }) => {
 
 // ── Add-on Card ───────────────────────────────────────────────────────────────
 const AddOnCard = ({ addOn, index, visible }) => {
-  const { language } = useTranslation();
-  const name = (language === 'fr' && addOn.nameFr)        ? addOn.nameFr        : addOn.name;
-  const desc = (language === 'fr' && addOn.descriptionFr) ? addOn.descriptionFr : addOn.description;
+  const { isFr } = useTranslation();
+  const name = (isFr && addOn.nameFr)        ? addOn.nameFr        : addOn.name;
+  const desc = (isFr && addOn.descriptionFr) ? addOn.descriptionFr : addOn.description;
   return (
     <div
       className={`flex items-center justify-between p-3.5 rounded-xl transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
@@ -570,6 +703,7 @@ const Services = () => {
                     <PackageCard key={pkg.id} pkg={pkg} vehicleType={activeVehicle} index={i} visible={visible} />
                   ))}
                 </div>
+                <PackageComparison packages={packages} services={services} vehicleType={activeVehicle} />
               </section>
             )}
 
@@ -602,6 +736,9 @@ const Services = () => {
                 </div>
               </section>
             )}
+
+            {/* ── 2b. PAINT CORRECTION SPOTLIGHT ────────────────────────── */}
+            <PaintCorrectionSpotlight />
 
             {/* ── 3. SERVICE CATEGORIES ─────────────────────────────────── */}
             {sortedCategories.map(cat => {

@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useServicesCache from '../hooks/useServicesCache';
+import { useTranslation } from '../hooks/useTranslation';
 import { ArrowRight, Check, Clock, Loader2, Sparkles, Star } from 'lucide-react';
 
 const GOLD = 'linear-gradient(135deg,#00a8cc,#00d4ff)';
@@ -61,6 +62,7 @@ const StepHeader = ({ n, label, done, active }) => (
 
 // ── Service row ───────────────────────────────────────────────────────────────
 const SvcRow = ({ item, vehicle, selected, onSelect, popular }) => {
+  const { isFr } = useTranslation();
   const price = getPriceFor(item.pricing || {}, vehicle);
   const exact = !!(item.pricing?.[vehicle] && Number(item.pricing[vehicle]) > 0);
   const dur   = fmtDur(item.estimatedDuration);
@@ -88,7 +90,7 @@ const SvcRow = ({ item, vehicle, selected, onSelect, popular }) => {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-white font-bold text-[15px] leading-snug">{item.name}</span>
+          <span className="text-white font-bold text-[15px] leading-snug">{(isFr && item.nameFr) ? item.nameFr : item.name}</span>
           {popular && (
             <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
               style={{ background: GOLD, color: '#0b0f1a' }}>
@@ -97,7 +99,7 @@ const SvcRow = ({ item, vehicle, selected, onSelect, popular }) => {
           )}
         </div>
         {selected && item.description && (
-          <p className="text-gray-400 text-xs mt-1 leading-relaxed">{item.description}</p>
+          <p className="text-gray-400 text-xs mt-1 leading-relaxed">{(isFr && item.descriptionFr) ? item.descriptionFr : item.description}</p>
         )}
         {dur && (
           <div className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -128,6 +130,7 @@ const SvcRow = ({ item, vehicle, selected, onSelect, popular }) => {
 // ── Main ──────────────────────────────────────────────────────────────────────
 const InstantQuote = () => {
   const navigate = useNavigate();
+  const { isFr } = useTranslation();
   const { services, packages, loading } = useServicesCache();
 
   const [vehicle,  setVehicle]  = useState(null);
@@ -277,7 +280,7 @@ const InstantQuote = () => {
               <div className="flex items-end justify-between mb-4">
                 <div>
                   <div className="text-xs text-gray-500 mb-1">
-                    {selected.item.name} · {vehicle}
+                    {(isFr && selected.item.nameFr) ? selected.item.nameFr : selected.item.name} · {vehicle}
                   </div>
                   <div className="text-[34px] font-black leading-none" style={{
                     background: GOLD,

@@ -145,7 +145,8 @@ const Navbar = () => {
           <span className="text-white font-bold text-sm">Menu</span>
           <button onClick={() => setDrawerOpen(false)}
             className="w-10 h-10 flex items-center justify-center rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.07)' }}>
+            style={{ background: 'rgba(255,255,255,0.07)' }}
+            aria-label="Close menu">
             <X className="w-4 h-4 text-gray-400" />
           </button>
         </div>

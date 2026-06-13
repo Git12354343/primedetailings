@@ -49,8 +49,12 @@ const PageLoadingFallback = () => (
 const PublicLayout = ({ children }) => (
   <ErrorBoundary>
     <div className="min-h-screen flex flex-col" style={{ background: '#0b0f1a' }}>
+      <a href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-cyan-500 focus:text-black focus:text-sm focus:font-bold">
+        Skip to content
+      </a>
       <Navbar />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <Suspense fallback={<PageLoadingFallback />}>
           {children}
         </Suspense>
