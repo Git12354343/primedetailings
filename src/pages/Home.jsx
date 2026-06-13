@@ -54,15 +54,32 @@ const TrustStrip = () => {
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-const Home = () => (
-  <div style={{ background: '#0b0f1a' }}>
-      <Seo page="home" path="/" />
-    <Hero />
-    <InstantQuote />
-    <TrustStrip />
-    <ReviewsSection />
-    <FAQSection />
-  </div>
-);
+const Home = () => {
+  const { t } = useTranslation();
+
+  // FAQPage structured data from the same items FAQSection renders —
+  // makes the home page eligible for FAQ rich results.
+  const faqItems  = t('faq.items');
+  const faqJsonLd = Array.isArray(faqItems) ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map(({ q, a }) => ({
+      '@type': 'Question',
+      name: q,
+      acceptedAnswer: { '@type': 'Answer', text: a },
+    })),
+  } : null;
+
+  return (
+    <div style={{ background: '#0b0f1a' }}>
+      <Seo page="home" path="/" jsonLd={faqJsonLd} />
+      <Hero />
+      <InstantQuote />
+      <TrustStrip />
+      <ReviewsSection />
+      <FAQSection />
+    </div>
+  );
+};
 
 export default Home;

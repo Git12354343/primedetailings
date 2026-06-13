@@ -53,15 +53,17 @@ What it *does* need, in priority order:
 
 **Tier 2 — direct revenue**
 2. **Abandoned-booking recovery** — expired `PENDING` bookings + unverified `VerificationCode.bookingData` already capture the lead. One cron + one SMS template ("Your spot is still available — finish in 30 seconds: {link}") at +2h. Typical recovery: 10–20% of abandons.
-3. **Maintenance subscriptions** — monthly/seasonal wash plans for past full-detail customers. Recurring revenue smooths winter dips (critical in Québec).
-4. **Ceramic/protection follow-up sequence** (Phase 3) — drives annual maintenance-detail rebookings.
-5. **Referral program** — unique code per customer, $25 credit both sides, asked in the post-review email (only to 5-star responders).
+3. **Ceramic/protection follow-up sequence** (Phase 3) — drives annual maintenance-detail rebookings.
+4. **Referral program** — unique code per customer, asked in the post-review email (only to 5-star responders).
 
 **Tier 3 — efficiency & retention**
-6. Customer portal (magic-link via SMS — no passwords): bookings, history, one-tap rebook "same as last time", reschedule/cancel. The lookup page already does 70% of this; portal = lookup + history + saved vehicle.
-7. Per-detailer scheduling capacity + admin day-view.
-8. Waitlist for full days ("notify me if a spot opens").
-9. Seasonal campaign calendar (spring salt-removal, fall winter-prep, holiday gift cards).
+5. Per-detailer scheduling capacity + admin day-view.
+6. Waitlist for full days ("notify me if a spot opens").
+7. Seasonal campaign calendar (spring salt-removal, fall winter-prep).
+
+> **Scope decision (owner, June 2026):** customer portal, memberships/subscriptions,
+> and payments/deposits are explicitly OUT of scope. Do not build unless the owner
+> asks again.
 
 ---
 
@@ -145,7 +147,6 @@ Current admin covers live feed, unassigned, quotes, catalog, reviews, manual boo
 2. **Today view** as the default landing tab: today's jobs by detailer with status, weather banner, one-tap call/SMS customer.
 3. **Campaigns tab**: send/preview the Phase 3 sequences, see consent counts (CASL).
 4. Revenue: add repeat-rate, average order value, and booking-source once Customer model lands.
-5. Membership management (when subscriptions ship).
 
 ---
 
@@ -159,6 +160,7 @@ Current admin covers live feed, unassigned, quotes, catalog, reviews, manual boo
 | **Next 2** | Customer + Vehicle models, migration + backfill, admin Customers tab | 3–5 days | — |
 | **Next 3** | Abandoned-booking recovery cron + SMS | 1 day | — |
 | **Next 4** | Maintenance + ceramic follow-up sequences (+ CASL consent checkbox) | 2–3 days | — |
-| **Later** | Customer portal (magic link), referral program, memberships, per-detailer capacity, waitlist, package comparison, owned photography | iterative | — |
+| **Later** | Referral program, per-detailer capacity, waitlist, package comparison, owned photography | iterative | — |
+| **Out of scope (owner decision)** | Customer portal, memberships/subscriptions, payments/deposits | — | ❌ excluded |
 
 **Migration safety:** every "Next" item is additive (new tables, new crons, new components). No existing table is altered destructively; the Customer backfill is a read-group-insert that leaves `bookings` untouched and adds a nullable `customerId`.
