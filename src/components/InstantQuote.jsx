@@ -121,12 +121,24 @@ const InstantQuote = () => {
 
   const activeAddOns = addOns.filter(a => a.isActive !== false);
 
-  const pkgPills = (pkg) =>
-    (pkg.includedServices || [])
-      .map(id => serviceById[String(id)])
-      .filter(Boolean)
-      .slice(0, 6)
-      .map(nm);
+  // Tags come straight from the catalog: a package lists its included
+  // services; everything else uses its `includes` / `includesFr` field
+  // (comma- or newline-separated, or a JSON array).
+  const parseIncludes = (raw) => {
+    if (!raw) return [];
+    try { const j = JSON.parse(raw); if (Array.isArray(j)) return j.map(String).filter(Boolean); }
+    catch { /* not JSON — fall through */ }
+    return String(raw).split(/\n|,\s*/).map(s => s.trim()).filter(Boolean);
+  };
+
+  const itemTags = (item, isPackage) => {
+    if (isPackage && (item.includedServices || []).length) {
+      return (item.includedServices || [])
+        .map(id => serviceById[String(id)]).filter(Boolean).slice(0, 6).map(nm);
+    }
+    const inc = isFr ? (item.includesFr || item.includes) : item.includes;
+    return parseIncludes(inc).slice(0, 6);
+  };
 
   // ── Estimate ────────────────────────────────────────────────────────────────
   const mainPrice = mainSel && !mainSel.item.requiresQuote
@@ -250,7 +262,7 @@ const InstantQuote = () => {
                           title={nm(opt.item)}
                           desc={desc(opt.item)}
                           priceLabel={opt.item.requiresQuote ? t('iq.quote') : (p ? fmt(p) : null)}
-                          pills={opt.isPackage ? pkgPills(opt.item) : []}
+                          pills={itemTags(opt.item, opt.isPackage)}
                           popular={opt.item.isMostPopular || opt.item.isFeatured}
                           selected={mainSel?.item.id === opt.item.id && mainSel?.isPackage === opt.isPackage}
                           onClick={() => selectMain(opt)}
@@ -271,6 +283,7 @@ const InstantQuote = () => {
                         title={nm(a)}
                         desc={desc(a)}
                         priceLabel={a.requiresQuote ? t('iq.quote') : `+${fmt(Number(a.price) || 0)}`}
+                        pills={itemTags(a, false)}
                         selected={addonSel.has(String(a.id))}
                         onClick={() => toggleAddon(a.id)}
                       />

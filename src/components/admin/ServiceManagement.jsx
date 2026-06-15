@@ -41,6 +41,8 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, vehicleTypes, serviceCate
     nameFr: initialData?.nameFr || '',
     description: initialData?.description || '',
     descriptionFr: initialData?.descriptionFr || '',
+    includes: initialData?.includes || '',
+    includesFr: initialData?.includesFr || '',
     category: initialData?.category || 'DETAILING',
     pricing: initialData?.pricing || vehicleTypes.reduce((a, t) => ({ ...a, [t]: '' }), {}),
     isActive: initialData?.isActive ?? true,
@@ -85,6 +87,22 @@ const ServiceFormModal = ({ isOpen, onClose, onSubmit, vehicleTypes, serviceCate
             value={formData.descriptionFr || ''}
             onChange={e => setFormData(p => ({ ...p, descriptionFr: e.target.value }))}
             placeholder="ex. Description du service en français..."
+            onFocus={e => e.target.style.borderColor = GOLD_S} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
+        </div>
+        <div>
+          <label style={labelCls}>Included — tags (EN) <span style={{color:'rgba(255,255,255,0.35)',fontWeight:400}}>— one per line or comma-separated; shown as pills on the site</span></label>
+          <textarea style={{ ...inputCls, resize: 'vertical', minHeight: '70px' }} rows={3}
+            value={formData.includes}
+            onChange={e => setFormData(p => ({ ...p, includes: e.target.value }))}
+            placeholder={'3-stage vacuum\nFull interior wipe\nDashboard & console\nMat cleaning'}
+            onFocus={e => e.target.style.borderColor = GOLD_S} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
+        </div>
+        <div>
+          <label style={labelCls}>Inclus — étiquettes (FR) <span style={{color:'rgba(255,255,255,0.35)',fontWeight:400}}>— optionnel</span></label>
+          <textarea style={{ ...inputCls, resize: 'vertical', minHeight: '70px' }} rows={3}
+            value={formData.includesFr || ''}
+            onChange={e => setFormData(p => ({ ...p, includesFr: e.target.value }))}
+            placeholder={'Aspirateur 3 étapes\nNettoyage intérieur complet\nTableau de bord et console\nNettoyage des tapis'}
             onFocus={e => e.target.style.borderColor = GOLD_S} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
         </div>
         <div>
