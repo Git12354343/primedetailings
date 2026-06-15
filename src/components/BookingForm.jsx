@@ -214,7 +214,17 @@ const BookingForm = () => {
   useEffect(() => {
     if (!prefilled?.packageId || !packages.length || selectedPkg) return;
     const pkg = packages.find(p => String(p.id) === String(prefilled.packageId));
-    if (pkg && !pkg.requiresQuote) selectPkg(pkg);
+    if (pkg && !pkg.requiresQuote) {
+      selectPkg(pkg);
+      // Preserve any extras chosen in the Instant Quote (add-ons / advanced
+      // services) that aren't already part of the package.
+      const incS = (pkg.includedServices || []).map(String);
+      const incA = (pkg.includedAddOns   || []).map(String);
+      const extraS = (prefilled.services || []).map(String).filter(id => !incS.includes(id));
+      const extraA = (prefilled.addOns   || []).map(String).filter(id => !incA.includes(id));
+      if (extraS.length) handleChange('services', [...incS, ...extraS]);
+      if (extraA.length) handleChange('addOns',   [...incA, ...extraA]);
+    }
   }, [packages.length]); // eslint-disable-line
 
   // Live pricing for custom mode
